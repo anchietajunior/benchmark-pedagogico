@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Como comparar explicações de IA em Biomedicina e Nutrição: fontes bibliográficas, avaliação científica, rubrica pedagógica e julgamento anonimizado.">
+  <meta name="theme-color" content="#173c38">
+  <title>Protocolo 2.1 | Avaliação científica, pedagógica e tecnológica de IA</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f7f6f1;
+      --white: #ffffff;
+      --ink: #223b37;
+      --muted: #536761;
+      --green: #276450;
+      --dark: #173c38;
+      --mint: #e5eee5;
+      --line: #d6ddd4;
+      --amber: #725011;
+      --amber-light: #faf0d8;
+      --red: #8e4030;
+      --red-light: #f8e9e3;
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 100px; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 16px/1.65 var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--green); text-underline-offset: 4px; }
+    a:hover { text-decoration-thickness: 2px; }
+    a:focus-visible, summary:focus-visible {
+      outline: 3px solid #b65c22;
+      outline-offset: 5px;
+      border-radius: 2px;
+    }
+    p { margin: 0 0 1rem; }
+    h1, h2, h3, h4 { line-height: 1.16; margin: 0; }
+    h1, h2 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.045em; }
+    h1 { font-size: clamp(3rem, 5.5vw, 5.05rem); }
+    h2 { font-size: clamp(2.2rem, 4vw, 3.25rem); }
+    h3 { font-size: 1.3rem; letter-spacing: -0.02em; }
+    h4 { font-size: 1rem; }
+    ul, ol { padding-left: 1.25rem; margin: 0; }
+    li + li { margin-top: 0.5rem; }
+    strong { font-weight: 650; }
+    small { font-size: 0.82rem; }
+    code { font-family: var(--mono); font-size: 0.85em; }
+    .container { width: min(1180px, calc(100% - 80px)); margin-inline: auto; }
+    .skip-link {
+      position: fixed;
+      top: -80px;
+      left: 16px;
+      padding: 10px 16px;
+      background: var(--white);
+      z-index: 10;
+    }
+    .skip-link:focus { top: 12px; }
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(247, 246, 241, 0.97);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 82px; }
+    .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
+    .brand-mark { display: grid; grid-template-columns: repeat(2, 9px); gap: 4px; transform: rotate(-12deg); }
+    .brand-mark span { width: 9px; height: 9px; background: var(--green); border-radius: 1px; }
+    .brand-mark span:last-child { background: #c6d5b9; }
+    .brand-name { font-size: 0.92rem; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
+    .brand-name small { display: block; margin-top: 5px; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    nav { display: flex; flex-wrap: wrap; gap: 23px; }
+    nav a { color: var(--muted); text-decoration: none; font-size: 0.82rem; font-weight: 600; }
+    nav a:hover { color: var(--green); text-decoration: underline; }
+    .eyebrow { display: flex; align-items: center; gap: 10px; color: var(--green); font: 600 0.7rem/1.4 var(--mono); letter-spacing: 0.11em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 22px; height: 1px; background: currentColor; }
+    .hero { padding: 74px 0 0; }
+    .hero-grid { display: grid; grid-template-columns: 1.2fr 0.9fr; gap: 70px; align-items: center; }
+    .hero h1 { margin: 25px 0 23px; }
+    .hero h1 em { color: var(--green); font-weight: 400; }
+    .hero-copy { color: var(--muted); font-size: 1.06rem; max-width: 560px; }
+    .hero-actions { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-top: 27px; }
+    .button { display: inline-flex; align-items: center; gap: 24px; padding: 12px 19px; background: var(--dark); color: white; text-decoration: none; font-size: 0.85rem; font-weight: 600; border-radius: 5px; }
+    .button:hover { background: #285b51; }
+    .text-link { font-size: 0.82rem; font-weight: 600; }
+    .protocol-card { border: 1px solid #bdcdbf; background: #edf1e8; border-radius: 12px; overflow: hidden; }
+    .protocol-card-top { padding: 20px 25px; display: flex; justify-content: space-between; border-bottom: 1px solid #cdd7c9; color: var(--muted); font: 0.67rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+    .protocol-card-body { padding: 26px; }
+    .document-tag { display: inline-block; border: 1px solid #cad5c6; background: var(--paper); padding: 5px 9px; font: 0.68rem var(--mono); border-radius: 4px; margin-bottom: 22px; }
+    .gate { display: grid; grid-template-columns: 35px 1fr; gap: 13px; }
+    .gate-number { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid #b3c4b0; font: 0.8rem var(--mono); }
+    .gate h3 { font-size: 1.12rem; margin: 3px 0 8px; }
+    .gate p { color: var(--muted); font-size: 0.85rem; margin: 0; }
+    .gate-connector { margin-left: 16px; border-left: 1px dashed #9db398; padding: 13px 0 13px 30px; color: var(--green); font: 0.63rem var(--mono); letter-spacing: 0.07em; text-transform: uppercase; }
+    .protocol-card-foot { background: var(--dark); color: #dbe8df; padding: 15px 25px; font-size: 0.75rem; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 58px; padding: 26px 0; border-block: 1px solid var(--line); }
+    .stat { padding-left: 27px; display: flex; gap: 15px; align-items: center; border-left: 1px solid var(--line); }
+    .stat:first-child { padding-left: 0; border-left: 0; }
+    .stat b { font: 2.5rem/1 var(--serif); }
+    .stat span { color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+    .section { padding: 76px 0; border-bottom: 1px solid var(--line); }
+    .section-heading { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: end; margin-bottom: 34px; }
+    .section-heading h2 { margin-top: 15px; }
+    .section-intro { color: var(--muted); font-size: 0.98rem; max-width: 520px; margin: 0; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .step { padding: 27px; background: rgba(255, 255, 255, 0.4); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); list-style: none; margin: 0; }
+    .steps { padding: 0; counter-reset: step; }
+    .step:nth-child(3n) { border-right: 0; }
+    .step:nth-child(n+4) { border-bottom: 0; }
+    .step-number { font: 0.74rem var(--mono); color: var(--green); display: flex; justify-content: space-between; margin-bottom: 22px; }
+    .step-number span:last-child { color: #7a9186; font: 1.1rem/1 var(--sans); }
+    .step h3 { font-size: 1.07rem; margin-bottom: 12px; }
+    .step p { color: var(--muted); font-size: 0.87rem; margin: 0; }
+    .step.focus { background: var(--mint); }
+    .note { border-left: 3px solid #8caa82; padding: 12px 18px; margin-top: 24px; color: var(--muted); font-size: 0.86rem; background: #eef1e9; }
+    .note p:last-child { margin: 0; }
+    .rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 30px; }
+    .rule h4 { margin-bottom: 9px; }
+    .rule p { color: var(--muted); font-size: 0.85rem; margin: 0; }
+    .topic-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+    .topic { border: 1px solid var(--line); border-radius: 10px; background: var(--white); overflow: hidden; }
+    .topic-main { padding: 27px 29px 23px; }
+    .topic-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 12px; }
+    .topic-code { color: var(--green); font: 0.78rem var(--mono); }
+    .badge { display: inline-block; font: 600 0.65rem/1.4 var(--sans); letter-spacing: 0.07em; text-transform: uppercase; padding: 5px 9px; border-radius: 4px; background: var(--mint); color: var(--green); }
+    .badge.nutrition { background: #f3eddc; color: #76602d; }
+    .topic h3 { font-family: var(--serif); font-size: 1.7rem; font-weight: 400; margin-bottom: 16px; }
+    .topic-question { color: var(--muted); font-size: 0.94rem; }
+    .scenario { font-size: 0.81rem; color: var(--muted); border-top: 1px solid #e8ece5; padding-top: 14px; margin: 17px 0 0; }
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::after { content: "+"; font: 1.2rem/1 var(--sans); flex-shrink: 0; margin-left: 15px; }
+    details[open] > summary::after { content: "−"; }
+    .topic details { border-top: 1px solid var(--line); }
+    .topic summary { display: flex; justify-content: space-between; align-items: center; padding: 16px 29px; font-size: 0.82rem; font-weight: 600; background: #fafbf8; }
+    .topic-details { padding: 8px 29px 24px; font-size: 0.87rem; }
+    .topic-details li { padding-left: 3px; }
+    .scope { margin-top: 20px; color: var(--muted); font-size: 0.81rem; }
+    .topic-links { margin-top: 19px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.79rem; }
+    .audit-intro { display: grid; grid-template-columns: 1.05fr 1fr; gap: 42px; margin-bottom: 28px; }
+    .audit-intro h3 { margin-bottom: 15px; }
+    .audit-intro p, .audit-intro li { font-size: 0.9rem; color: var(--muted); }
+    .audit-record { border: 1px solid var(--line); border-radius: 8px; padding: 22px; background: var(--white); }
+    .record-label { font: 0.67rem var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin-bottom: 13px; }
+    .record-fields { display: flex; flex-wrap: wrap; gap: 7px; }
+    .record-fields span { font-size: 0.77rem; padding: 5px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); }
+    .audit-record p { font-size: 0.8rem; margin: 13px 0 0; }
+    .status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .status { border-radius: 8px; padding: 24px; border: 1px solid transparent; }
+    .status.approved { background: #e5eee5; border-color: #bccfbd; }
+    .status.correction { background: var(--red-light); border-color: #e6cfc5; color: var(--red); }
+    .status.pending { background: var(--amber-light); border-color: #e3d6b4; color: var(--amber); }
+    .status h3 { font: 650 0.85rem var(--mono); letter-spacing: 0.06em; margin-bottom: 14px; }
+    .status p { font-size: 0.85rem; }
+    .status-outcome { display: block; border-top: 1px solid currentColor; padding-top: 12px; margin-top: 20px; font-size: 0.77rem; font-weight: 650; }
+    .fine-print { font-size: 0.79rem; color: var(--muted); margin: 18px 0 0; }
+    .blind-section { background: var(--dark); color: #f0f3eb; }
+    .blind-section .eyebrow { color: #bbd4ad; }
+    .blind-section .section-intro { color: #c9d7cf; }
+    .blind-section h2 { color: #f0f3eb; }
+    .blind-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .blind-panel { padding: 27px; border: 1px solid #4a6860; border-radius: 8px; }
+    .blind-panel h3 { margin-bottom: 18px; font-size: 1.05rem; }
+    .blind-panel li { color: #d4dfd7; font-size: 0.87rem; }
+    .blind-panel:first-child { background: #244b42; }
+    .blind-panel-label { display: inline-block; color: #b8cda9; font: 0.68rem var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+    .blind-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; margin-top: 27px; }
+    .blind-bottom h4 { color: #e5eadf; margin-bottom: 9px; }
+    .blind-bottom p { color: #c9d7cf; font-size: 0.84rem; margin: 0; }
+    .blind-section .fine-print { color: #c1d1c5; border-top: 1px solid #49655c; padding-top: 20px; margin-top: 27px; }
+    .scale-key { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+    .scale-key span { font-size: 0.74rem; border: 1px solid var(--line); padding: 5px 9px; border-radius: 4px; background: #fff; }
+    .scale-key b { font-family: var(--mono); color: var(--green); margin-right: 5px; }
+    .metric { border-top: 1px solid var(--line); }
+    .metric:last-child { border-bottom: 1px solid var(--line); }
+    .metric summary { display: flex; align-items: center; padding: 24px 8px; gap: 22px; }
+    .metric summary::after { margin-left: auto; color: var(--green); }
+    .metric-code { font: 0.79rem var(--mono); color: var(--green); }
+    .metric-title { font-size: 1.07rem; font-weight: 650; display: block; }
+    .metric-question { display: block; font-size: 0.86rem; color: var(--muted); margin-top: 4px; }
+    .metric-content { padding: 0 43px 25px 53px; }
+    .anchors { list-style: none; padding: 0; }
+    .anchors li { display: grid; grid-template-columns: 45px 1fr; gap: 15px; padding: 11px 0; border-top: 1px solid #e3e8df; font-size: 0.88rem; margin: 0; }
+    .score-number { font: 0.76rem var(--mono); height: 25px; display: grid; place-items: center; background: var(--mint); border-radius: 4px; color: var(--green); }
+    .formula-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; background: #eeefe6; border: 1px solid var(--line); padding: 27px 30px; margin-top: 28px; border-radius: 8px; }
+    .formula-panel h3 { font-size: 1rem; margin-bottom: 12px; }
+    .formula { font: 1.15rem/1.6 var(--mono); color: var(--green); margin-bottom: 10px; }
+    .formula-panel p:last-child { font-size: 0.83rem; color: var(--muted); margin: 0; }
+    .method-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .method { padding: 24px 26px; border: 1px solid var(--line); border-radius: 8px; }
+    .method h3 { font-size: 1.08rem; margin-bottom: 13px; }
+    .method p { color: var(--muted); font-size: 0.85rem; }
+    .method a { font-size: 0.8rem; }
+    .method-tag { font: 0.65rem var(--mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--green); margin-bottom: 13px; }
+    .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .comparison-grid h3 { margin-bottom: 19px; }
+    .comparison-grid li { color: var(--muted); font-size: 0.9rem; }
+    .measurement-list { display: grid; gap: 19px; }
+    .measurement { border-bottom: 1px solid var(--line); padding-bottom: 17px; }
+    .measurement:last-child { border-bottom: 0; }
+    .measurement dt { font-weight: 650; font-size: 0.94rem; }
+    .measurement dd { color: var(--muted); font-size: 0.84rem; margin: 5px 0 0; }
+    .limits { background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 25px 29px; margin-top: 30px; }
+    .limits h3 { font-size: 1.05rem; margin-bottom: 14px; }
+    .limits p { font-size: 0.9rem; margin: 0; color: var(--muted); }
+    .source-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px 45px; }
+    .source-group { border-top: 1px solid var(--line); padding-top: 20px; }
+    .source-group h3 { font-size: 1.04rem; margin-bottom: 17px; }
+    .source-group li { font-size: 0.84rem; color: var(--muted); }
+    .source-group .supplement { margin: 16px 0 0; font-size: 0.78rem; color: var(--muted); }
+    .resources { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; margin-top: 29px; }
+    .resource { padding: 19px; background: var(--white); border: 1px solid var(--line); border-radius: 7px; text-decoration: none; }
+    .resource:hover { border-color: var(--green); }
+    .resource span { font: 0.65rem var(--mono); color: var(--muted); letter-spacing: 0.06em; }
+    .resource strong { display: block; margin-top: 10px; font-size: 0.85rem; }
+    .resource small { display: block; color: var(--muted); font-size: 0.76rem; margin-top: 6px; }
+    .data-table-wrap { overflow-x: auto; margin-top: 22px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .data-table caption { text-align: left; font-weight: 650; margin-bottom: 12px; }
+    .data-table th, .data-table td { padding: 13px 15px; text-align: left; vertical-align: top; border: 1px solid var(--line); }
+    .data-table th { background: var(--mint); font-weight: 650; }
+    .data-table td { background: var(--white); }
+    .data-table code { overflow-wrap: anywhere; }
+    .footer { padding: 27px 0 38px; }
+    .footer-inner { display: flex; justify-content: space-between; gap: 30px; color: var(--muted); font-size: 0.75rem; }
+    .footer p { margin: 0; }
+    .footer a { white-space: nowrap; }
+    @media (min-width: 1500px) {
+      .hero { padding-top: 90px; }
+    }
+    @media (max-width: 1000px) {
+      .container { width: calc(100% - 48px); }
+      .hero-grid { gap: 35px; grid-template-columns: 1.1fr 1fr; }
+      .hero h1 { font-size: 3.5rem; }
+      nav { gap: 14px; }
+      .section-heading { gap: 35px; }
+      .stat { padding-left: 18px; gap: 11px; }
+      .stat b { font-size: 2rem; }
+      .resources { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 760px) {
+      html { scroll-padding-top: 22px; }
+      .site-header { position: static; }
+      .header-inner { align-items: flex-start; flex-direction: column; padding-block: 20px 15px; gap: 20px; }
+      nav { gap: 12px 20px; }
+      nav a { font-size: 0.76rem; }
+      .hero { padding-top: 43px; }
+      .hero-grid, .section-heading, .audit-intro, .comparison-grid { grid-template-columns: 1fr; gap: 25px; }
+      .hero h1 { font-size: clamp(2.7rem, 8vw, 3.6rem); }
+      .hero-copy { font-size: 1rem; }
+      .protocol-card { max-width: none; margin-top: 10px; }
+      .stats { margin-top: 35px; grid-template-columns: repeat(2, 1fr); row-gap: 24px; }
+      .stat:nth-child(3) { padding-left: 0; border-left: 0; }
+      .stat span { font-size: 0.76rem; }
+      .section { padding: 50px 0; }
+      .section-heading { margin-bottom: 27px; }
+      .steps { grid-template-columns: repeat(2, 1fr); }
+      .step { padding: 23px; }
+      .step:nth-child(3n) { border-right: 1px solid var(--line); }
+      .step:nth-child(2n) { border-right: 0; }
+      .step:nth-child(4) { border-bottom: 1px solid var(--line); }
+      .topic-grid, .status-grid, .blind-grid, .blind-bottom, .method-grid, .source-list { grid-template-columns: 1fr; }
+      .rules { grid-template-columns: 1fr; gap: 20px; }
+      .status { padding: 23px; }
+      .status-outcome { margin-top: 14px; }
+      .formula-panel { grid-template-columns: 1fr; gap: 23px; }
+      .metric summary { gap: 14px; padding-block: 20px; }
+      .metric-title { font-size: 1rem; }
+      .metric-question { font-size: 0.8rem; }
+      .metric-content { padding: 0 8px 24px; }
+      .footer-inner { flex-direction: column; gap: 12px; }
+    }
+    @media (max-width: 430px) {
+      .container { width: calc(100% - 36px); }
+      .hero h1 { font-size: 2.65rem; }
+      .eyebrow { font-size: 0.62rem; letter-spacing: 0.075em; }
+      .steps { grid-template-columns: 1fr; }
+      .step:nth-child(n) { border-right: 0; border-bottom: 1px solid var(--line); }
+      .step:last-child { border-bottom: 0; }
+      .step-number { margin-bottom: 15px; }
+      .topic-main { padding: 24px; }
+      .topic summary { padding-inline: 24px; }
+      .topic-details { padding-inline: 24px; }
+      .protocol-card-body { padding: 23px; }
+      .resources { grid-template-columns: 1fr; }
+      .formula-panel { padding: 23px; }
+      .formula { font-size: 0.91rem; }
+      .blind-panel { padding: 23px; }
+      .stat { gap: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+    @media print {
+      :root { --paper: #fff; --ink: #111; --muted: #333; --line: #aaa; }
+      @page { margin: 16mm; }
+      body { font-size: 10pt; line-height: 1.45; }
+      .container { width: 100%; }
+      .site-header, .hero-actions, .skip-link, .resources, .footer a { display: none; }
+      .hero { padding-top: 0; }
+      .hero-grid { grid-template-columns: 1fr; gap: 20px; }
+      h1, .hero h1 { font-size: 30pt; }
+      h2 { font-size: 23pt; }
+      .section { padding: 25px 0; }
+      .section-heading { gap: 20px; margin-bottom: 20px; }
+      .protocol-card { max-width: 100%; }
+      .stats { margin-top: 22px; }
+      .blind-section { background: #fff; color: #111; }
+      .blind-section h2, .blind-section .eyebrow, .blind-section .section-intro,
+      .blind-panel li, .blind-panel-label, .blind-bottom h4, .blind-bottom p,
+      .blind-section .fine-print { color: #222; }
+      .blind-panel:first-child { background: #fff; }
+      .protocol-card-foot { background: #eee; color: #222; }
+      .topic, .status, .method, .blind-panel, .source-group, .metric { break-inside: avoid; }
+      details::details-content { content-visibility: visible; }
+      details > :not(summary) { display: block !important; }
+      summary::after { display: none; }
+      a { color: #173c38; }
+      .topic-links { display: none; }
+      .steps, .topic-grid, .status-grid, .method-grid, .source-list { gap: 12px; }
+      .step { border: 1px solid #aaa !important; }
+      .topic h3 { font-size: 17pt; }
+      .metric summary { padding-block: 14px; }
+      .metric-content { padding-bottom: 15px; }
+      .anchors li { padding-block: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#inicio" aria-label="Estudo de explicações de IA - início">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        <span class="brand-name">Explicações de IA<small>Caderno do experimento</small></span>
+      </a>
+      <nav aria-label="Seções do documento">
+        <a href="#fluxo">Fluxo</a>
+        <a href="#temas">Temas</a>
+        <a href="#validacao">Validação</a>
+        <a href="#julgamento">Julgamento</a>
+        <a href="#rubrica">Pontuação</a>
+        <a href="#tecnologia">Tecnologia</a>
+        <a href="#fontes">Fontes</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="hero container" id="inicio" aria-labelledby="titulo">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">Biomedicina + Nutrição / Estudo piloto</div>
+          <h1 id="titulo">Primeiro, correta.<br>Depois,<br><em>compreensível.</em></h1>
+          <p class="hero-copy">Um protocolo para comparar como diferentes modelos de IA explicam temas complexos da saúde, com conferência bibliográfica e julgamento de autoria anonimizada.</p>
+          <p class="hero-copy">Recorte acadêmico: cursos do Centro Universitário do Rio São Francisco, o UniRios.
+            Três painéis: ciência, pedagogia e tecnologia.</p>
+          <div class="hero-actions">
+            <a class="button" href="#fluxo">Entenda o fluxo <span aria-hidden="true">↓</span></a>
+            <a class="text-link" href="workflow.md">Abrir o passo a passo de coleta</a>
+          </div>
+        </div>
+        <aside class="protocol-card" aria-label="Lógica central do protocolo">
+          <div class="protocol-card-top"><span>Protocolo 2.1</span><span>Leitura em duas etapas</span></div>
+          <div class="protocol-card-body">
+            <span class="document-tag">ENTRADA / EXPLICAÇÃO SEM AUTORIA</span>
+            <div class="gate">
+              <span class="gate-number" aria-hidden="true">1</span>
+              <div><h3>O conteúdo está correto?</h3><p>Confrontar os conceitos, os exemplos e as relações causais com fontes efetivamente consultadas.</p></div>
+            </div>
+            <div class="gate-connector">Somente respostas APTO avançam</div>
+            <div class="gate">
+              <span class="gate-number" aria-hidden="true">2</span>
+              <div><h3>Como o texto ajuda a entender?</h3><p>Calcular cinco notas de 0 a 100 a partir de 10 subcritérios, com evidências retiradas da explicação.</p></div>
+            </div>
+          </div>
+          <div class="protocol-card-foot">Boa redação não compensa erro científico.</div>
+        </aside>
+      </div>
+      <div class="stats" aria-label="Dimensões do estudo">
+        <div class="stat"><b>02</b><span>cursos<br>da área da saúde</span></div>
+        <div class="stat"><b>04</b><span>temas<br>com recortes definidos</span></div>
+        <div class="stat"><b>10</b><span>subcritérios<br>pedagógicos observáveis</span></div>
+        <div class="stat"><b>80</b><span>execuções previstas<br>em cinco rodadas</span></div>
+      </div>
+    </section>
+
+    <section class="section container" id="fluxo" aria-labelledby="titulo-fluxo">
+      <div class="section-heading">
+        <div><div class="eyebrow">01 / Desenho do experimento</div><h2 id="titulo-fluxo">Do pedido<br>a três painéis de resultado.</h2></div>
+        <p class="section-intro">Comece com um piloto de dois modelos e B01, conferindo ambiguidades e estabilidade dos 10 itens com J1/J2 nas respostas APTO.
+          Depois de ajustar e congelar o protocolo, a proposta é coletar quatro modelos × quatro temas × cinco rodadas.
+          Cada geração e cada julgamento têm registros próprios.</p>
+      </div>
+      <ol class="steps">
+        <li class="step"><div class="step-number"><span>01 / PESQUISADOR</span><span aria-hidden="true">→</span></div><h3>Congelar o desenho</h3><p>Fixar modelos, versões, configurações, pedidos, fontes, ordem de execução e metas técnicas.
+          Testar os itens nos APTO do piloto, registrar divergências e arquivar o protocolo 2.1 congelado antes da coleta definitiva.</p></li>
+        <li class="step"><div class="step-number"><span>02 / GERADORES</span><span aria-hidden="true">→</span></div><h3>Gerar e preservar</h3><p>Consultar as fontes e explicar em uma sessão nova.
+          Salvar a primeira saída, o pacote enviado e os registros de tempo, consumo, custo e falhas.</p></li>
+        <li class="step"><div class="step-number"><span>03 / PESQUISADOR</span><span aria-hidden="true">→</span></div><h3>Preparar cópias anônimas</h3><p>Retirar somente autoria explícita, preservar estrutura e fontes e criar códigos diferentes para J1 e J2.
+          A chave fica em arquivo privado.</p></li>
+        <li class="step focus"><div class="step-number"><span>04 / JUIZ DE CONTEÚDO</span><span aria-hidden="true">→</span></div><h3>Conferir e pontuar</h3><p>Uma resposta por chamada: verificar ciência e calcular C1 a C3.
+          Somente APTO recebe os 10 subcritérios pedagógicos e as cinco médias de 0 a 100.</p></li>
+        <li class="step"><div class="step-number"><span>05 / SESSÕES SEPARADAS</span><span aria-hidden="true">→</span></div><h3>Repetir e apurar tecnologia</h3><p>J2 verifica estabilidade sem conhecer J1.
+          O analista técnico usa registros e originais, após bloquear as notas de conteúdo.
+          Pairwise é opcional.</p></li>
+        <li class="step"><div class="step-number"><span>06 / CONSOLIDAÇÃO</span><span aria-hidden="true">↺</span></div><h3>Unir sem compensar</h3><p>Conferir cálculos, faltantes, empates, divergências e elegibilidade.
+          Apresentar ciência, pedagogia e tecnologia separadas, sem somá-las em uma nota única.</p></li>
+      </ol>
+      <div class="note"><p><strong>80 execuções não são 80 temas.</strong> Cinco repetições examinam a variação de respostas aos mesmos quatro pedidos.
+        J1 e J2 avaliam os mesmos textos e não criam novas gerações.
+        Cinco rodadas é uma escolha exploratória, não garantia de poder estatístico.</p></div>
+      <div class="rules">
+        <div class="rule"><h4>Mesmo público e conteúdo</h4><p>Graduando de saúde com conhecimentos introdutórios.
+          Cada pedido exige seis pontos essenciais e um exemplo concreto.</p></div>
+        <div class="rule"><h4>Mesmo formato</h4><p>Até 600 palavras antes de <code>## Fontes consultadas</code>, Markdown sem imagens, título e <code>## Síntese</code> com três itens.</p></div>
+        <div class="rule"><h4>Mesmas fontes acessíveis</h4><p>Preferir trechos idênticos e identificados.
+          Sem material suficiente, salvar <code>PENDENTE DE FONTES</code>, sem inventar uma explicação conferida.</p></div>
+      </div>
+      <div class="hero-actions"><a class="button" href="workflow.md">Executar o workflow <span aria-hidden="true">↗</span></a><a class="text-link" href="referencias/protocolo-pontuacao.md">Consultar regras e fórmulas</a></div>
+    </section>
+
+    <section class="section container" id="temas" aria-labelledby="titulo-temas">
+      <div class="section-heading">
+        <div><div class="eyebrow">02 / Conteúdo avaliado</div><h2 id="titulo-temas">Quatro temas.<br>Um recorte por explicação.</h2></div>
+        <p class="section-intro">Os pedidos exigem relações entre conceitos, não apenas definições.
+          Cada tema tem seis pontos de cobertura, um cenário concreto e limites de escopo para tornar a comparação consistente.</p>
+      </div>
+      <div class="topic-grid">
+        <article class="topic">
+          <div class="topic-main">
+            <div class="topic-meta"><span class="topic-code">B01</span><span class="badge">Biomedicina</span></div>
+            <h3>Hemostasia e coagulação</h3>
+            <p class="topic-question">Como o corpo interrompe um sangramento sem deixar a formação de coágulos sair de controle?</p>
+            <p class="scenario"><strong>Cenário:</strong> uma pequena lesão em um vaso sanguíneo.</p>
+          </div>
+          <details>
+            <summary>Ver os 6 pontos de avaliação</summary>
+            <div class="topic-details">
+              <ol>
+                <li>Mudanças no vaso lesionado que iniciam a resposta hemostática.</li>
+                <li>Adesão, ativação e agregação das plaquetas na formação do tampão.</li>
+                <li>Ativação dos fatores de coagulação e formação de trombina e fibrina.</li>
+                <li>Estabilização pela fibrina e integração entre hemostasia primária e secundária.</li>
+                <li>Regulação da coagulação e remoção da fibrina pela fibrinólise.</li>
+                <li>Diferença entre hemostasia fisiológica e trombose.</li>
+              </ol>
+              <p class="scope"><strong>Fora do recorte:</strong> enumerar todos os fatores de coagulação ou exames laboratoriais.</p>
+              <div class="topic-links"><a href="prompts/pedidos/B01-hemostasia.md">Pedido completo ↗</a><a href="#fontes-b01">Bibliografia ↓</a></div>
+            </div>
+          </details>
+        </article>
+        <article class="topic">
+          <div class="topic-main">
+            <div class="topic-meta"><span class="topic-code">B02</span><span class="badge">Biomedicina</span></div>
+            <h3>Resposta imune e memória</h3>
+            <p class="topic-question">Como linfócitos B e T participam da resposta adaptativa e da memória imunológica?</p>
+            <p class="scenario"><strong>Cenário:</strong> vacinação hipotética seguida de contato com o agente correspondente.</p>
+          </div>
+          <details>
+            <summary>Ver os 6 pontos de avaliação</summary>
+            <div class="topic-details">
+              <ol>
+                <li>Antígeno, resposta inata e apresentação de antígenos na ativação adaptativa.</li>
+                <li>Papéis dos linfócitos B, plasmócitos e anticorpos.</li>
+                <li>Funções distintas dos linfócitos T auxiliares e citotóxicos.</li>
+                <li>Expansão clonal e formação de células de memória.</li>
+                <li>Resposta de memória em um novo contato com o mesmo antígeno.</li>
+                <li>Relação com a vacinação e limites das afirmações de proteção.</li>
+              </ol>
+              <p class="scope"><strong>Fora do recorte:</strong> vacinas comerciais específicas, todas as citocinas, subclasses de anticorpos e plataformas vacinais.</p>
+              <div class="topic-links"><a href="prompts/pedidos/B02-memoria-imunologica.md">Pedido completo ↗</a><a href="#fontes-b02">Bibliografia ↓</a></div>
+            </div>
+          </details>
+        </article>
+        <article class="topic">
+          <div class="topic-main">
+            <div class="topic-meta"><span class="topic-code">N01</span><span class="badge nutrition">Nutrição</span></div>
+            <h3>Energia entre refeição e jejum</h3>
+            <p class="topic-question">De onde vem a energia após uma refeição e durante um jejum noturno habitual?</p>
+            <p class="scenario"><strong>Cenário:</strong> adulto saudável, do período após o jantar até antes do café da manhã.</p>
+          </div>
+          <details>
+            <summary>Ver os 6 pontos de avaliação</summary>
+            <div class="topic-details">
+              <ol>
+                <li>Disponibilidade de nutrientes e sinalização relativa de insulina e glucagon.</li>
+                <li>Fígado, armazenamento de glicogênio e manutenção da glicose sanguínea.</li>
+                <li>Diferenças entre as funções do glicogênio muscular e hepático.</li>
+                <li>Armazenamento e mobilização de gordura no tecido adiposo.</li>
+                <li>Glicogenólise e gliconeogênese no fornecimento de glicose durante o jejum.</li>
+                <li>Integração gradual dos processos e necessidades diferentes dos tecidos.</li>
+              </ol>
+              <p class="scope"><strong>Fora do recorte:</strong> recomendações alimentares, todas as enzimas e adaptações ao jejum prolongado.</p>
+              <div class="topic-links"><a href="prompts/pedidos/N01-metabolismo-energetico.md">Pedido completo ↗</a><a href="#fontes-n01">Bibliografia ↓</a></div>
+            </div>
+          </details>
+        </article>
+        <article class="topic">
+          <div class="topic-main">
+            <div class="topic-meta"><span class="topic-code">N02</span><span class="badge nutrition">Nutrição</span></div>
+            <h3>Absorção e regulação do ferro</h3>
+            <p class="topic-question">Por que ingerir ferro não significa absorvê-lo ou disponibilizá-lo integralmente aos tecidos?</p>
+            <p class="scenario"><strong>Cenário:</strong> uma refeição e sua relação com absorção, transporte, armazenamento e regulação.</p>
+          </div>
+          <details>
+            <summary>Ver os 6 pontos de avaliação</summary>
+            <div class="topic-details">
+              <ol>
+                <li>Ferro heme e não heme e suas diferenças de biodisponibilidade.</li>
+                <li>Absorção pelo enterócito e exportação para o sangue pela ferroportina.</li>
+                <li>Funções distintas de transferrina e ferritina.</li>
+                <li>Ação da hepcidina sobre a ferroportina e a disponibilidade de ferro.</li>
+                <li>Vitamina C e fatores alimentares inibidores da absorção do ferro não heme.</li>
+                <li>Influência da inflamação e das reservas corporais na interpretação da disponibilidade.</li>
+              </ol>
+              <p class="scope"><strong>Fora do recorte:</strong> suplementos, doses, diagnóstico individual e enumeração de todos os transportadores e exames.</p>
+              <div class="topic-links"><a href="prompts/pedidos/N02-metabolismo-do-ferro.md">Pedido completo ↗</a><a href="#fontes-n02">Bibliografia ↓</a></div>
+            </div>
+          </details>
+        </article>
+      </div>
+      <p class="fine-print">A seleção se apoia nas disciplinas publicadas nos cursos e nos planos de <a href="https://www.unirios.edu.br/arquivos/files/cursos/biomedicina/2025/1_semestre/5p/hematologia_clinica.pdf">Hematologia Clínica (2025.1)</a> e <a href="https://www.unirios.edu.br/arquivos/files/cursos/nutricao/2024/2_semestre/2p/nutricao_e_metabolismo.pdf">Nutrição e Metabolismo (2024.2)</a>.
+        Isso fundamenta a pertinência curricular, não uma classificação dos quatro assuntos como os mais difíceis dos cursos.</p>
+    </section>
+
+    <section class="section container" id="validacao" aria-labelledby="titulo-validacao">
+      <div class="section-heading">
+        <div><div class="eyebrow">03 / Painel científico</div><h2 id="titulo-validacao">Notas com evidência.<br>Erros com consequência.</h2></div>
+        <p class="section-intro">C1, C2 e C3 descrevem aspectos científicos de 0 a 100.
+          São indicadores diagnósticos, não uma média que permita compensar falsidades.
+          Um erro localizado também exige correção.</p>
+      </div>
+      <div class="audit-intro">
+        <div><h3>O juiz verifica, não presume</h3><p>Conferir os seis pontos e todas as afirmações relevantes, inclusive exemplos, analogias e generalizações.
+          O gabarito orienta a busca; a fonte efetivamente consultada sustenta a decisão.</p><p>Uma afirmação desconhecida não é automaticamente falsa.
+          Registre a falta de evidência e mantenha a medida afetada N/A.</p></div>
+        <div class="audit-record"><div class="record-label">Trilha de evidência por item</div><div class="record-fields"><span>Identificador</span><span>Trecho ou ausência</span><span>Resultado</span><span>Fonte e localização</span><span>Justificativa</span></div><p>Registrar obra, edição disponível, seção ou página observada, data e extensão do acesso.
+          Preservar numeradores, denominadores, erros e pendências.</p></div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table"><caption>Três indicadores científicos, sem média geral</caption>
+          <thead><tr><th scope="col">Indicador</th><th scope="col">Cálculo 0-100</th><th scope="col">Regra de evidência</th></tr></thead>
+          <tbody>
+            <tr><td><strong>C1 / Cobertura</strong></td><td>Média de K1 a K6.</td><td>100: essencial correto e suficiente; 50: parte correta, mas relação essencial ausente; 0: ausência ou erro confirmado; N/A: não verificável.</td></tr>
+            <tr><td><strong>C2 / Sustentação factual</strong></td><td>100 × afirmações sustentadas ÷ afirmações inventariadas.</td><td>Inventário de proposições distintas, sem inflar por repetições.
+              Qualquer afirmação não verificável torna C2 N/A.</td></tr>
+            <tr><td><strong>C3 / Vínculos bibliográficos</strong></td><td>100 × vínculos válidos ÷ vínculos declarados.</td><td>A fonte deve existir e sustentar a associação.
+              Vínculo não verificável ou inexistência de vínculos declarados produz C3 N/A.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="fine-print">Um K de 50 ou 0 implica CORRIGIR.
+        Se algum K for N/A, C1 também é N/A, sem descartar o item.
+        Sem afirmações inventariadas, C2 é N/A.
+        Fonte inventada confirmada exige CORRIGIR; falta de citação isolada é uma questão formal, não prova de falsidade.</p>
+      <div class="status-grid" aria-label="Situações científicas">
+        <article class="status approved"><h3>APTO</h3><p>K1 a K6 = 100, afirmações verificadas e nenhum erro ou pendência científica/bibliográfica relevante.</p><span class="status-outcome">Avança para a pontuação pedagógica →</span></article>
+        <article class="status correction"><h3>CORRIGIR</h3><p>Erro confirmado, omissão essencial, recusa, saída vazia ou truncada efetivamente fornecida.
+          Indicadores científicos calculáveis continuam visíveis.</p><span class="status-outcome">Pedagogia N/A · fora do ranking</span></article>
+        <article class="status pending"><h3>PENDENTE</h3><p>Acesso insuficiente, evidência indisponível, conflito não resolvido ou mensagem PENDENTE DE FONTES, sem erro confirmado prioritário.</p><span class="status-outcome">Pedagogia N/A · aguarda evidência</span></article>
+      </div>
+      <div class="note"><p><strong>A nota não substitui o impedimento.</strong> Mesmo com C2 próximo de 100, um erro confirmado exige CORRIGIR.
+        A prioridade é CORRIGIR &gt; PENDENTE &gt; APTO.
+        Falha sem resposta é registrada como AUSENTE, não como um quarto julgamento científico.
+        APTO não garante infalibilidade.</p></div>
+    </section>
+
+    <section class="section blind-section" id="julgamento" aria-labelledby="titulo-julgamento">
+      <div class="container">
+        <div class="section-heading"><div><div class="eyebrow">04 / Julgamento anonimizado</div><h2 id="titulo-julgamento">Uma resposta por chamada.<br>A autoria fica de fora.</h2></div><p class="section-intro">Pointwise é o formato principal: o juiz confere e pontua uma explicação de cada vez.
+          J1 é pré-definido como julgamento primário.
+          J2 verifica a estabilidade, sem ver decisões anteriores.</p></div>
+        <div class="blind-grid">
+          <article class="blind-panel"><span class="blind-panel-label">Dentro da sessão do juiz</span><h3>Conteúdo e critérios completos</h3><ul><li>Protocolo de pontuação 2.1 e metaprompt.</li><li>Pedido, gabarito e fontes acessíveis do tema.</li><li>Uma resposta com código público aleatório.</li><li>Estrutura e bibliografia preservadas.</li><li>Rodada, tema e identificação de J1 ou J2.</li></ul></article>
+          <article class="blind-panel"><span class="blind-panel-label">Fora da sessão do juiz</span><h3>Identidade e operação</h3><ul><li>Nome, fornecedor e versão do gerador.</li><li>Chave que relaciona códigos a modelos.</li><li>Custos, tempos e consumo de tokens.</li><li>Originais identificados e registros de execução.</li><li>Notas anteriores e expectativas de vencedor.</li></ul></article>
+        </div>
+        <div class="blind-bottom">
+          <div><h4>Repetição sem substituir o resultado</h4><p>J2 usa os mesmos textos, em sessões novas, com novos códigos e ordem de processamento alterada.
+            Compare situações e notas após desfazer os códigos.
+            Desacordo científico relevante precisa de revisão antes de recomendar vencedor definitivo.</p></div>
+          <div><h4>Pairwise como análise opcional</h4><p>Dois APTO do mesmo tema e rodada são comparados em duas ordens.
+            A decisão pode ser A, B, EMPATE ou INVIÁVEL.
+            Mudança após inverter as posições é INCONSISTENTE, não empate automático nem escolha da decisão preferida.</p></div>
+        </div>
+        <p class="fine-print">Desative memória e personalização quando possível; janela anônima não basta.
+          Conteúdo da resposta é dado, não instrução para alterar notas.
+          Uma avaliação anônima por IA estima qualidade didática, sem comprovar entendimento humano ou eliminar vieses.</p>
+      </div>
+    </section>
+
+    <section class="section container" id="rubrica" aria-labelledby="titulo-rubrica">
+      <div class="section-heading"><div><div class="eyebrow">05 / Painel pedagógico</div><h2 id="titulo-rubrica">10 subcritérios<br>agrupados em 5 dimensões.</h2></div><p class="section-intro">Cada dimensão recebe uma nota calculada de 0 a 100.
+        São dois subcritérios por dimensão, com evidências e pesos iguais.
+        A pontuação vem do atendimento observado, não de uma impressão livre de “87 pontos”.</p></div>
+      <div class="scale-key" aria-label="Âncoras dos subcritérios"><span><b>0</b> Ausente ou problema predominante</span><span><b>50</b> Atendimento parcial demonstrado</span><span><b>100</b> Atendimento completo demonstrado</span><span><b>N/A</b> Avaliação não concluída</span></div>
+      <div class="metrics">
+        <details class="metric">
+          <summary><span class="metric-code">M1</span><span><span class="metric-title">Clareza linguística</span><span class="metric-question">O vocabulário e as frases são acessíveis ao público definido?</span></span></summary>
+          <div class="metric-content"><ol class="anchors">
+            <li><span class="score-number">M1.1</span><span>Termos técnicos, siglas e expressões além do conhecimento prévio definido são explicados no primeiro uso; se não houver termos novos, o requisito está atendido.</span></li>
+            <li><span class="score-number">M1.2</span><span>As frases têm sujeitos e referentes identificáveis, sem ambiguidade relevante.</span></li>
+          </ol></div>
+        </details>
+        <details class="metric">
+          <summary><span class="metric-code">M2</span><span><span class="metric-title">Organização e progressão</span><span class="metric-question">A sequência prepara o leitor para compreender a etapa seguinte?</span></span></summary>
+          <div class="metric-content"><ol class="anchors">
+            <li><span class="score-number">M2.1</span><span>A sequência apresenta os componentes antes das relações que dependem deles e permite acompanhar as etapas do mecanismo.</span></li>
+            <li><span class="score-number">M2.2</span><span>A síntese final integra as ideias e responde ao objetivo, sem introduzir pré-requisito novo.</span></li>
+          </ol></div>
+        </details>
+        <details class="metric">
+          <summary><span class="metric-code">M3</span><span><span class="metric-title">Foco e economia cognitiva</span><span class="metric-question">A apresentação mantém o essencial sem esforço desnecessário?</span></span></summary>
+          <div class="metric-content"><ol class="anchors">
+            <li><span class="score-number">M3.1</span><span>Cada trecho contribui para o recorte solicitado.</span></li>
+            <li><span class="score-number">M3.2</span><span>A explicação evita repetições sem função; síntese útil não é redundância inútil.</span></li>
+          </ol></div>
+        </details>
+        <details class="metric">
+          <summary><span class="metric-code">M4</span><span><span class="metric-title">Explicação causal</span><span class="metric-question">O texto explica as relações que produzem o resultado?</span></span></summary>
+          <div class="metric-content"><ol class="anchors">
+            <li><span class="score-number">M4.1</span><span>O texto explica por que as etapas se conectam e produzem o resultado, além de apenas listar acontecimentos.</span></li>
+            <li><span class="score-number">M4.2</span><span>Condições, regulação ou limites pertinentes ao pedido são conectados à conclusão.</span></li>
+          </ol></div>
+        </details>
+        <details class="metric">
+          <summary><span class="metric-code">M5</span><span><span class="metric-title">Concretização e aplicação</span><span class="metric-question">O exemplo conecta o mecanismo a uma situação concreta?</span></span></summary>
+          <div class="metric-content"><ol class="anchors">
+            <li><span class="score-number">M5.1</span><span>Há uma situação concreta identificável e pertinente ao pedido.</span></li>
+            <li><span class="score-number">M5.2</span><span>Os elementos e o resultado do exemplo são explicados por sua relação com os conceitos apresentados.</span></li>
+          </ol></div>
+        </details>
+      </div>
+      <p class="fine-print">Abra as dimensões para ver os requisitos.
+        Para 50, o juiz precisa mostrar tanto a parte atendida quanto a limitação.
+        Cada subcritério exige evidência ou descrição da ausência.
+        M2 observa ordem e síntese; M4, causalidade e condições; M5, concretização no exemplo.
+        M3 não mede carga cognitiva real; M5 não comprova transferência de aprendizagem.</p>
+      <div class="formula-panel"><div><h3>Cálculo transparente</h3><p class="formula">M = soma de seus 2 itens ÷ 2<br>P = (M1 + M2 + M3 + M4 + M5) ÷ 5</p><p>Exemplo aritmético: (100 + 50) ÷ 2 = 75.
+        Em uma explicação, cada M pode ser 0, 25, 50, 75 ou 100; P avança em passos de 5.
+        Médias entre explicações podem ter outros valores.
+        Qualquer subitem N/A impede a média correspondente e P.</p></div><div><h3>Mais dados, não precisão inventada</h3><p>Os dados adicionais são os subcritérios, as evidências e as repetições.
+        Mudar a escala sozinho não cria informação.
+        Nota 80 não significa 80% de chance de entendimento.
+        As categorias e médias são experimentais, não uma medida psicométrica validada.</p></div></div>
+      <div class="note"><p><strong>Somente APTO recebe pedagogia.</strong> Respostas CORRIGIR e PENDENTE mantêm todas as notas M e P como N/A.
+        Não se atribui nota a uma versão imaginada ou corrigida da resposta.
+        Limites de analogias e generalizações continuam sujeitos à conferência científica.</p></div>
+      <p class="fine-print">Dez itens é uma escolha operacional, não uma quantidade validada pela literatura.
+        O piloto compara J1/J2 item a item nos APTO, registra ambiguidades e solicita revisão docente; se não houver APTO, a parte pedagógica ainda precisa ser testada.
+        Resolva ambiguidades antes de congelar os descritores e registre quando a revisão docente não estiver disponível.
+        Esse procedimento não valida psicometricamente a rubrica.</p>
+    </section>
+
+    <section class="section container" id="tecnologia" aria-labelledby="titulo-tecnologia">
+      <div class="section-heading"><div><div class="eyebrow">06 / Painel tecnológico</div><h2 id="titulo-tecnologia">Medir o serviço.<br>Preservar os dados brutos.</h2></div><p class="section-intro">Tempo, consumo, cobrança e falhas vêm de registros, não da opinião do juiz.
+        A apuração é separada e acontece depois de bloquear os julgamentos de conteúdo.</p></div>
+      <div class="data-table-wrap">
+        <table class="data-table"><caption>Medidas tecnológicas e notas</caption><thead><tr><th scope="col">Código</th><th scope="col">Dado observado</th><th scope="col">Pontuação</th></tr></thead><tbody>
+          <tr><td><strong>T1 / Latência total</strong></td><td>Segundos do envio à conclusão normal, incluindo ferramentas e fontes.</td><td>0-100 por meta e limite pré-fixados; sem eles, N/A.</td></tr>
+          <tr><td><strong>T2 / Primeiro texto</strong></td><td>Segundos até o primeiro fragmento textual observado.</td><td>Mesma fórmula de metas; sem observação, N/A.</td></tr>
+          <tr><td><strong>T3 / Custo</strong></td><td>Reais gastos na geração, com tentativas e taxas distintas de ferramentas.</td><td>0-100 por meta e limite de custo; origem medida ou estimada identificada.</td></tr>
+          <tr><td><strong>T4 / Conclusão técnica</strong></td><td>Saída não vazia, término normal e ausência de erro técnico ou truncamento.</td><td>100 por conclusão normal; 0 por falha observada.
+            Agregado: 100 × concluídas ÷ iniciadas.</td></tr>
+          <tr><td><strong>T5 / Conformidade formal</strong></td><td>Título, limite de palavras, síntese, declaração de fontes e ausência de autoria/imagens.</td><td>Média de cinco verificações 0/100 no original.
+            PENDENTE DE FONTES tem checklist próprio e é reportado separadamente.</td></tr>
+        </tbody></table>
+      </div>
+      <div class="formula-panel"><div><h3>Normalização de T1 a T3</h3><p class="formula">100 × (limite − valor)<br>÷ (limite − alvo)</p><p>Valor até o alvo recebe 100; a partir do limite, 0.
+        Exigir 0 ≤ alvo &lt; limite.
+        Metas iguais para todos, justificadas e congeladas antes da coleta definitiva.</p></div><div><h3>Sem metas, sem nota inventada</h3><p>Metas ainda não escolhidas ficam N/A.
+        Publique segundos e reais disponíveis, sem derivar limites do melhor e do pior resultado.
+        Falha técnica deixa T1 a T3 normalizados N/A; seu gasto e tempo até erro continuam registrados.</p></div></div>
+      <div class="rules">
+        <div class="rule"><h4>Tokens não são nota de qualidade</h4><p>Preservar entrada, saída, raciocínio e cache como informados, evitando contar subconjuntos duas vezes.
+          Tokenizadores diferentes não medem a mesma quantidade de palavras.</p></div>
+        <div class="rule"><h4>Custo por explicação APTO</h4><p>Custo de todas as tentativas de geração do recorte ÷ respostas APTO em J1.
+          Inclui falhas, CORRIGIR e PENDENTE.
+          Zero APTO torna a medida indefinida; custo incompleto torna-a N/A.</p></div>
+        <div class="rule"><h4>Funcionamento não é verdade</h4><p>Uma recusa ou PENDENTE DE FONTES entregue normalmente pode ter T4 = 100.
+          Isso não aprova ciência nem libera notas pedagógicas.
+          Não existe média tecnológica geral que esconda essas diferenças.</p></div>
+      </div>
+      <p class="fine-print">TTFT só representa um token quando ele for efetivamente observado; fragmentos podem conter vários tokens.
+        No chat manual, tempos visuais são aproximados e dados de cobrança podem faltar.
+        Compare modelo + plataforma + configuração, pois rede, filas e ferramentas influenciam o resultado.
+        Separe gastos de geração e avaliação.</p>
+    </section>
+
+    <section class="section container" id="metodologia" aria-labelledby="titulo-metodologia">
+      <div class="section-heading">
+        <div><div class="eyebrow">07 / Fundamentação metodológica</div><h2 id="titulo-metodologia">De onde vêm os critérios?</h2></div>
+        <p class="section-intro">A rubrica combina princípios pedagógicos estabelecidos em uma operacionalização própria.
+          A combinação de subcritérios, pesos, normalizações e IA como juiz ainda não foi validada para este público.</p>
+      </div>
+      <div class="method-grid">
+        <article class="method"><div class="method-tag">Linguagem e organização</div><h3>Compreensibilidade do PEMAT</h3><p>Inspira a atenção a vocabulário, estrutura e apresentação compreensível.
+          O instrumento da AHRQ foi desenvolvido para educação de pacientes; este estudo não aplica sua escala original nem trata o PEMAT como verificação de exatidão científica.</p><a href="https://www.ahrq.gov/health-literacy/patient-education/pemat.html">AHRQ / Patient Education Materials Assessment Tool ↗</a></article>
+        <article class="method"><div class="method-tag">Foco e progressão</div><h3>Princípios de desenho instrucional</h3><p>Coerência, sinalização, segmentação e preparação de conceitos ajudam a definir o que observar na apresentação.
+          Parte da evidência discutida por Mayer é multimodal: a adaptação textual não transfere automaticamente seus efeitos experimentais.</p><a href="https://doi.org/10.1111/j.1365-2923.2010.03624.x">Mayer / Medical Education, 2010 ↗</a></article>
+        <article class="method"><div class="method-tag">Conhecimento e aplicação</div><h3>Princípios de aprendizagem</h3><p>Conhecimento prévio, organização de conceitos e apoio à aplicação orientam a progressão, as relações causais e o uso de exemplos.
+          Avaliar esses sinais no texto não demonstra aprendizagem ou transferência em estudantes reais.</p><a href="https://www.cmu.edu/teaching/principles/learning.html">Eberly Center / Carnegie Mellon University ↗</a></article>
+        <article class="method"><div class="method-tag">Controle do julgamento</div><h3>LLM-as-a-Judge e seus vieses</h3><p>A literatura discute efeitos de posição, extensão e preferência pelo próprio modelo.
+          Códigos anônimos, critérios fixos e novo julgamento com ordem alterada ajudam a examinar a sensibilidade do resultado, sem garantir validade humana.</p><a href="https://arxiv.org/abs/2306.05685">Zheng et al. / MT-Bench e Chatbot Arena, 2023 ↗</a></article>
+        <article class="method"><div class="method-tag">Múltiplas dimensões</div><h3>HELM e desempenho de inferência</h3><p>Ciência, qualidade didática e recursos são eixos distintos.
+          A normalização deste piloto usa metas locais, sem alegar certificação de benchmark.</p><a href="https://crfm.stanford.edu/2022/11/17/helm.html">HELM / Stanford ↗</a> · <a href="https://mlcommons.org/2025/09/small-llm-inference-5-1/">MLPerf / Inferência ↗</a></article>
+        <article class="method"><div class="method-tag">Regras e variabilidade</div><h3>IFEval e repetibilidade</h3><p>Requisitos formais verificáveis complementam a avaliação semântica.
+          Repetições de geração examinam variação do sistema; repetições de julgamento examinam o avaliador.</p><a href="https://arxiv.org/abs/2311.07911">IFEval / Zhou et al. ↗</a> · <a href="https://arxiv.org/abs/2410.03492">Reprodutibilidade / Blackwell et al. ↗</a></article>
+      </div>
+    </section>
+
+    <section class="section container" id="resultados" aria-labelledby="titulo-resultados">
+      <div class="section-heading"><div><div class="eyebrow">08 / Consolidação</div><h2 id="titulo-resultados">Comparar sem<br>apagar as falhas.</h2></div><p class="section-intro">O analista recebe a chave privada somente após bloquear os julgamentos.
+        Ele confere aritmética e une os registros; não volta a dar notas depois de saber quem escreveu.</p></div>
+      <div class="comparison-grid">
+        <div><h3>Regras de elegibilidade</h3><ol>
+          <li>Em cada tema e rodada, classificar apenas APTO com os 10 códigos esperados e subnotas completas da versão 2.1, sem duplicatas, pelo índice P, mantendo empates.</li>
+          <li>Média global da rodada somente com quatro APTO e quatro P completos por modelo, em lote completo.</li>
+          <li>Nas cinco rodadas, média pedagógica geral somente com 20 APTO e 20 P completos; não calcular um ranking só com as respostas sobreviventes.</li>
+          <li>Mostrar APTO, CORRIGIR, PENDENTE e AUSENTE sobre todas as execuções previstas.
+            Se ninguém for elegível, não há vencedor global recomendável.</li>
+          <li>Se J1/J2 divergirem sobre ciência e isso afetar a elegibilidade, manter resultado provisório até revisão.</li>
+        </ol></div>
+        <div><h3>Arquivos que sustentam o relatório</h3><dl class="measurement-list">
+          <div class="measurement"><dt>Originais e registros privados</dt><dd>Pacote enviado, primeira resposta, uso/cobrança, condições, falhas e chave de anonimização.</dd></div>
+          <div class="measurement"><dt>Julgamentos independentes</dt><dd>Fontes lidas, inventário científico, 10 subnotas por APTO, justificativas e resumos J1/J2, sem sobrescrever resultados.</dd></div>
+          <div class="measurement"><dt>Consolidado auditável</dt><dd>CSV científicos, pedagógicos e técnicos, estabilidade e relatório.
+            N/A permanece N/A; custo ausente não vira zero.</dd></div>
+        </dl><a class="text-link" href="workflow.md">Ver pastas, fichas e todos os metaprompts ↗</a></div>
+      </div>
+      <div class="limits"><h3>O que o estudo poderá concluir</h3><p>Qualidade científica no escopo conferido, qualidade didática estimada e desempenho operacional observado.
+        Sem estudantes avaliados, não há aprendizagem humana demonstrada.
+        Quatro temas e suas repetições não representam todo o currículo.
+        Esta página descreve um protocolo, sem dados reais ou ranking já executado.</p></div>
+      <p class="fine-print">Conserve resultados das versões 1.0 e 2.0 sem convertê-los ou misturá-los com a versão 2.1.
+        Os códigos M foram redefinidos; compare textos antigos somente após novo julgamento pela mesma rubrica.
+        Mantenha os resultados do piloto separados da coleta definitiva.
+        Ciência, pedagogia e tecnologia permanecem separadas.
+        A coleta definitiva requer revisão das fontes, decisões documentadas e critérios congelados.</p>
+    </section>
+
+    <section class="section container" id="fontes" aria-labelledby="titulo-fontes">
+      <div class="section-heading">
+        <div><div class="eyebrow">09 / Bibliografia e materiais</div><h2 id="titulo-fontes">As fontes fazem<br>parte do experimento.</h2></div>
+        <p class="section-intro">Geradores e juiz recebem a bibliografia do tema.
+          O ideal é conservar uma versão identificada dos mesmos trechos para todos, respeitando as condições de acesso e reprodução.</p>
+      </div>
+      <div class="source-list">
+        <article class="source-group" id="fontes-b01"><h3>B01 / Hemostasia e coagulação</h3>
+          <ul><li><a href="https://openstax.org/books/anatomy-and-physiology-2e/pages/18-5-hemostasis">OpenStax, Anatomy and Physiology 2e, seção 18.5: Hemostasis.</a></li>
+            <li><a href="https://www.msdmanuals.com/professional/hematology-and-oncology/hemostasis/overview-of-hemostasis">MSD Manual, versão profissional: Overview of Hemostasis.</a></li></ul>
+          <p class="supplement">Complementar: Hoffbrand e Moss, <em>Fundamentos em Hematologia</em>, 6ª ed., Artmed, 2013.</p>
+        </article>
+        <article class="source-group" id="fontes-b02"><h3>B02 / Resposta imune e memória</h3>
+          <ul><li><a href="https://www.ncbi.nlm.nih.gov/sites/books/NBK27158/">Janeway et al., Immunobiology, 5ª ed., 2001: Immunological memory.</a></li>
+            <li><a href="https://www.ncbi.nlm.nih.gov/sites/books/NBK21070/">Alberts et al., Molecular Biology of the Cell, 4ª ed., 2002: The Adaptive Immune System.</a></li></ul>
+          <p class="supplement">Complementar: Abbas, Lichtman e Pillai, <em>Imunologia Celular e Molecular</em>, 10ª ed., Guanabara Koogan, 2023.
+            As fontes-base antigas sustentam mecanismos fundamentais, não recomendações atuais de vacinas específicas.</p>
+        </article>
+        <article class="source-group" id="fontes-n01"><h3>N01 / Metabolismo energético</h3>
+          <ul><li><a href="https://openstax.org/books/anatomy-and-physiology-2e/pages/24-5-metabolic-states-of-the-body">OpenStax, Anatomy and Physiology 2e, seção 24.5: Metabolic States of the Body.</a></li>
+            <li><a href="https://www.ncbi.nlm.nih.gov/sites/books/NBK279127/">Endotext: Glucagon Physiology.</a></li>
+            <li><a href="https://www.ncbi.nlm.nih.gov/sites/books/NBK539802/">StatPearls: Biochemistry, Glycogen.</a></li></ul>
+          <p class="supplement">Complementar: <em>Princípios de Bioquímica de Lehninger</em>, 8ª ed., Artmed, 2022.</p>
+        </article>
+        <article class="source-group" id="fontes-n02"><h3>N02 / Absorção e regulação do ferro</h3>
+          <ul><li><a href="https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/">NIH Office of Dietary Supplements: Iron, Fact Sheet for Health Professionals.</a></li>
+            <li><a href="https://pubmed.ncbi.nlm.nih.gov/15514116/">Nemeth et al., Science, 2004: regulação da ferroportina pela hepcidina.</a></li></ul>
+          <p class="supplement">Complementar: Cozzolino, <em>Biodisponibilidade de nutrientes</em>, 7ª ed., Manole, 2024.
+            No artigo de Nemeth, o acesso ao resumo não deve ser registrado como leitura integral.</p>
+        </article>
+      </div>
+      <div class="note"><p><strong>Referência indicada não é fonte consultada.</strong> Os capítulos completos das obras complementares não foram consultados na preparação do kit.
+        Para usá-los como evidência, é necessário disponibilizar e ler os trechos pertinentes.
+        Falta de acesso ou conflito não resolvido mantém a verificação pendente.</p></div>
+      <div class="resources" aria-label="Arquivos do protocolo">
+        <a class="resource" href="workflow.md"><span>COMECE AQUI / MARKDOWN</span><strong>Workflow completo ↗</strong><small>Etapas, metaprompts e armazenamento.</small></a>
+        <a class="resource" href="referencias/protocolo-pontuacao.md"><span>REGRAS / MARKDOWN</span><strong>Pontuação 0-100 ↗</strong><small>Critérios, fórmulas e impedimentos.</small></a>
+        <a class="resource" href="prompts/apurar-tecnologia.md"><span>TECNOLOGIA / MARKDOWN</span><strong>Apuração técnica ↗</strong><small>Registros, valores brutos e T1 a T5.</small></a>
+        <a class="resource" href="prompts/consolidar-resultados.md"><span>RELATÓRIO / MARKDOWN</span><strong>Consolidação final ↗</strong><small>Três painéis e análise de estabilidade.</small></a>
+        <a class="resource" href="prompts/gerar-explicacao.md"><span>01 / MARKDOWN</span><strong>Metaprompt de geração ↗</strong><small>Instruções iguais para os modelos.</small></a>
+        <a class="resource" href="prompts/avaliar-explicacoes.md"><span>02 / MARKDOWN</span><strong>Metaprompt de avaliação ↗</strong><small>Checagem, notas e tabelas de saída.</small></a>
+        <a class="resource" href="referencias/gabaritos-conceituais.md"><span>03 / MARKDOWN</span><strong>Gabaritos conceituais ↗</strong><small>Guia de conferência do avaliador.</small></a>
+        <a class="resource" href="referencias/bibliografia-por-tema.md"><span>04 / MARKDOWN</span><strong>Bibliografia por tema ↗</strong><small>Fontes, escopo e condições de uso.</small></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>Protocolo 2.1 · Atualizado em 25 de setembro de 2026<br>Documento explicativo de um estudo piloto, sem resultados experimentais ou chancela institucional declarada.</p>
+      <a href="#inicio">Voltar ao início ↑</a>
+    </div>
+  </footer>
+</body>
+</html>
