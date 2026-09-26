@@ -3,23 +3,25 @@
 Os pedidos já instruem o agente a salvar em ~/Documents/coletas.
 Com acesso local, você não precisa copiar a explicação para um arquivo.
 
-## 1. Copie o pedido e informe o ID
+## 1. Copie o arquivo do tema e cole no agente
 
 Uma vez, preencha o [modelo de lote](coleta/lote.md) e salve em ~/Documents/coletas/lote.md.
 O piloto já prevê E001 e E002: uma resposta de cada sistema sobre B01.
+Esses são rótulos do planejamento; o arquivo coletado pode ter um ID automático, vinculado depois sem mudar o plano.
 Sistema significa agente + modelo + configuração; registre os nomes exibidos e controles disponíveis.
 
 | Curso | Pedido completo para copiar |
 | --- | --- |
-| Biomedicina | [B01 - Hemostasia e coagulação](pacotes/B01.md) |
-| Biomedicina | [B02 - Resposta imune e memória](pacotes/B02.md) |
-| Nutrição | [N01 - Metabolismo energético](pacotes/N01.md) |
-| Nutrição | [N02 - Regulação do ferro](pacotes/N02.md) |
+| Biomedicina | [B01 - Hemostasia e coagulação](prompts/gerar-explicacao-bio-01.md) |
+| Biomedicina | [B02 - Resposta imune e memória](prompts/gerar-explicacao-bio-02.md) |
+| Nutrição | [N01 - Metabolismo energético](prompts/gerar-explicacao-nut-01.md) |
+| Nutrição | [N02 - Regulação do ferro](prompts/gerar-explicacao-nut-02.md) |
 
-No pedido escolhido, preencha somente execucao_id: E001, E002 ou outro ID previsto no lote.
+Copie o arquivo inteiro: não há campos de tema, bibliografia ou pergunta para preencher.
+O agente cria o ID automaticamente; se quiser usar o rótulo planejado, acrescente “execucao_id: E001” à mensagem, sem editar o arquivo.
 Abra uma conversa nova, cole o pedido inteiro e cronometre do envio até a confirmação final, incluindo ferramentas e gravação.
 Envie somente o pedido e as fontes comuns; o gerador não deve acessar o lote, outras coletas ou materiais dos juízes.
-Use as mesmas instruções para todos, variando apenas o ID; registre configurações que não conseguir controlar.
+Use o mesmo arquivo para todos os sistemas do tema e registre configurações que não conseguir controlar.
 Os pedidos têm links, não capítulos completos: confirme o acesso no piloto.
 
 ## 2. Confira o arquivo salvo
@@ -31,12 +33,13 @@ Ele não poderá sobrescrever uma execução existente.
 ~/Documents/coletas/
   lote.md                 cadastro e execuções previstas
   entrada/
-    E001.md               cabeçalho privado + resposta original
-    E002.md               cabeçalho privado + resposta original
-  comprovantes/           prints ou logs, se houver; use E001 no nome
+    ID_DA_EXECUCAO.md      cabeçalho privado + resposta original
+  comprovantes/           prints ou logs, se houver; use o ID real no nome
 ```
 
 Abra o arquivo confirmado e complete no cabeçalho o término observado, a duração cronometrada e os dados disponíveis na ferramenta.
+Anote o nome retornado na coluna “Arquivo coletado” da linha planejada; preserve nome e ID originais.
+Se a identidade ou a rodada não estiverem claras, o organizador pedirá essa ligação antes de encaminhar aos juízes.
 O agente pode copiar medidas comprovadas por logs; números escritos por ele sem evidência continuam não verificados.
 Tokens e custo indisponíveis ficam N/A; não use mensalidade como custo por resposta.
 Não altere o corpo depois do marcador da resposta original, nem substitua a primeira tentativa.

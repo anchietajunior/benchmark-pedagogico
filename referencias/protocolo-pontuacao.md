@@ -38,7 +38,10 @@ Cada item sem evidência fica N/A com motivo; zero indica descumprimento observa
 
 O [workflow](../workflow.md) é o roteiro de coleta; [avaliacao.md](../avaliacao.md) explica o encaminhamento posterior.
 No fluxo atual, ~/Documents/coletas/lote.md é o manifesto e ~/Documents/coletas/entrada/E001.md reúne registro privado e resposta original após um marcador explícito.
-O nome do arquivo liga a execução ao sistema, tema e rodada do manifesto.
+Os pedidos completos por tema geram um ID automático se o pesquisador não fornecer um.
+A coluna “Arquivo coletado” do manifesto liga esse ID ao sistema, tema e rodada planejados; nomes antigos com ID planejado continuam aceitos.
+Preserve a correspondência e o original, sem atribuir rodada ou sistema pela ordem dos arquivos.
+O ID automático identifica armazenamento, não aleatorização experimental; vínculo ausente exige esclarecimento antes do julgamento.
 O agente pode salvar o registro com dados de logs efetivamente acessíveis; o pesquisador confirma término e medidas observadas externamente.
 Autodeclarações sem evidência não validam consumo, custo ou duração; mantenha os campos afetados N/A.
 O corpo didático não contém os dados operacionais do cabeçalho nem a confirmação de gravação no chat.

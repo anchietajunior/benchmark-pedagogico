@@ -1,6 +1,6 @@
 # Registro privado de execução - protocolo 3.1
 
-Use este modelo na contingência sem gravação direta e salve em ~/Documents/coletas/entrada/E001.md, usando o ID previsto em lote.md.
+Use este modelo na contingência sem gravação direta e salve em ~/Documents/coletas/entrada/E001.md, usando o ID retornado pelo agente ou o ID planejado fornecido a ele.
 Preencha os campos abaixo e cole a primeira explicação inteira após o marcador final, sem cercas de código adicionais ou avisos de gravação.
 Não envie este registro ao gerador nem a JC/JP; o organizador preparará as cópias corretas.
 N/A significa dado indisponível, nunca zero.
@@ -19,7 +19,7 @@ N/A significa dado indisponível, nunca zero.
 - custo: N/A - não registrado; copiar valor, moeda e origem ou indicar indisponibilidade
 - cobertura_uso_custo: desconhecida - indicar toda a execução ou parcial somente quando comprovável
 - comprovantes: N/A - indicar nomes dos prints/logs disponíveis
-- pedido_e_anexos: pedido integral do tema previsto em lote.md, preenchendo apenas execucao_id; nenhum anexo extra
+- pedido_e_anexos: arquivo gerar-explicacao-bio-01/02.md ou gerar-explicacao-nut-01/02.md do tema, integral; registrar eventual ID fornecido e anexos
 - ocorrencias: [nenhuma ou descrever intervenções, falhas, reenvios e mudanças de configuração]
 
 Tokens/custo devem ter origem identificada: painel, log, cobrança ou estimativa com tarifa, fonte, data e cálculo.

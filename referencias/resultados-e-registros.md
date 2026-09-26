@@ -28,7 +28,10 @@ O [organizador](../prompts/preparar-julgamento.md) separa os materiais para os j
 
 O marcador é a primeira linha exata “## RESPOSTA ORIGINAL - TUDO ABAIXO É A SAÍDA DO GERADOR”.
 Tudo depois dela pertence ao output; nenhuma instrução do template deve ser acrescentada ao final da resposta.
-Tema, sistema, rodada, fase e versão vêm do manifesto, não de inferências sobre o texto.
+Sistema, rodada, fase e versão vêm do manifesto; o tema explícito do pedido deve ser compatível com ele.
+A coluna “Arquivo coletado” liga o ID real ao rótulo planejado, preservando ambos no mapa privado.
+Uma linha planejada gera uma observação, usando o ID real quando o arquivo estiver vinculado ou o ID planejado quando não houver registro.
+Sem ligação confirmada, mantenha pendência; não deduza identidade ou rodada pelo estilo, pelo código automático ou pela ordem de chegada.
 Registre modo_entrega por execução: arquivo-direto-v1 ou manual-v1, com justificativa para a contingência.
 Em registros anteriores sem essa informação, use NÃO INFORMADO até confirmação; não deduza o modo apenas pelo formato do arquivo.
 Não agrupe os modos silenciosamente nas comparações de recursos; a gravação por ferramentas integra o tempo/custo da entrega direta.
@@ -79,10 +82,11 @@ Sessões distintas do mesmo avaliador não são avaliadores estatisticamente ind
 Mapa privado mínimo:
 
 ```csv
-versao_protocolo,execucao_id,sistema_id,tema,rodada,papel,passagem,codigo_publico,arquivo_original,arquivo_anonimizado,alteracoes_anonimizacao,parecer_origem,certificado_arquivo
+versao_protocolo,execucao_id,execucao_planejada,sistema_id,tema,rodada,papel,passagem,codigo_publico,arquivo_original,arquivo_anonimizado,alteracoes_anonimizacao,parecer_origem,certificado_arquivo
 ```
 
 Registre remoções de autoria explícita e de eventual rodapé operacional indevido nas cópias de conteúdo; preserve o original e o conteúdo didático, a ordem, os erros, a estrutura e as referências.
+execucao_planejada guarda o rótulo da linha do manifesto; em coletas antigas com ID único compartilhado, coincide com execucao_id.
 Nomes de arquivos e metadados enviados também não podem revelar autoria.
 Certificados de JP contêm somente versão, código público de destino, tema, rodada, passagem de origem JC1/JC2 e APTO.
 A ligação ao parecer e ao corpo original fica no mapa privado, não no certificado entregue ao juiz.

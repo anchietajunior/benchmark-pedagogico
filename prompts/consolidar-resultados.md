@@ -7,7 +7,10 @@ No formato registro-unico-v1, aceite lote.md como manifesto, entrada/E001.md com
 O diretório padrão dos dados é ~/Documents/coletas, separado do kit; aceite outro lote explicitamente informado.
 Registre modo_entrega por execução e não agrupe arquivo-direto-v1 e manual-v1 silenciosamente nas comparações de tempo/custo.
 Use também originais extraídos, registros, insumos arquivados, certificados e fila administrativa fornecidos pelo organizador.
-Ligue cada arquivo ao nome da execução na tabela do manifesto; se faltar correspondência, registre pendência sem inferir a identidade.
+Ligue cada arquivo pela coluna “Arquivo coletado” do manifesto ou pelo ID planejado explicitamente compatível.
+Para linha com arquivo vinculado, use seu execucao_id real; para linha sem registro, conserve o ID planejado e a ausência.
+Preserve o vínculo privado entre ID real e rótulo planejado, sem contar ambos como observações distintas.
+Sem correspondência confirmada, registre pendência sem inferir sistema, rodada ou fase.
 Aceite o formato anterior com planejamento.md e ficha.md + resposta.md por execução, conferindo execucao_id.
 Não duplique a mesma observação presente nos dois formatos e não interprete template não preenchido como execução.
 Arquivo ausente é registro ausente; não presuma que a execução falhou ou não começou.

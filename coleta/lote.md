@@ -11,7 +11,7 @@ As linhas abaixo são planejamento, não execuções já realizadas.
 - modo_entrega_planejado: arquivo-direto-v1; registrar contingência manual-v1 por execução
 - fase: PILOTO
 - data_planejamento: [preencher antes da primeira execução]
-- pedidos: pacotes/B01.md, integral, preenchendo apenas execucao_id; manter a versão usada durante o lote
+- pedidos: prompts/gerar-explicacao-bio-01.md, integral; manter a versão usada e arquivar eventual ID informado separadamente
 - fontes: endereços do pedido; se fornecer trechos, guardar o material comum e registrar em cada execução
 - timeout_e_reenvios: [registrar a regra do piloto; preservar falhas e todas as tentativas]
 - metas_E1_E2_E3: N/A - piloto sem metas de normalização; publicar medidas brutas disponíveis
@@ -31,10 +31,14 @@ As linhas abaixo são planejamento, não execuções já realizadas.
 
 ## Execuções previstas - nesta ordem
 
-| Execução e nome do arquivo | Sistema | Tema | Rodada |
-| --- | --- | --- | --- |
-| E001.md | S01 | B01 | R01 |
-| E002.md | S02 | B01 | R01 |
+| Execução planejada | Sistema | Tema | Rodada | Arquivo coletado |
+| --- | --- | --- | --- | --- |
+| E001 | S01 | B01 | R01 | NÃO VINCULADO |
+| E002 | S02 | B01 | R01 | NÃO VINCULADO |
+
+Depois de cada geração, anote o nome exato do arquivo na linha correspondente, sem renomear o original.
+O ID automático não substitui o planejamento nem cria outra observação; uma linha planejada recebe uma única primeira geração.
+Não associe arquivos apenas pela ordem em que apareceram; confirme sistema, tema e rodada.
 
 Arquivo ausente significa registro ausente, não falha automaticamente nem prova de que a execução não começou.
 Novas execuções precisam de novas linhas antes de serem iniciadas; não substitua uma resposta por outra.
