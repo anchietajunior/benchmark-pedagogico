@@ -1,59 +1,47 @@
-# Guia rápido: o que vamos coletar
+# Guia do estudo
 
-Vamos comparar explicações de temas da saúde produzidas por diferentes combinações de agente e modelo.
-Primeiro verificaremos se estão corretas; depois, se ajudam a entender o assunto.
-Tempo, custo e funcionamento serão avaliados separadamente.
+Vamos comparar sistemas de IA explicando quatro temas de saúde.
+Primeiro vem a correção científica; depois, a qualidade didática estimada.
 
-## O que fazer agora
+| Curso | Tema |
+| --- | --- |
+| Biomedicina | B01 - Hemostasia e coagulação. |
+| Biomedicina | B02 - Resposta imune e memória. |
+| Nutrição | N01 - Metabolismo energético após refeição e no jejum noturno. |
+| Nutrição | N02 - Absorção e regulação do ferro. |
 
-Siga o [workflow](workflow.md) e comece com um piloto: dois sistemas explicando B01 uma vez cada.
-“Sistema” significa a combinação fixa de agente, modelo e configuração.
-Em cada execução, salve dois arquivos:
+## O que você faz
 
-| Arquivo | Conteúdo | Quem preenche |
-| --- | --- | --- |
-| resposta.md | A primeira resposta inteira, com as fontes, sem corrigir o texto. | Você copia a saída do agente. |
-| ficha.md | Tema, sistema, rodada, tempo, tokens, custo e ocorrências. | Você copia os dados da ferramenta ou usa N/A. |
+Siga somente o [workflow](workflow.md) para começar.
+Copie o pedido e informe o ID; com acesso local, o agente salvará o registro em ~/Documents/coletas/entrada/.
+Confira a gravação e complete apenas os dados que dependem de observação externa.
+O registro reúne dados privados e resposta original; não é o arquivo enviado aos juízes de conteúdo.
+O metaprompt organizador prepara essa separação e uma fila de arquivos para enviar.
+Não é preciso instalar skills, construir tabelas, calcular notas ou criar códigos anônimos manualmente.
 
-Guarde prints ou logs quando a ferramenta mostrar consumo, custo ou erro.
-Não peça ao modelo para adivinhar quanto gastou ou quanto demorou.
-A ficha contém informações privadas e não vai para os juízes de ciência e pedagogia.
-
-## Os quatro assuntos
-
-Os pedidos completos já estão prontos para copiar e colar.
-
-| Curso | Código | Assunto e pedido pronto |
-| --- | --- | --- |
-| Biomedicina | B01 | [Hemostasia e coagulação](pacotes/B01.md) |
-| Biomedicina | B02 | [Resposta imune e memória](pacotes/B02.md) |
-| Nutrição | N01 | [Energia após refeição e no jejum noturno](pacotes/N01.md) |
-| Nutrição | N02 | [Absorção e regulação do ferro](pacotes/N02.md) |
-
-Cada pacote contém instruções, pedido e endereços bibliográficos autorizados.
-O agente precisa conseguir ler as fontes; sem acesso, a saída será PENDENTE DE FONTES.
-Use o mesmo material para todos os sistemas.
-
-## O que acontecerá com os arquivos
+## Quem dá as notas
 
 | Juiz | O que verifica | Resultado |
 | --- | --- | --- |
-| Científico, JC | Correção e sustentação bibliográfica. | C1-C3 e APTO, CORRIGIR ou PENDENTE. |
-| Pedagógico, JP | Clareza, organização, foco, causalidade e exemplos, somente após APTO. | Cinco dimensões e índice P, a partir de 10 itens. |
-| Tecnológico, JT | Conclusão da geração e cumprimento do formato. | T1 e T2. |
-| Tempo e custo, JE | Registros de duração, consumo e gasto. | Valores brutos e E1-E3, quando calculáveis. |
+| JC - Científico | Correção dos seis pontos e sustentação nas fontes lidas. | C1-C3 e APTO, CORRIGIR ou PENDENTE. |
+| JP - Pedagógico | Clareza, organização, foco, causalidade e exemplos, somente após APTO. | Cinco dimensões e índice P, a partir de 10 itens. |
+| JT - Tecnológico | Conclusão da geração e cumprimento do formato. | T1 e T2. |
+| JE - Tempo e custo | Duração, consumo e gasto documentados. | Valores brutos e E1-E3, quando calculáveis. |
 
-Cada papel trabalha separadamente.
-O [roteiro de avaliação](avaliacao.md) explica quais arquivos enviar e onde salvar as notas.
-Ao final, a consolidação reúne todos os itens em tabelas, preservando falhas e N/A.
-O ranking HTML é uma apresentação desses resultados, não um novo julgamento.
+Cada papel recebe apenas seus materiais e trabalha em sessão separada.
+Ciência e pedagogia têm duas passagens para verificar estabilidade, com códigos diferentes.
+O organizador não julga; o consolidador reúne os quatro painéis sem produzir uma nota geral.
+O [roteiro de avaliação](avaliacao.md) explica como seguir a fila e salvar os pareceres.
 
-## Três cuidados
+## Limites que permanecem
 
-- Sem alunos participantes, o resultado é qualidade didática estimada, não aprendizagem comprovada.
-- Se agente e modelo mudarem juntos, a comparação é entre as combinações, não entre LLMs isolados.
-- Dados ausentes ficam N/A; preço baixo ou boa escrita não compensam erro científico.
+- Sem alunos participantes, as notas não comprovam aprendizagem ou probabilidade de compreensão.
+- Agente e modelo diferentes comparam sistemas completos, não o efeito isolado do LLM.
+- Anonimização remove identificadores explícitos, mas não garante que o estilo seja irreconhecível.
+- Medidas desconhecidas ficam N/A; sem metas prévias de tempo/custo, publicam-se valores brutos, não notas E inventadas.
+- Boa escrita, rapidez e preço não compensam erro científico; desacordos exigem revisão especializada.
 
-A proposta completa continua sendo quatro sistemas × quatro temas × cinco rodadas.
-Não é preciso executar as 80 gerações para testar o procedimento.
-Os detalhes científicos e estatísticos ficam no [protocolo](referencias/protocolo-pontuacao.md).
+Comece com o piloto de dois sistemas sobre B01.
+A proposta definitiva continua sendo quatro sistemas × quatro temas × cinco rodadas, separada do piloto.
+Antes dela, use o [planejamento completo](modelos/planejamento.md) para fixar condições, fontes, ordem, metas e revisão humana.
+Critérios e fórmulas estão no [protocolo](referencias/protocolo-pontuacao.md).

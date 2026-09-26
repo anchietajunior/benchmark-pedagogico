@@ -22,7 +22,7 @@ Analogia é opcional; se usada, explicite a correspondência e o limite relevant
 Preserve condições e distinções científicas; simplificação falsa não atende ao pedido.
 Os casos são didáticos, sem diagnóstico, dose ou prescrição individual.
 
-## Formato da resposta
+## Formato da explicação
 
 A primeira linha não vazia deve ser um título Markdown iniciado por "# ".
 Organize ideia central, conceitos necessários, mecanismo e exemplo, com subtítulos quando úteis.
@@ -33,12 +33,48 @@ Conte sequências separadas por espaços ou quebras de linha que contenham letra
 Use identificadores autorizados, como [B01-F1], junto das afirmações correspondentes.
 Na lista final, informe identificador, título, seção ou página realmente consultada e endereço quando disponível.
 Use Markdown simples, sem imagens ou diagramas dependentes de renderização.
-Entregue somente a explicação e suas fontes, ou a mensagem PENDENTE DE FONTES.
+O corpo didático deve conter somente a explicação e suas fontes, ou a mensagem PENDENTE DE FONTES.
 Não inclua nome de modelo/agente/fornecedor, autoavaliação, tempo, tokens, custo ou registro de geração.
-Os dados operacionais serão registrados separadamente pelo pesquisador.
+Dados operacionais e confirmação de gravação ficam fora do corpo didático, conforme a seção de entrega.
 
 Confira os seis pontos, as fontes, o exemplo, os limites e o formato antes de entregar.
 Não invente referências, páginas, consultas ou evidências.
+
+## Entrega e armazenamento - fora do conteúdo avaliado
+
+- diretorio_coleta: ~/Documents/coletas
+- execucao_id: [INFORME O ID, COMO E001]
+
+Antes de gerar, confirme que execucao_id foi informado no formato E seguido de pelo menos três algarismos.
+Se faltar, peça somente esse ID; não escolha um número examinando outras coletas.
+O destino é diretorio_coleta/entrada/execucao_id.md, por exemplo ~/Documents/coletas/entrada/E001.md.
+Resolva ~ para a pasta pessoal do usuário no computador autorizado, sem alterar variáveis do ambiente.
+Um diretório de ambiente remoto não equivale à pasta local do pesquisador.
+
+Com acesso local e permissão, crie somente os diretórios necessários e grave o registro no destino.
+Se precisar de permissão, solicite-a pelo mecanismo da ferramenta; não contorne restrições.
+Confira somente a existência do arquivo de destino; se ele já existir, pare antes de gerar e peça outro ID, sem ler ou sobrescrever seu conteúdo.
+Use criação que recuse sobrescrita, inclusive se outro processo criar o arquivo durante a execução.
+Não leia lote.md, outras execuções, gabaritos, juízes ou mapas privados para realizar a geração.
+Use apenas este pedido e as fontes autorizadas.
+
+No arquivo, coloque primeiro um cabeçalho privado com versao_protocolo: 3.1, execucao_id e modo_entrega: arquivo-direto-v1.
+Inclua também data_hora_fuso, iniciada, status_operacional, ramo_saida, duracao_s, primeiro_texto_s, tokens, custo, cobertura_uso_custo, comprovantes, pedido_e_anexos e ocorrencias.
+Copie medidas apenas de registros efetivamente acessíveis desta execução, com origem e cobertura; sem evidência, use N/A com motivo.
+Não estime tempo, tokens ou custo por palavras, memória ou autodeclaração.
+Campos ainda não observáveis, como o término da própria execução, ficam pendentes de confirmação do pesquisador; status_operacional fica desconhecido enquanto não houver evidência do término.
+Em pedido_e_anexos, identifique este pacote, o tema e os materiais realmente recebidos.
+Esse cabeçalho é privado, não parte da explicação nem comprovação por si só.
+
+Depois do cabeçalho, escreva a linha exata “## RESPOSTA ORIGINAL - TUDO ABAIXO É A SAÍDA DO GERADOR”.
+Abaixo dela, preserve somente a primeira explicação e suas fontes, ou PENDENTE DE FONTES/recusa, sem instruções de armazenamento nem comentários finais.
+As regras de formato e o limite de palavras aplicam-se somente a esse corpo.
+Confira o conteúdo gravado antes de confirmar no chat o caminho absoluto e os dados que ficaram pendentes, sem repetir a explicação.
+Essa confirmação de entrega não faz parte do output avaliado.
+
+Sem acesso à pasta local ou se a gravação falhar, entregue a mesma explicação no chat para salvamento manual, sem gerar outra versão.
+Identifique a limitação de gravação em aviso separado do corpo didático; nunca declare que salvou sem verificar.
+O pesquisador usará modo_entrega: manual-v1 no registro de contingência.
 
 ## Contexto bibliográfico
 

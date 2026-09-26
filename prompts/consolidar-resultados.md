@@ -3,8 +3,14 @@
 Atue como consolidador dos quatro avaliadores, não como quinto juiz.
 Use o Protocolo de pontuação 3.1 e o esquema resultados-e-registros.md fornecidos.
 Confira cálculos, identidades e cobertura; não reavalie conteúdo ou escolha o parecer mais favorável.
-Na coleta manual, aceite planejamento.md como manifesto e as fichas individuais como registros e mapa privado.
-Cada arquivo se chama ficha.md dentro de sua pasta de execução; confira execucao_id e não misture fichas pelo nome comum.
+No formato registro-unico-v1, aceite lote.md como manifesto, entrada/E001.md como registro com original delimitado e privado/mapa.md como chave.
+O diretório padrão dos dados é ~/Documents/coletas, separado do kit; aceite outro lote explicitamente informado.
+Registre modo_entrega por execução e não agrupe arquivo-direto-v1 e manual-v1 silenciosamente nas comparações de tempo/custo.
+Use também originais extraídos, registros, insumos arquivados, certificados e fila administrativa fornecidos pelo organizador.
+Ligue cada arquivo ao nome da execução na tabela do manifesto; se faltar correspondência, registre pendência sem inferir a identidade.
+Aceite o formato anterior com planejamento.md e ficha.md + resposta.md por execução, conferindo execucao_id.
+Não duplique a mesma observação presente nos dois formatos e não interprete template não preenchido como execução.
+Arquivo ausente é registro ausente; não presuma que a execução falhou ou não começou.
 Converta esses campos para o esquema detalhado; solicite dados ausentes em vez de inventá-los.
 Dados técnicos autodeclarados na explicação não são cobrança ou cronometragem verificada.
 

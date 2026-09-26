@@ -1,126 +1,63 @@
-# Coleta manual: copiar, gerar e salvar
+# Coleta em três etapas
 
-Seu objetivo nesta etapa é guardar a explicação e os dados da execução.
-As notas serão atribuídas depois.
-Comece com dois sistemas e o assunto B01, em um piloto separado.
+Os pedidos já instruem o agente a salvar em ~/Documents/coletas.
+Com acesso local, você não precisa copiar a explicação para um arquivo.
 
-## 1. Prepare uma vez
+## 1. Copie o pedido e informe o ID
 
-Copie o [modelo de planejamento](modelos/planejamento.md) para coleta/piloto/planejamento.md.
-Preencha quais agentes/modelos serão usados e a ordem das execuções.
-Se ainda não escolheu metas de tempo e custo, deixe N/A.
+Uma vez, preencha o [modelo de lote](coleta/lote.md) e salve em ~/Documents/coletas/lote.md.
+O piloto já prevê E001 e E002: uma resposta de cada sistema sobre B01.
+Sistema significa agente + modelo + configuração; registre os nomes exibidos e controles disponíveis.
 
-Crie uma pasta para cada execução:
+| Curso | Pedido completo para copiar |
+| --- | --- |
+| Biomedicina | [B01 - Hemostasia e coagulação](pacotes/B01.md) |
+| Biomedicina | [B02 - Resposta imune e memória](pacotes/B02.md) |
+| Nutrição | [N01 - Metabolismo energético](pacotes/N01.md) |
+| Nutrição | [N02 - Regulação do ferro](pacotes/N02.md) |
+
+No pedido escolhido, preencha somente execucao_id: E001, E002 ou outro ID previsto no lote.
+Abra uma conversa nova, cole o pedido inteiro e cronometre do envio até a confirmação final, incluindo ferramentas e gravação.
+Envie somente o pedido e as fontes comuns; o gerador não deve acessar o lote, outras coletas ou materiais dos juízes.
+Use as mesmas instruções para todos, variando apenas o ID; registre configurações que não conseguir controlar.
+Os pedidos têm links, não capítulos completos: confirme o acesso no piloto.
+
+## 2. Confira o arquivo salvo
+
+O agente deverá criar a pasta se necessário, salvar o registro e confirmar o caminho.
+Ele não poderá sobrescrever uma execução existente.
 
 ```text
-coleta/piloto/
-  planejamento.md
-  pedidos/
-    B01.md
-  E001/
-    resposta.md
-    ficha.md
-    comprovantes/    (somente se houver prints ou logs)
-  E002/
-    resposta.md
-    ficha.md
+~/Documents/coletas/
+  lote.md                 cadastro e execuções previstas
+  entrada/
+    E001.md               cabeçalho privado + resposta original
+    E002.md               cabeçalho privado + resposta original
+  comprovantes/           prints ou logs, se houver; use E001 no nome
 ```
 
-E001 e E002 são IDs de execuções, não nomes de modelos.
-Na coleta definitiva, use coleta/definitiva/ e mantenha o piloto separado.
-Não sobrescreva arquivos de execuções anteriores.
+Abra o arquivo confirmado e complete no cabeçalho o término observado, a duração cronometrada e os dados disponíveis na ferramenta.
+O agente pode copiar medidas comprovadas por logs; números escritos por ele sem evidência continuam não verificados.
+Tokens e custo indisponíveis ficam N/A; não use mensalidade como custo por resposta.
+Não altere o corpo depois do marcador da resposta original, nem substitua a primeira tentativa.
+Salve também recusas, PENDENTE DE FONTES e saídas truncadas; documente falhas sem saída.
+Guarde prints/logs em comprovantes/, sem credenciais, e indique o arquivo no cabeçalho.
 
-## 2. Copie o pedido pronto
+Se o agente não tiver acesso local ou a gravação falhar, use o [registro manual](modelos/ficha-coleta.md) e salve a mesma saída no destino.
+Registre o modo manual de contingência; não o misture silenciosamente com a entrega direta nas comparações de tempo/custo.
 
-Escolha um arquivo e copie todo o conteúdo:
+## 3. Peça à IA para preparar a avaliação
 
-| Código | Pedido pronto |
-| --- | --- |
-| B01 | [Hemostasia e coagulação](pacotes/B01.md) |
-| B02 | [Resposta imune e memória](pacotes/B02.md) |
-| N01 | [Metabolismo energético](pacotes/N01.md) |
-| N02 | [Regulação do ferro](pacotes/N02.md) |
+Em uma sessão de organização, copie o [metaprompt Preparar julgamento](prompts/preparar-julgamento.md).
+Ele já aponta para ~/Documents/coletas; dê ao organizador acesso a essa pasta e ao kit deste projeto.
+Em chat sem acesso local, anexe o kit e a coleta, em ZIP se suportado, sem .git/ e sem credenciais.
+Essa sessão conhece identidades e não pode atuar como juiz.
 
-Salve uma cópia exata em pedidos/B01.md, por exemplo.
-Use essa mesma cópia para todos os sistemas que responderão ao tema.
-Os pacotes incluem links para fontes, não os capítulos completos.
-Confirme no piloto que os agentes conseguem abri-los.
-Se precisar anexar trechos, identifique as fontes, salve-os em pedidos/ e forneça os mesmos trechos a todos.
-Anote na ficha qualquer material adicional enviado.
+O organizador preparará os pacotes em ~/Documents/coletas/juizes/enviar/ e a fila em ~/Documents/coletas/privado/FILA.md.
+A fila dirá qual arquivo enviar a cada juiz e onde salvar o parecer.
+Sem ferramentas de arquivos, o organizador entregará os conteúdos para você salvar, sem alegar que criou a pasta.
 
-## 3. Abra uma conversa nova e envie
-
-Abra uma sessão nova no agente/modelo escolhido.
-Se estiver usando um agente com acesso a arquivos, dê acesso somente ao pedido e às fontes desse tema.
-Não abra a pasta inteira do projeto: ela contém gabaritos e resultados de avaliação.
-Desative memória e personalização quando possível; registre o que não puder controlar.
-
-Copie o [modelo de ficha](modelos/ficha-coleta.md) para E001/ficha.md.
-Preencha identificação e sistema antes de enviar.
-Cole o pedido completo no chat.
-
-Inicie o cronômetro ao enviar.
-Pare quando a resposta terminar por completo, incluindo fontes e ferramentas.
-Anote a duração em segundos na ficha.
-Se conseguir medir o primeiro texto visível, registre esse tempo também; caso contrário, N/A.
-
-## 4. Salve a primeira resposta
-
-Copie a resposta inteira para E001/resposta.md, preferindo a opção de copiar Markdown da ferramenta.
-Inclua título, explicação, síntese e fontes exatamente como recebidos.
-Não melhore, corte ou corrija o texto.
-Não inclua barras da interface ou outras mensagens da conversa.
-Não peça uma segunda versão para substituir a primeira.
-
-Se a saída for PENDENTE DE FONTES, recusa ou texto truncado, salve assim mesmo.
-Se não houve saída, registre a falha na ficha e não crie uma explicação vazia.
-Se a ferramenta realmente devolveu um texto vazio, preserve essa ocorrência e identifique-a na ficha.
-
-## 5. Preencha os dados observados
-
-Use a ficha pronta; você não precisa calcular notas nem converter moedas agora.
-
-| Dado | De onde copiar | Se não estiver disponível |
-| --- | --- | --- |
-| Tempo total | Cronômetro ou registro da ferramenta. | N/A e motivo. |
-| Primeiro texto | Observação cronometrada, se feita. | N/A. |
-| Tokens de entrada e saída | Painel de uso ou log referente à execução. | N/A; não estimar por palavras. |
-| Custo e moeda | Cobrança ou painel da execução, com origem registrada. | N/A; não usar a assinatura mensal. |
-| Conclusão ou falha | O que você observou na ferramenta. | Desconhecido, com motivo. |
-
-Salve o comprovante disponível em E001/comprovantes/ e indique o arquivo na ficha.
-Um número escrito pelo próprio modelo não é comprovante de consumo ou cobrança.
-Se só houver valores parciais, anote que são parciais.
-O custo completo inclui chamadas internas, ferramentas e reenvios; não some novamente parcelas já incluídas no total.
-Campos de cache e raciocínio devem ser copiados como aparecem, sem soma automática.
-Se houver apenas tokens totais, guarde esse valor nos dados extras da ficha e deixe entrada/saída N/A.
-Uma estimativa por tarifa exige tabela, data e cálculo; pode ser feita depois por JE.
-Sem esses dados, o custo continua N/A.
-
-## 6. Confira e repita
-
-Antes de encerrar a execução, confira:
-
-- [ ] O pedido enviado está salvo.
-- [ ] A resposta está preservada, ou a ausência está documentada.
-- [ ] A ficha identifica tema, rodada, sistema, data e situação.
-- [ ] Cada medida tem origem ou N/A com motivo.
-- [ ] Prints/logs disponíveis estão vinculados à ficha.
-
-Repita com o segundo sistema em E002, usando a mesma rodada e o mesmo pedido.
-Mude apenas a execução e o sistema na ficha.
-Intervenções e tentativas extras devem ser registradas, nunca apagadas.
-Uma nova geração é uma nova execução/rodada conforme o planejamento; reenvios de transporte ficam registrados na execução original.
-
-**A coleta desta execução terminou aqui.**
-Você não precisa calcular C, M, T ou E, anonimizar tudo ou gerar o ranking neste momento.
-
-## Depois: encaminhe para avaliação
-
-Quando as respostas estiverem salvas, siga [avaliacao.md](avaliacao.md).
-Você preparará cópias sem autoria para ciência/pedagogia e enviará os registros operacionais somente aos outros papéis.
-Os juízes devolverão pareceres; a consolidação montará as tabelas.
-
-Antes da coleta definitiva, teste também os juízes no piloto, resolva as ambiguidades e congele o planejamento.
-Se o piloto não produzir APTO, a parte pedagógica ainda precisa ser testada.
-Não altere fontes, prompts ou configurações no meio da coleta sem identificar uma nova condição.
+A coleta termina aqui; para as notas, siga a fila e o [roteiro de avaliação](avaliacao.md).
+Ciência e tecnologia podem começar; pedagogia aguarda APTO científico e tempo/custo aguarda a situação operacional conferida.
+Teste também os juízes no piloto; sem APTO científico, a etapa pedagógica continua não testada.
+Antes da coleta definitiva, use um lote separado e congele pedidos, fontes, configuração e modo de entrega.

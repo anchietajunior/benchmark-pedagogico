@@ -1,7 +1,7 @@
 # Avaliação das explicações - encaminhamento
 
 Este arquivo não é um metaprompt para executar quatro papéis na mesma sessão.
-Use o [roteiro de avaliação manual](../avaliacao.md) com o protocolo 3.1.
+Use [Preparar julgamento](preparar-julgamento.md) para montar os pacotes e depois siga a fila descrita no [roteiro de avaliação](../avaliacao.md).
 
 | Papel | Metaprompt |
 | --- | --- |
@@ -13,4 +13,4 @@ Use o [roteiro de avaliação manual](../avaliacao.md) com o protocolo 3.1.
 
 O atalho anterior de sessão única foi retirado porque expunha notas científicas e dados operacionais ao papel pedagógico.
 Se houver avaliações antigas nesse formato, preserve-as com seu procedimento original; não as apresente como sessões separadas.
-O original e a ficha são coletados primeiro; anonimização e julgamentos vêm depois.
+O registro privado único reúne dados e original durante a coleta; o organizador prepara as cópias separadas antes dos julgamentos.

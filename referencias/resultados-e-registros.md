@@ -9,18 +9,42 @@ Preserve valores sem arredondamento nos registros; use duas casas decimais somen
 
 ## Coleta simples sem CSV
 
-Para começar manualmente, use [planejamento](../modelos/planejamento.md) uma vez e [ficha de coleta](../modelos/ficha-coleta.md) em cada execução.
+Preencha o [modelo de lote](../coleta/lote.md) e salve em ~/Documents/coletas/lote.md.
+Os pacotes de geração instruem a gravação direta; o [registro manual](../modelos/ficha-coleta.md) é a contingência sem acesso local.
 Não é necessário preencher as tabelas CSV deste documento durante a geração.
-Planejamento e fichas ficam privados; o consolidador os converte para os campos detalhados depois.
+O formato registro-unico-v1 junta registro e output em um arquivo privado, sem pedir dados de consumo ao modelo gerador.
+O [organizador](../prompts/preparar-julgamento.md) separa os materiais para os juízes; o consolidador os converte para os campos detalhados depois.
 
 | No fluxo manual | Equivalente no esquema detalhado |
 | --- | --- |
-| planejamento.md | Manifesto, sistemas, avaliadores e metas, com datas e configurações. |
-| E001/resposta.md | Original da execução E001. |
-| E001/ficha.md | Registro operacional, uso/custo e, ao avaliar, mapa privado dos códigos de cada passagem. |
-| E001/comprovantes/ | Prints, logs, cobrança e registros brutos efetivamente disponíveis. |
-| E001/avaliacoes/ | Cópias públicas, certificados, pareceres e bloqueios, ligados pela ficha. |
-| consolidado/ | Tabelas e relatório produzidos somente após o julgamento. |
+| ~/Documents/coletas/lote.md | Manifesto, sistemas, avaliadores, execuções previstas e metas. |
+| ~/Documents/coletas/entrada/E001.md, antes do marcador | Registro operacional e uso/custo da execução ligada à linha E001.md do manifesto. |
+| ~/Documents/coletas/entrada/E001.md, depois do marcador | Resposta original, preservada literalmente. |
+| ~/Documents/coletas/comprovantes/ | Prints, logs, cobrança e registros brutos efetivamente disponíveis. |
+| ~/Documents/coletas/privado/ | Originais extraídos, insumos arquivados, registros, mapa de códigos, fila e consolidação de entrada. |
+| ~/Documents/coletas/juizes/enviar/ | Um pacote completo por chamada, sem dados proibidos para seu destinatário. |
+| ~/Documents/coletas/juizes/pareceres/ | Pareceres integrais por papel e código; bloqueios ficam em registro administrativo privado. |
+| ~/Documents/coletas/consolidado/ | Tabelas e relatório produzidos somente após o julgamento. |
+
+O marcador é a primeira linha exata “## RESPOSTA ORIGINAL - TUDO ABAIXO É A SAÍDA DO GERADOR”.
+Tudo depois dela pertence ao output; nenhuma instrução do template deve ser acrescentada ao final da resposta.
+Tema, sistema, rodada, fase e versão vêm do manifesto, não de inferências sobre o texto.
+Registre modo_entrega por execução: arquivo-direto-v1 ou manual-v1, com justificativa para a contingência.
+Em registros anteriores sem essa informação, use NÃO INFORMADO até confirmação; não deduza o modo apenas pelo formato do arquivo.
+Não agrupe os modos silenciosamente nas comparações de recursos; a gravação por ferramentas integra o tempo/custo da entrega direta.
+Cabeçalho redigido pelo gerador exige evidência independente para suas medidas; o término pode depender de confirmação posterior do pesquisador.
+duracao_s representa latência total somente em conclusão normal e tempo até falha nos casos de erro/interrupção.
+Em situação desconhecida, preserve a duração bruta sem classificá-la por suposição.
+Campos de tokens sem detalhamento não permitem reconstruir entrada/saída.
+Sem arquivo, registre ausência de registro.
+Para afirmar que uma execução não foi iniciada, exija evidência explícita; a ausência do arquivo não basta.
+
+Os formatos anteriores com planejamento.md e E001/resposta.md + ficha.md permanecem aceitos.
+Neles, planejamento.md equivale ao manifesto, ficha.md contém os registros e eventual mapa, e resposta.md é o original.
+Não duplique observações quando os dois formatos representarem a mesma execução.
+A pasta padrão ~/Documents/coletas fica fora deste repositório e não é incluída em seus commits.
+A exclusão Git de coleta/ permanece apenas para compatibilidade com o destino anterior.
+Armazenamento externo não substitui controle de acesso nem backup privado do estudo.
 
 Dados não fornecidos ficam N/A; formato simples não transforma uma medida ausente em zero.
 O consolidador deve pedir esclarecimento quando não conseguir mapear um campo, sem adivinhá-lo.
@@ -32,7 +56,7 @@ Uma execução tem um execucao_id único, um sistema_id, tema, rodada, fase e ve
 sistema_id identifica uma configuração fixa, não apenas o nome comercial do modelo.
 Alterações de agente, modelo, provedor, fontes ou parâmetros relevantes não podem ser agrupadas silenciosamente na mesma condição.
 Códigos públicos de JC1, JC2, JP1 e JP2 são diferentes e não contêm sistema_id.
-Somente depois do bloqueio dos pareceres o consolidador os liga à execução e ao sistema.
+O organizador mantém a ligação privada para encaminhar chamadas; somente depois do bloqueio dos pareceres o consolidador reúne notas por execução e sistema.
 Não envie registros privados, pastas de outros concorrentes ou resultados aos geradores ou juízes de conteúdo.
 
 Guarde em 01-privado/sistemas.csv, ou em registros vinculados por sistema_id:
@@ -97,7 +121,7 @@ Essa chave é única dentro de versão e fase.
 A/V usam IDs locais únicos por inventário e passagem; o mesmo número em JC1 e JC2 não garante a mesma afirmação.
 
 ```csv
-versao_protocolo,fase,execucao_id,sistema_id,tema,rodada,codigo_publico,papel,passagem,item,nota_0_100,valor_bruto,unidade,numerador,denominador,situacao,execucao_avaliacao,avaliador_config_id,metodo_verificacao,arquivo_origem,evidencia,motivo_na
+versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,codigo_publico,papel,passagem,item,nota_0_100,valor_bruto,unidade,numerador,denominador,situacao,execucao_avaliacao,avaliador_config_id,metodo_verificacao,arquivo_origem,evidencia,motivo_na
 ```
 
 | Campo | Regra |
@@ -145,7 +169,7 @@ Reúne JC1, JP1, JT e JE; as passagens de estabilidade permanecem na tabela comp
 Não omita execuções reprovadas, pendentes ou não iniciadas.
 
 ```csv
-versao_protocolo,fase,execucao_id,sistema_id,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,K1,K2,K3,K4,K5,K6,C1,C2,C3,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia
+versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,K1,K2,K3,K4,K5,K6,C1,C2,C3,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia
 ```
 
 Publique também uma tabela Markdown legível por execução ou tema, com os mesmos campos, podendo organizar colunas por painel.
@@ -156,7 +180,7 @@ Nomes comerciais só entram na versão de publicação após autorização do pe
 ## 5. Estabilidade e comparações
 
 ```csv
-versao_protocolo,fase,execucao_id,sistema_id,tema,rodada,papel,item,passagem_1,valor_1,passagem_2,valor_2,comparavel,diferenca,concordancia,motivo_exclusao,evidencia
+versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,papel,item,passagem_1,valor_1,passagem_2,valor_2,comparavel,diferenca,concordancia,motivo_exclusao,evidencia
 ```
 
 Em JC, compare decisões de situação e indicadores calculáveis, com suas coberturas; ausência administrativa não é concordância de dois juízos executados.

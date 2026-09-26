@@ -1,7 +1,10 @@
 # Protocolo de pontuação 3.1
 
 Versão: 3.1, de 26 de setembro de 2026.
-Revisão operacional: explicação e dados de execução passam a arquivos separados; o atalho de avaliação dos quatro papéis na mesma sessão é retirado.
+Revisão operacional: dados de execução ficam fora do output solicitado ao gerador; o atalho de avaliação dos quatro papéis na mesma sessão é retirado.
+No formato de coleta registro-unico-v1, o pesquisador pode guardar dados e output em seções separadas de um arquivo privado; o organizador os extrai antes dos julgamentos.
+As instruções de entrega em arquivo alteram a operação do agente, sem modificar o conteúdo didático solicitado, os critérios ou as fórmulas da versão 3.1.
+Identifique modo_entrega: arquivo-direto-v1 ou manual-v1; preserve o pedido completo e não misture esses modos silenciosamente nas comparações de tempo/custo.
 As escalas, fórmulas, quatro temas e bibliografia da versão 3.0 são preservados.
 A mudança de instrução de saída e de F4 exige identificar a nova versão, sem misturar coletas automaticamente.
 Esta é a referência normativa dos quatro avaliadores e da consolidação.
@@ -25,7 +28,8 @@ JC e JP atuam em sessões separadas, com autoria anonimizada; o mesmo modelo em 
 JT e JE usam verificações programáticas e cálculos sempre que disponíveis; um LLM pode organizar os registros, mas não inventar medidas nem afirmar que executou testes inexistentes.
 JT não confere verdade científica; JE não julga conteúdo, conformidade formal ou elegibilidade.
 O consolidador não é um quinto juiz: confere aritmética e une resultados bloqueados, sem reavaliar conteúdo ou produzir uma média dos quatro papéis.
-Somente o pesquisador e o consolidador acessam a chave completa de identidades.
+Somente o pesquisador, sua sessão organizadora e o consolidador acessam a chave completa de identidades.
+A sessão organizadora apenas separa materiais e encaminha pareceres; nunca atribui notas nem é reaproveitada como juiz.
 JT pode precisar do original com autoria para verificar F5; essa informação nunca retorna a JC ou JP.
 JE pode conhecer provedor e versão para conferir tarifas, sem transmitir essa informação aos juízes de conteúdo.
 Cada item sem evidência fica N/A com motivo; zero indica descumprimento observado.
@@ -33,9 +37,18 @@ Cada item sem evidência fica N/A com motivo; zero indica descumprimento observa
 ## Coleta manual
 
 O [workflow](../workflow.md) é o roteiro de coleta; [avaliacao.md](../avaliacao.md) explica o encaminhamento posterior.
-Na coleta manual, planejamento.md é o manifesto e cada execução tem resposta.md e ficha.md, com comprovantes disponíveis.
-A ficha privada registra identidade e medidas; a explicação não contém tempo, tokens ou custo solicitado ao gerador.
-A referência detalhada de armazenamento admite esse formato simples, sem exigir CSV na coleta.
+No fluxo atual, ~/Documents/coletas/lote.md é o manifesto e ~/Documents/coletas/entrada/E001.md reúne registro privado e resposta original após um marcador explícito.
+O nome do arquivo liga a execução ao sistema, tema e rodada do manifesto.
+O agente pode salvar o registro com dados de logs efetivamente acessíveis; o pesquisador confirma término e medidas observadas externamente.
+Autodeclarações sem evidência não validam consumo, custo ou duração; mantenha os campos afetados N/A.
+O corpo didático não contém os dados operacionais do cabeçalho nem a confirmação de gravação no chat.
+Na entrega direta, duração e custo da execução incluem as operações de gravação até a conclusão final.
+JC/JP recebem o pedido sem a seção operacional de entrega, que contém ID e caminho privados; a versão integral fica arquivada.
+O organizador preserva o arquivo e extrai original, registros e cópias anônimas antes do envio aos juízes.
+O formato anterior com planejamento.md, resposta.md e ficha.md continua aceito, sem conversão de notas nem exigência de CSV na coleta.
+A fila privada indica o arquivo completo permitido por chamada; nunca é enviada aos juízes.
+JP aguarda o APTO da passagem científica correspondente; JE recebe a situação operacional conferida por JT, sem notas T.
+Campos não preenchidos, modelos vazios e arquivos de controle não contam como execuções realizadas.
 Um número declarado pelo modelo não comprova duração, consumo ou cobrança; use observação, logs ou estimativa documentada.
 Não é válido apenas pedir ao juiz que ignore os dados operacionais: JC e JP não devem recebê-los.
 Para anonimização, preserve o original e registre toda remoção de autoria ou de rodapé operacional indevido, sem editar o conteúdo didático.

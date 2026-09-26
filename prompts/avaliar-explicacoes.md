@@ -2,6 +2,7 @@
 
 Este arquivo é um índice de compatibilidade, não um metaprompt executável.
 O julgamento combinado das versões anteriores foi substituído por quatro papéis separados.
+Para não preencher cada metaprompt manualmente, use [Preparar julgamento](preparar-julgamento.md) e siga a fila de arquivos completos.
 
 1. Use [avaliar-ciencia.md](avaliar-ciencia.md) para JC1 e JC2.
 2. Encaminhe somente APTO, com certificado mínimo e sem notas científicas, a [avaliar-pedagogia.md](avaliar-pedagogia.md) para JP1 e JP2.

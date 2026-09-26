@@ -1,10 +1,14 @@
 # Planejamento da coleta - uso privado
 
-Preencha uma vez antes do piloto e salve as alterações antes de iniciar a coleta definitiva.
+Para o piloto inicial, use o [lote já preparado](../coleta/lote.md).
+Use este modelo completo antes da coleta definitiva, em lote separado, fixando decisões antes de gerar respostas.
 Este arquivo é o manifesto e o mapa privado dos sistemas; não o envie a JC ou JP.
+O organizador aceita este manifesto com registros únicos de execução ou com os antigos resposta.md e ficha.md.
 
 - versao_protocolo: 3.1
 - fase: [PILOTO ou DEFINITIVA]
+- diretorio_coleta: [diretório exclusivo deste lote; piloto usa ~/Documents/coletas]
+- modo_entrega_planejado: [arquivo-direto-v1 ou manual-v1; registrar diferenças por execução]
 - data_congelamento: [data]
 - fontes_e_pedidos: [pasta com cópias exatas; indicar anexos e datas de acesso]
 - desenho: [piloto: dois sistemas, B01, R01; definitiva proposta: quatro sistemas, quatro temas, R01-R05]
