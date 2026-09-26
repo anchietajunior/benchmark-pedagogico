@@ -1,6 +1,9 @@
-# Protocolo de pontuação 3.0
+# Protocolo de pontuação 3.1
 
-Versão: 3.0, de 25 de setembro de 2026.
+Versão: 3.1, de 26 de setembro de 2026.
+Revisão operacional: explicação e dados de execução passam a arquivos separados; o atalho de avaliação dos quatro papéis na mesma sessão é retirado.
+As escalas, fórmulas, quatro temas e bibliografia da versão 3.0 são preservados.
+A mudança de instrução de saída e de F4 exige identificar a nova versão, sem misturar coletas automaticamente.
 Esta é a referência normativa dos quatro avaliadores e da consolidação.
 A avaliação científica deixa de compartilhar a chamada com a pedagógica; tempo/custo deixam o painel tecnológico e ganham apuração própria.
 Os quatro temas, fontes, seis pontos científicos por tema e 10 subcritérios pedagógicos da versão 2.1 são preservados.
@@ -26,6 +29,18 @@ Somente o pesquisador e o consolidador acessam a chave completa de identidades.
 JT pode precisar do original com autoria para verificar F5; essa informação nunca retorna a JC ou JP.
 JE pode conhecer provedor e versão para conferir tarifas, sem transmitir essa informação aos juízes de conteúdo.
 Cada item sem evidência fica N/A com motivo; zero indica descumprimento observado.
+
+## Coleta manual
+
+O [workflow](../workflow.md) é o roteiro de coleta; [avaliacao.md](../avaliacao.md) explica o encaminhamento posterior.
+Na coleta manual, planejamento.md é o manifesto e cada execução tem resposta.md e ficha.md, com comprovantes disponíveis.
+A ficha privada registra identidade e medidas; a explicação não contém tempo, tokens ou custo solicitado ao gerador.
+A referência detalhada de armazenamento admite esse formato simples, sem exigir CSV na coleta.
+Um número declarado pelo modelo não comprova duração, consumo ou cobrança; use observação, logs ou estimativa documentada.
+Não é válido apenas pedir ao juiz que ignore os dados operacionais: JC e JP não devem recebê-los.
+Para anonimização, preserve o original e registre toda remoção de autoria ou de rodapé operacional indevido, sem editar o conteúdo didático.
+JT aplica F1-F5 ao original, não à cópia limpa; limpeza não apaga um descumprimento observado.
+Os resultados de geração e julgamento são preservados independentemente de aprovação.
 
 ## Desenho, ordem e cegamento
 
@@ -217,7 +232,7 @@ Para uma explicação, cada requisito recebe 100 se atendido ou 0 se descumprido
 - F1: primeira linha não vazia é um título Markdown iniciado por `# `.
 - F2: corpo didático não vazio com até 600 palavras pela convenção de contagem abaixo.
 - F3: seção `## Síntese` contém exatamente três itens de lista antes da seção de fontes.
-- F4: seção `## Fontes consultadas`, seguida apenas pela seção `## Registro de geração`, contém pelo menos um identificador autorizado para o tema, título e localização de consulta declarados.
+- F4: seção final `## Fontes consultadas` contém pelo menos um identificador autorizado para o tema, título e localização de consulta declarados.
 - F5: não há declaração de autoria do modelo/fornecedor nem imagem incorporada em Markdown ou HTML.
 
 `T2 = (F1 + F2 + F3 + F4 + F5) / 5`, em passos de 20 pontos.

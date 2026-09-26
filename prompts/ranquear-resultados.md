@@ -1,41 +1,49 @@
-# Metaprompt de ranking - protocolo 3.0
+# Metaprompt de apresentação do ranking - protocolo 3.1
 
-Atue como consolidador: receba a tabela de notas anonimizadas e o mapa que liga cada número de modelo ao agente e ao modelo reais, e produza um arquivo HTML com o ranking.
-Não reavalie conteúdo, não altere notas e não crie nota geral somando painéis.
+Atue como apresentador de resultados já consolidados.
+Receba resultados-resumo.csv, relatorio.md, planejamento e, quando necessário, resultados-completos.csv e estabilidade.csv.
+Use o Protocolo de pontuação 3.1 fornecido.
+Não reavalie textos, invente notas, escolha o parecer mais favorável ou crie uma média dos quatro painéis.
 
-## Entradas
+## Conferência e ordenação
 
-Receba um ou mais arquivos de notas gerados pelo metaprompt de julgamento, com a tabela-resumo e as seções por arquivo.
-Receba o mapa de identidades no formato `modelo_01: <agente>, <modelo>, <provedor>, <data>`; ele é a única fonte para revelar nomes.
-Receba, se existirem, as metas de tempo e custo e a taxa de câmbio usadas no julgamento.
-Se um arquivo da tabela não tiver correspondência no mapa, mantenha o código anônimo e sinalize a pendência.
-Se o mesmo arquivo aparecer em mais de uma tabela de notas, preserve as duas linhas e marque a divergência; não escolha a mais favorável.
+Confira versão, fase, temas/rodadas planejados e sistema_id.
+Não trate linhas de estabilidade como novas explicações.
+Se houver duplicatas, junções pendentes ou contestações, mantenha-as visíveis e suspenda a ordenação afetada.
+Dentro de cada tema e rodada, ordene APTO em JC1 com JP1 concluído por P decrescente, preservando empates.
+Mostre APTO incompleto, PENDENTE, CORRIGIR e AUSENTE em grupos fora do ranking, com seus motivos.
+Não desempate P por tempo, custo ou T1/T2.
+Recomendação afetada por desacordo científico fica provisória até revisão.
 
-## Regras de ordenação
+Média global da rodada exige os quatro temas APTO com P completo por sistema.
+Média geral das cinco rodadas exige 20 APTO e 20 P completos por sistema.
+Uma média apenas dos sobreviventes é diagnóstico com n elegível/n previsto, não ranking global.
+No piloto, apresente somente os temas/rodadas realizados e suas limitações, sem extrapolar ao estudo completo.
+Agrupe por sistema_id, sem misturar agentes, modelos, versões ou configurações.
 
-Dentro de cada assunto, ordene assim: APTO com P completo, em ordem decrescente de P; depois APTO sem P; depois PENDENTE; por fim CORRIGIR, recusas e falhas.
-Mantenha empates na mesma posição; não desempate por tecnologia, tempo ou custo.
-Ciência, tecnologia e custo ficam em colunas próprias, sem soma ponderada.
-No quadro geral por modelo, mostre APTO sobre total de arquivos, média de P apenas dos arquivos elegíveis com o n informado, T1 agregado, T2 médio com cobertura, tempo e custo totais e médios, e custo por APTO (custo de todos os arquivos do modelo dividido pelo número de APTO; indefinido sem APTO; N/A sem custo completo).
-Uma média de P só representa o modelo quando todos os seus arquivos forem APTO com P; caso contrário, apresente-a como diagnóstico com cobertura.
-Não converta N/A em zero e não atribua a diferença entre modelos ao LLM isolado quando agente e modelo variarem juntos.
+Transcreva medidas e agregados da consolidação, com cobertura e origem.
+Preserve falhas, tempos até erro, custos incorridos e todos os N/A.
+Diferencie cobranças observadas, estimativas documentadas e dados indisponíveis.
+Não converta moeda sem taxa, fonte e data.
+Não use números autodeclarados pelo gerador como cobrança ou cronometragem verificada.
+Custo por APTO inclui todas as gerações do recorte e APTO em JC1; sem custo completo, N/A; sem APTO, indefinido.
+O fornecimento do mapa com autorização explícita permite mostrar agente/modelo; caso contrário, mantenha sistema_id.
 
-## Saída obrigatória
+## Entrega
 
-Entregue um único arquivo HTML autocontido, com CSS inline simples e sem scripts, que o pesquisador salvará como `ranking_<data>.html`.
-Inclua, nesta ordem:
+Produza um único HTML autocontido, com CSS inline, sem scripts, para salvar como ranking_DATA.html.
+Inclua título, fase, data, protocolo, quantidades previstas/observadas e legenda.
+Mostre tabelas por tema/rodada com posição, sistema, situações JC1/JP1, C1-C3, M1-M5/P, T1/T2, E1-E3, tempos, tokens, custo, origem e pendências.
+Inclua os 10 subitens pedagógicos em tabela de detalhamento, sem substituir a tabela completa de evidências.
+Mostre agregados elegíveis, estabilidade e limitações conforme o relatório.
+Use thead e th com scope; identifique situações por texto, não somente por cor.
+Explique que ciência, pedagogia, tecnologia e recursos não são somados em nota geral.
+Sem revisão humana ou aprendizagem medida, declare a ausência.
+A comparação é entre sistemas agente + modelo, não o efeito isolado do LLM.
 
-1. Título, data, versão do protocolo e quantidade de arquivos, assuntos e modelos.
-2. Legenda das colunas e a regra de ordenação acima.
-3. Uma tabela por assunto com posição, arquivo, agente e modelo, situação científica, C1, C2, C3, P e M1 a M5, T1, T2, tempo, tokens, custo, E1 a E3 e observações.
-4. Quadro geral por modelo com as agregações da seção anterior.
-5. Pendências: contestações, revisões científicas solicitadas, arquivos sem mapa, valores N/A e seus motivos.
-6. Limitações: notas atribuídas por IA sem revisão docente, tempo e custo declarados pelos geradores e não conferidos, ausência de medição de aprendizagem humana e comparação de combinações agente + modelo.
-
-Use tabelas HTML acessíveis, com thead e th com scope, e marque APTO, PENDENTE e CORRIGIR por texto e cor, nunca só por cor.
-
-<ranking versao="3.0">
-<notas>[COLE OS ARQUIVOS DE NOTAS COMPLETOS.]</notas>
-<mapa>[COLE O MAPA modelo_nn: agente, modelo, provedor, data.]</mapa>
-<metas_e_cambio>[COLE METAS E TAXA DE CÂMBIO OU N/A.]</metas_e_cambio>
+<ranking versao="3.1">
+<protocolo>[ANEXE O PROTOCOLO 3.1.]</protocolo>
+<planejamento>[FASE, SISTEMAS, TEMAS, RODADAS E EXECUÇÕES PREVISTAS.]</planejamento>
+<consolidado>[ANEXE RESUMO, RELATÓRIO E TABELAS DETALHADAS NECESSÁRIAS.]</consolidado>
+<identidades>[MAPA sistema_id E AUTORIZAÇÃO PARA REVELAR NOMES, OU MANTER ANÔNIMO.]</identidades>
 </ranking>

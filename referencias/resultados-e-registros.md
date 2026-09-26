@@ -1,4 +1,4 @@
-# Resultados e registros - protocolo 3.0
+# Resultados e registros - protocolo 3.1
 
 Este é o esquema de armazenamento e consolidação dos quatro papéis.
 Leia em conjunto com o [protocolo](protocolo-pontuacao.md) e o [workflow](../workflow.md).
@@ -6,6 +6,25 @@ Os exemplos são estruturas vazias, não resultados experimentais.
 Não crie notas nem medições para preencher células.
 Use UTF-8, vírgula como separador de CSV, ponto decimal, aspas em campos com vírgulas/quebras de linha e N/A acompanhado de motivo.
 Preserve valores sem arredondamento nos registros; use duas casas decimais somente na apresentação.
+
+## Coleta simples sem CSV
+
+Para começar manualmente, use [planejamento](../modelos/planejamento.md) uma vez e [ficha de coleta](../modelos/ficha-coleta.md) em cada execução.
+Não é necessário preencher as tabelas CSV deste documento durante a geração.
+Planejamento e fichas ficam privados; o consolidador os converte para os campos detalhados depois.
+
+| No fluxo manual | Equivalente no esquema detalhado |
+| --- | --- |
+| planejamento.md | Manifesto, sistemas, avaliadores e metas, com datas e configurações. |
+| E001/resposta.md | Original da execução E001. |
+| E001/ficha.md | Registro operacional, uso/custo e, ao avaliar, mapa privado dos códigos de cada passagem. |
+| E001/comprovantes/ | Prints, logs, cobrança e registros brutos efetivamente disponíveis. |
+| E001/avaliacoes/ | Cópias públicas, certificados, pareceres e bloqueios, ligados pela ficha. |
+| consolidado/ | Tabelas e relatório produzidos somente após o julgamento. |
+
+Dados não fornecidos ficam N/A; formato simples não transforma uma medida ausente em zero.
+O consolidador deve pedir esclarecimento quando não conseguir mapear um campo, sem adivinhá-lo.
+A chave detalhada de uma execução é preservada mesmo quando o registro foi feito em Markdown.
 
 ## 1. Identidades, condições e acesso
 
@@ -39,7 +58,7 @@ Mapa privado mínimo:
 versao_protocolo,execucao_id,sistema_id,tema,rodada,papel,passagem,codigo_publico,arquivo_original,arquivo_anonimizado,alteracoes_anonimizacao,parecer_origem,certificado_arquivo
 ```
 
-Registre somente remoções de autoria explícita; preserve conteúdo, ordem, erros, estrutura e referências.
+Registre remoções de autoria explícita e de eventual rodapé operacional indevido nas cópias de conteúdo; preserve o original e o conteúdo didático, a ordem, os erros, a estrutura e as referências.
 Nomes de arquivos e metadados enviados também não podem revelar autoria.
 Certificados de JP contêm somente versão, código público de destino, tema, rodada, passagem de origem JC1/JC2 e APTO.
 A ligação ao parecer e ao corpo original fica no mapa privado, não no certificado entregue ao juiz.

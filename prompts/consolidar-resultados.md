@@ -1,8 +1,12 @@
-# Metaprompt de consolidação - protocolo 3.0
+# Metaprompt de consolidação - protocolo 3.1
 
 Atue como consolidador dos quatro avaliadores, não como quinto juiz.
-Use o Protocolo de pontuação 3.0 e o esquema resultados-e-registros.md fornecidos.
+Use o Protocolo de pontuação 3.1 e o esquema resultados-e-registros.md fornecidos.
 Confira cálculos, identidades e cobertura; não reavalie conteúdo ou escolha o parecer mais favorável.
+Na coleta manual, aceite planejamento.md como manifesto e as fichas individuais como registros e mapa privado.
+Cada arquivo se chama ficha.md dentro de sua pasta de execução; confira execucao_id e não misture fichas pelo nome comum.
+Converta esses campos para o esquema detalhado; solicite dados ausentes em vez de inventá-los.
+Dados técnicos autodeclarados na explicação não são cobrança ou cronometragem verificada.
 
 ## Procedimento
 
@@ -54,8 +58,8 @@ A tabela completa inclui os itens K, A, V, C, M, F/FP, T e E; não substitua os 
 Preserve fontes e caminhos de evidência, assim como originais e erratas.
 Não atribua resultados a avaliações que não foram executadas.
 
-<consolidacao versao="3.0">
-<protocolo>[ANEXE OU COLE O PROTOCOLO 3.0 COMPLETO.]</protocolo>
+<consolidacao versao="3.1">
+<protocolo>[ANEXE OU COLE O PROTOCOLO 3.1 COMPLETO.]</protocolo>
 <esquema>[ANEXE OU COLE RESULTADOS-E-REGISTROS.MD.]</esquema>
 <manifesto>[COLE PLANEJAMENTO, FASE, TEMAS E EXECUÇÕES.]</manifesto>
 <chave_restrita>[COLE O REMAPEAMENTO SOMENTE NESTA ETAPA.]</chave_restrita>

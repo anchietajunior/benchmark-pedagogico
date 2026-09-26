@@ -1,4 +1,4 @@
-# Encaminhamento dos julgamentos - protocolo 3.0
+# Encaminhamento dos julgamentos - protocolo 3.1
 
 Este arquivo é um índice de compatibilidade, não um metaprompt executável.
 O julgamento combinado das versões anteriores foi substituído por quatro papéis separados.
@@ -11,4 +11,4 @@ O julgamento combinado das versões anteriores foi substituído por quatro papé
 
 Cada avaliação tem sua própria sessão ou verificador; não cole os quatro metaprompts juntos.
 O consolidador reúne resultados, mas não funciona como quinto juiz.
-As regras completas estão no [protocolo](../referencias/protocolo-pontuacao.md), e o passo a passo está no [workflow](../workflow.md).
+As regras completas estão no [protocolo](../referencias/protocolo-pontuacao.md), e o passo a passo do julgamento está em [avaliacao.md](../avaliacao.md).
