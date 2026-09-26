@@ -1,0 +1,8 @@
+# Raw study records and private judge preparation stay local by default.
+/coleta/entrada/*
+!/coleta/entrada/.gitkeep
+/coleta/comprovantes/*
+!/coleta/comprovantes/.gitkeep
+/coleta/privado/
+/coleta/juizes/
+/coleta/consolidado/

@@ -1,8 +1,18 @@
-# Metaprompt de consolidação - protocolo 3.0
+# Metaprompt de consolidação - protocolo 3.1
 
 Atue como consolidador dos quatro avaliadores, não como quinto juiz.
-Use o Protocolo de pontuação 3.0 e o esquema resultados-e-registros.md fornecidos.
+Use o Protocolo de pontuação 3.1 e o esquema resultados-e-registros.md fornecidos.
 Confira cálculos, identidades e cobertura; não reavalie conteúdo ou escolha o parecer mais favorável.
+No formato registro-unico-v1, aceite lote.md como manifesto, entrada/E001.md como registro com original delimitado e privado/mapa.md como chave.
+O diretório padrão dos dados é ~/Documents/coletas, separado do kit; aceite outro lote explicitamente informado.
+Registre modo_entrega por execução e não agrupe arquivo-direto-v1 e manual-v1 silenciosamente nas comparações de tempo/custo.
+Use também originais extraídos, registros, insumos arquivados, certificados e fila administrativa fornecidos pelo organizador.
+Ligue cada arquivo ao nome da execução na tabela do manifesto; se faltar correspondência, registre pendência sem inferir a identidade.
+Aceite o formato anterior com planejamento.md e ficha.md + resposta.md por execução, conferindo execucao_id.
+Não duplique a mesma observação presente nos dois formatos e não interprete template não preenchido como execução.
+Arquivo ausente é registro ausente; não presuma que a execução falhou ou não começou.
+Converta esses campos para o esquema detalhado; solicite dados ausentes em vez de inventá-los.
+Dados técnicos autodeclarados na explicação não são cobrança ou cronometragem verificada.
 
 ## Procedimento
 
@@ -54,8 +64,8 @@ A tabela completa inclui os itens K, A, V, C, M, F/FP, T e E; não substitua os 
 Preserve fontes e caminhos de evidência, assim como originais e erratas.
 Não atribua resultados a avaliações que não foram executadas.
 
-<consolidacao versao="3.0">
-<protocolo>[ANEXE OU COLE O PROTOCOLO 3.0 COMPLETO.]</protocolo>
+<consolidacao versao="3.1">
+<protocolo>[ANEXE OU COLE O PROTOCOLO 3.1 COMPLETO.]</protocolo>
 <esquema>[ANEXE OU COLE RESULTADOS-E-REGISTROS.MD.]</esquema>
 <manifesto>[COLE PLANEJAMENTO, FASE, TEMAS E EXECUÇÕES.]</manifesto>
 <chave_restrita>[COLE O REMAPEAMENTO SOMENTE NESTA ETAPA.]</chave_restrita>
