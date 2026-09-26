@@ -1,4 +1,4 @@
-# Encaminhamento dos julgamentos - protocolo 3.1
+# Encaminhamento dos julgamentos - protocolo 3.2
 
 Este arquivo é um índice de compatibilidade, não um metaprompt executável.
 O julgamento combinado das versões anteriores foi substituído por quatro papéis separados.

@@ -1,6 +1,6 @@
 # Metaprompt organizador - preparar e atualizar a fila de julgamento
 
-Organize a coleta segundo o protocolo 3.1, sem atuar como juiz, corrigir explicações ou atribuir notas.
+Organize a coleta segundo o protocolo 3.2, sem atuar como juiz, corrigir explicações ou atribuir notas.
 Seu trabalho é entregar arquivos completos para copiar e enviar, com dados separados por competência.
 Use diretorio_coleta: ~/Documents/coletas, salvo outro destino explícito do pesquisador.
 Se o pesquisador indicar outro diretório de lote, substitua esse prefixo em todos os caminhos de dados abaixo, mantendo os arquivos do kit em sua origem.
@@ -33,6 +33,9 @@ Um ID automático não permite deduzir sistema, fase, rodada ou posição; o tem
 Sem ligação inequívoca, marque PENDENTE DE IDENTIFICAÇÃO e peça ao pesquisador somente os vínculos faltantes em uma lista, sem atribuir o arquivo à próxima linha livre.
 Preserve o ID real, o rótulo planejado e sua correspondência no mapa privado, sem renomear originais, alterar a ordem planejada ou contar os dois IDs como duas gerações.
 Não misture piloto, definitiva, configurações diferentes ou versões de protocolo.
+Este kit prepara julgamentos 3.2; para registros 3.1, preserve os originais e solicite o kit arquivado correspondente antes de montar os pacotes.
+Sem o pedido e protocolo compatíveis, marque PENDENTE DE VERSÃO, sem preencher com as regras atuais, alterar o cabeçalho ou pedir uma expansão da resposta antiga.
+Separe os lotes: a mudança de extensão e estrutura afeta a explicação solicitada e também tempo, tokens e custo.
 Campos ainda entre colchetes são não preenchidos, não dados observados.
 Registros-modelo e .gitkeep não são execuções realizadas.
 Preserve as linhas previstas mesmo quando não houver arquivo: registro ausente não prova falha nem ausência de início.
@@ -102,7 +105,7 @@ Nunca inclua esse mapa ou a fila inteira no material dos juízes.
 ## 4. Monte um arquivo completo por chamada
 
 Use os metaprompts canônicos, preenchendo seus campos com o conteúdo efetivo, sem inventar outra rubrica.
-Cada arquivo em ~/Documents/coletas/juizes/enviar/PAPEL/CODIGO.md deve conter o metaprompt, protocolo 3.1 completo e entradas permitidas para uma única resposta.
+Cada arquivo em ~/Documents/coletas/juizes/enviar/PAPEL/CODIGO.md deve conter o metaprompt, protocolo 3.2 completo e entradas permitidas para uma única resposta.
 Insira os conteúdos no arquivo; um link local, nome de arquivo ou marcador como COLE AQUI não substitui uma entrada.
 Inclua fontes comuns do tema e trechos fornecidos, quando exigidos pelo papel, mantendo identificadores e localizações.
 Nos pacotes de JC/JP, retire do pedido a seção “Entrega e armazenamento - fora do conteúdo avaliado”, que contém caminho e ID privados.
@@ -139,7 +142,7 @@ Crie ~/Documents/coletas/privado/FILA.md com uma linha por chamada ou impediment
 | Ordem | Papel/passagem | Arquivo pronto para enviar | Anexos necessários | Salvar parecer em | Situação/motivo |
 | --- | --- | --- | --- | --- | --- |
 
-Use situações PRONTO, AGUARDANDO JC, AGUARDANDO JT, PENDENTE DE DADOS, RECEBIDO ou NÃO EXECUTADO.
+Use situações PRONTO, AGUARDANDO JC, AGUARDANDO JT, PENDENTE DE DADOS, PENDENTE DE VERSÃO, RECEBIDO ou NÃO EXECUTADO.
 PRONTO exige arquivo completo, revisão de vazamento de identidade e configuração/método do avaliador registrado.
 Receber um parecer não significa validar sua verdade ou dar nota ao texto.
 Salve cada parecer em ~/Documents/coletas/juizes/pareceres/PAPEL/CODIGO.md, mantendo-o integral e sem correções silenciosas.

@@ -10,6 +10,14 @@ Primeiro vem a correção científica; depois, a qualidade didática estimada.
 | Nutrição | N01 - Metabolismo energético após refeição e no jejum noturno. |
 | Nutrição | N02 - Absorção e regulação do ferro. |
 
+## Material de estudo esperado
+
+Cada explicação deve ter de 800 a 1.200 palavras, além da lista final de fontes.
+O texto desenvolve os seis pontos do tema, explica as conexões do mecanismo, acompanha um exemplo e esclarece duas confusões conceituais.
+Duas perguntas com respostas comentadas ajudam a revisar o raciocínio; a síntese final reúne três ideias principais.
+O objetivo é uma pequena aula para estudo individual, com linguagem simples e profundidade delimitada, sem ampliar o assunto para além do recorte.
+Quantidade de palavras não demonstra aprendizagem; os juízes continuam avaliando correção e qualidade didática estimada.
+
 ## O que você faz
 
 Siga somente o [workflow](workflow.md) para começar.

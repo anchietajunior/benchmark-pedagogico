@@ -61,5 +61,5 @@ Confira por amostragem a correspondência entre resposta, código e parecer, al�
 O piloto não sustenta um vencedor global de quatro temas.
 Para uma apresentação HTML posterior, use o [metaprompt de ranking](prompts/ranquear-resultados.md) sobre os resultados conferidos.
 
-Os critérios continuam no [protocolo 3.1](referencias/protocolo-pontuacao.md).
+Os critérios continuam no [protocolo 3.2](referencias/protocolo-pontuacao.md).
 O organizador cuida do encaminhamento; a correção científica e a revisão humana não são substituídas por ele.

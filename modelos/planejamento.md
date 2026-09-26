@@ -5,7 +5,7 @@ Use este modelo completo antes da coleta definitiva, em lote separado, fixando d
 Este arquivo é o manifesto e o mapa privado dos sistemas; não o envie a JC ou JP.
 O organizador aceita este manifesto com registros únicos de execução ou com os antigos resposta.md e ficha.md.
 
-- versao_protocolo: 3.1
+- versao_protocolo: 3.2
 - fase: [PILOTO ou DEFINITIVA]
 - diretorio_coleta: [diretório exclusivo deste lote; piloto usa ~/Documents/coletas]
 - modo_entrega_planejado: [arquivo-direto-v1 ou manual-v1; registrar diferenças por execução]

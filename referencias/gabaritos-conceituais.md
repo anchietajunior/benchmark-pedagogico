@@ -1,6 +1,6 @@
 # Gabaritos conceituais para o avaliador
 
-Referência de conteúdo do protocolo 3.1; os quatro temas e seus seis pontos foram preservados da versão 1.0.
+Referência de conteúdo do protocolo 3.2; os quatro temas e seus seis pontos foram preservados da versão 1.0.
 Para notas e impedimentos, use o [Protocolo de pontuação](protocolo-pontuacao.md).
 Forneça somente ao juiz científico (JC) as seções correspondentes aos temas em julgamento, acompanhadas da [bibliografia por tema](bibliografia-por-tema.md) e do acesso às fontes ou a seus trechos.
 Os seis itens de cada seção correspondem aos seis pontos do pedido de mesmo código.

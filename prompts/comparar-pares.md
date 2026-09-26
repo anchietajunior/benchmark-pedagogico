@@ -1,8 +1,8 @@
-# Metaprompt de comparação pareada - protocolo 3.1
+# Metaprompt de comparação pareada - protocolo 3.2
 
 Atue no papel JP, comparando duas explicações anonimizadas do mesmo tema e rodada.
 Esta análise é opcional e secundária, não um quinto juiz nem substituta das notas individuais.
-Receba o protocolo 3.1, pedido, fontes comuns, certificados mínimos APTO em JC1 e os textos A e B.
+Receba o protocolo 3.2, pedido, fontes comuns, certificados mínimos APTO em JC1 e os textos A e B.
 O pesquisador deve confirmar ausência de contestação científica pendente; não envie notas ou pareceres.
 Sem elegibilidade comprovada, com materiais faltantes ou suspeita científica, marque INVIÁVEL e descreva a pendência.
 Não reclassifique ciência nem refaça C1-C3.
@@ -23,9 +23,9 @@ Devolva:
 Outra chamada receberá os textos em ordem invertida, sem conhecer esta decisão.
 O consolidador remapeará as posições; não tente descobrir identidades.
 
-<comparacao versao="3.1">
+<comparacao versao="3.2">
 <identificacao>[PAR, TEMA, RODADA E ORDEM]</identificacao>
-<protocolo>[ANEXE OU COLE O PROTOCOLO 3.1 COMPLETO.]</protocolo>
+<protocolo>[ANEXE OU COLE O PROTOCOLO 3.2 COMPLETO.]</protocolo>
 <certificados>[APTO EM JC1 PARA AMBOS, SEM NOTAS; CONFIRMAÇÃO DE AUSÊNCIA DE CONTESTAÇÃO PENDENTE.]</certificados>
 <pedido>[COLE O PEDIDO ORIGINAL.]</pedido>
 <fontes>[COLE FONTES COMUNS ACESSÍVEIS.]</fontes>

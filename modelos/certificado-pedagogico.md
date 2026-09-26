@@ -1,6 +1,6 @@
 # Certificado para o juiz pedagógico
 
-- versao_protocolo: 3.1
+- versao_protocolo: 3.2
 - codigo_publico_destino: [código da cópia enviada a JP]
 - tema: [B01, B02, N01 ou N02]
 - rodada: [R01]

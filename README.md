@@ -14,6 +14,7 @@ Sem skills, instalação ou comandos de terminal.
 - [gerar-explicacao-nut-01.md](prompts/gerar-explicacao-nut-01.md) - Nutrição 01 - Metabolismo energético.
 - [gerar-explicacao-nut-02.md](prompts/gerar-explicacao-nut-02.md) - Nutrição 02 - Absorção e regulação do ferro.
 
+Os quatro pedidos solicitam uma pequena aula de 800 a 1.200 palavras, com mecanismo explicado, exemplo desenvolvido, confusões esclarecidas e revisão comentada.
 O [workflow](workflow.md) explica como conferir a coleta e preparar os juízes.
 
 | Arquivo | Para que serve |
@@ -24,8 +25,9 @@ O [workflow](workflow.md) explica como conferir a coleta e preparar os juízes.
 | [Avaliação](avaliacao.md) | Executar os pedidos preparados e reunir os pareceres. |
 | [Protocolo](referencias/protocolo-pontuacao.md) | Consultar critérios, fórmulas e limitações. |
 
-Protocolo 3.1; formato de coleta simplificado em 26 de setembro de 2026.
-Os pedidos incluem instruções de gravação direta; o conteúdo solicitado, as fontes e as regras de pontuação permanecem os mesmos.
+Protocolo 3.2; aprofundamento dos pedidos revisado em 26 de setembro de 2026.
+As fontes e os seis pontos científicos permanecem os mesmos; a extensão e a estrutura foram ampliadas, com F2/F3 atualizados.
+Use um lote novo: coletas 3.1 preservam seus pedidos e regras originais, sem expansão ou reavaliação retroativa pelo formato atual.
 Registre arquivo-direto-v1 ou manual-v1, pois a entrega por ferramentas pode mudar tempo e custo.
 Os registros separados de resposta.md e ficha.md continuam aceitos.
 Não há resultados experimentais neste kit.

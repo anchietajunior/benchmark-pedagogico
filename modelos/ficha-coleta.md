@@ -1,4 +1,4 @@
-# Registro privado de execução - protocolo 3.1
+# Registro privado de execução - protocolo 3.2
 
 Use este modelo na contingência sem gravação direta e salve em ~/Documents/coletas/entrada/E001.md, usando o ID retornado pelo agente ou o ID planejado fornecido a ele.
 Preencha os campos abaixo e cole a primeira explicação inteira após o marcador final, sem cercas de código adicionais ou avisos de gravação.

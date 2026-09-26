@@ -1,8 +1,8 @@
-# Metaprompt de apresentação do ranking - protocolo 3.1
+# Metaprompt de apresentação do ranking - protocolo 3.2
 
 Atue como apresentador de resultados já consolidados.
 Receba resultados-resumo.csv, relatorio.md, planejamento e, quando necessário, resultados-completos.csv e estabilidade.csv.
-Use o Protocolo de pontuação 3.1 fornecido.
+Use o Protocolo de pontuação 3.2 fornecido.
 Não reavalie textos, invente notas, escolha o parecer mais favorável ou crie uma média dos quatro painéis.
 
 ## Conferência e ordenação
@@ -41,8 +41,8 @@ Explique que ciência, pedagogia, tecnologia e recursos não são somados em not
 Sem revisão humana ou aprendizagem medida, declare a ausência.
 A comparação é entre sistemas agente + modelo, não o efeito isolado do LLM.
 
-<ranking versao="3.1">
-<protocolo>[ANEXE O PROTOCOLO 3.1.]</protocolo>
+<ranking versao="3.2">
+<protocolo>[ANEXE O PROTOCOLO 3.2.]</protocolo>
 <planejamento>[FASE, SISTEMAS, TEMAS, RODADAS E EXECUÇÕES PREVISTAS.]</planejamento>
 <consolidado>[ANEXE RESUMO, RELATÓRIO E TABELAS DETALHADAS NECESSÁRIAS.]</consolidado>
 <identidades>[MAPA sistema_id E AUTORIZAÇÃO PARA REVELAR NOMES, OU MANTER ANÔNIMO.]</identidades>

@@ -18,6 +18,8 @@ Sistema significa agente + modelo + configuração; registre os nomes exibidos e
 | Nutrição | [N02 - Regulação do ferro](prompts/gerar-explicacao-nut-02.md) |
 
 Copie o arquivo inteiro: não há campos de tema, bibliografia ou pergunta para preencher.
+A versão 3.2 pede de 800 a 1.200 palavras, com mecanismo desenvolvido, exemplo explicado, duas confusões esclarecidas e duas perguntas com respostas comentadas.
+Comece um lote separado para esta versão; preserve as coletas 3.1 sem pedir expansão nem aplicar a elas o novo mínimo de palavras.
 O agente cria o ID automaticamente; se quiser usar o rótulo planejado, acrescente “execucao_id: E001” à mensagem, sem editar o arquivo.
 Abra uma conversa nova, cole o pedido inteiro e cronometre do envio até a confirmação final, incluindo ferramentas e gravação.
 Envie somente o pedido e as fontes comuns; o gerador não deve acessar o lote, outras coletas ou materiais dos juízes.
@@ -43,6 +45,7 @@ Se a identidade ou a rodada não estiverem claras, o organizador pedirá essa li
 O agente pode copiar medidas comprovadas por logs; números escritos por ele sem evidência continuam não verificados.
 Tokens e custo indisponíveis ficam N/A; não use mensalidade como custo por resposta.
 Não altere o corpo depois do marcador da resposta original, nem substitua a primeira tentativa.
+Se vier curto, superficial ou longo demais, preserve o resultado para avaliação; não peça uma versão melhor para ocupar a mesma execução.
 Salve também recusas, PENDENTE DE FONTES e saídas truncadas; documente falhas sem saída.
 Guarde prints/logs em comprovantes/, sem credenciais, e indique o arquivo no cabeçalho.
 

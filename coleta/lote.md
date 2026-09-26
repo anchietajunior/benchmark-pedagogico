@@ -5,7 +5,7 @@ Não sobrescreva um lote existente.
 Este arquivo não vai para os geradores ou juízes de conteúdo.
 As linhas abaixo são planejamento, não execuções já realizadas.
 
-- versao_protocolo: 3.1
+- versao_protocolo: 3.2
 - formato_coleta: registro-unico-v1
 - diretorio_coleta: ~/Documents/coletas
 - modo_entrega_planejado: arquivo-direto-v1; registrar contingência manual-v1 por execução

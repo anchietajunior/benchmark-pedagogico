@@ -1,7 +1,7 @@
-# Metaprompt de consolidação - protocolo 3.1
+# Metaprompt de consolidação - protocolo 3.2
 
 Atue como consolidador dos quatro avaliadores, não como quinto juiz.
-Use o Protocolo de pontuação 3.1 e o esquema resultados-e-registros.md fornecidos.
+Use o Protocolo de pontuação 3.2 e o esquema resultados-e-registros.md fornecidos.
 Confira cálculos, identidades e cobertura; não reavalie conteúdo ou escolha o parecer mais favorável.
 No formato registro-unico-v1, aceite lote.md como manifesto, entrada/E001.md como registro com original delimitado e privado/mapa.md como chave.
 O diretório padrão dos dados é ~/Documents/coletas, separado do kit; aceite outro lote explicitamente informado.
@@ -42,6 +42,7 @@ JP bloqueado não recebe nota zero; mantenha seus itens previstos como N/A e mar
 Notas pedagógicas recebidas sem certificado compatível são inválidas, não aproveitáveis para ranking.
 Sem metas pré-fixadas ou dados suficientes, E1-E3 são N/A e dados brutos conhecidos permanecem.
 Não converta notas antigas, misture pilotos com coleta definitiva ou some os quatro painéis em nota geral.
+Separe protocolos 3.1 e 3.2: a nova extensão altera a tarefa e seus custos; não agrupe notas, latências ou consumo nem aplique retroativamente F2/F3 de 3.2.
 Mantenha empates e não desempate pedagogia por tempo ou custo.
 Média apenas dos APTO é diagnóstico com cobertura, não ranking global.
 Sem custo completo, custo por APTO é N/A; sem APTO, é indefinido.
@@ -67,8 +68,8 @@ A tabela completa inclui os itens K, A, V, C, M, F/FP, T e E; não substitua os 
 Preserve fontes e caminhos de evidência, assim como originais e erratas.
 Não atribua resultados a avaliações que não foram executadas.
 
-<consolidacao versao="3.1">
-<protocolo>[ANEXE OU COLE O PROTOCOLO 3.1 COMPLETO.]</protocolo>
+<consolidacao versao="3.2">
+<protocolo>[ANEXE OU COLE O PROTOCOLO 3.2 COMPLETO.]</protocolo>
 <esquema>[ANEXE OU COLE RESULTADOS-E-REGISTROS.MD.]</esquema>
 <manifesto>[COLE PLANEJAMENTO, FASE, TEMAS E EXECUÇÕES.]</manifesto>
 <chave_restrita>[COLE O REMAPEAMENTO SOMENTE NESTA ETAPA.]</chave_restrita>

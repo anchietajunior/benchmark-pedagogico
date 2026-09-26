@@ -1,17 +1,21 @@
-# Protocolo de pontuação 3.1
+# Protocolo de pontuação 3.2
 
-Versão: 3.1, de 26 de setembro de 2026.
-Revisão operacional: dados de execução ficam fora do output solicitado ao gerador; o atalho de avaliação dos quatro papéis na mesma sessão é retirado.
-No formato de coleta registro-unico-v1, o pesquisador pode guardar dados e output em seções separadas de um arquivo privado; o organizador os extrai antes dos julgamentos.
-As instruções de entrega em arquivo alteram a operação do agente, sem modificar o conteúdo didático solicitado, os critérios ou as fórmulas da versão 3.1.
-Identifique modo_entrega: arquivo-direto-v1 ou manual-v1; preserve o pedido completo e não misture esses modos silenciosamente nas comparações de tempo/custo.
-As escalas, fórmulas, quatro temas e bibliografia da versão 3.0 são preservados.
-A mudança de instrução de saída e de F4 exige identificar a nova versão, sem misturar coletas automaticamente.
+Versão: 3.2, de 26 de setembro de 2026.
+Esta revisão pede material de estudo desenvolvido, com 800 a 1.200 palavras, mecanismo passo a passo, exemplo interpretado, duas confusões esclarecidas e duas perguntas com respostas comentadas.
+F2 passa a verificar a faixa de extensão e F3 a estrutura didática; os quatro papéis, fórmulas, seis pontos científicos por tema, fontes e 10 subcritérios pedagógicos são preservados.
+A faixa é uma decisão operacional a testar no piloto, não um limiar validado de aprendizagem.
+Mais texto não autoriza incluir conteúdos fora do recorte nem relaxar a conferência bibliográfica.
+
 Esta é a referência normativa dos quatro avaliadores e da consolidação.
-A avaliação científica deixa de compartilhar a chamada com a pedagógica; tempo/custo deixam o painel tecnológico e ganham apuração própria.
-Os quatro temas, fontes, seis pontos científicos por tema e 10 subcritérios pedagógicos da versão 2.1 são preservados.
-Conserve resultados antigos com sua versão; não converta notas nem misture protocolos automaticamente.
-Os antigos T1/T2/T3 passam a E1/E2/E3; os antigos T4/T5 passam a T1/T2, apenas como mapa conceitual para ler a documentação histórica, não como autorização para converter resultados.
+Dados operacionais continuam fora do corpo didático, no cabeçalho privado do registro-unico-v1.
+Identifique modo_entrega: arquivo-direto-v1 ou manual-v1; preserve o pedido completo e não misture esses modos silenciosamente nas comparações de tempo/custo.
+Os metaprompts não implementam medição automática de tempo ou tokens; essa lacuna exige instrumentação separada.
+
+Coletas 3.1 preservam seu pedido e limite anterior de até 600 palavras; não aplique a elas o mínimo de 800 palavras nem as novas seções.
+Use o kit e o protocolo efetivamente arquivados daquela versão para avaliá-las; sem esses materiais, registre pendência, sem reconstruir a regra por suposição.
+Não peça que o agente expanda uma resposta antiga e a mantenha como se fosse a primeira geração.
+Novas gerações com o pedido 3.2 pertencem a um lote separado; não agregue suas notas, tempos ou custos aos da versão 3.1 sem distinguir as condições.
+Conserve resultados antigos com sua versão; não converta notas automaticamente.
 Identifique toda medida por versão + código.
 
 ## Quatro responsabilidades, uma consolidação
@@ -118,7 +122,7 @@ O resultado atual permite comparar a utilidade das combinações observadas, nã
 O juiz consulta os mesmos trechos identificados ou fontes autorizadas fornecidos aos geradores.
 Catálogos, citações do candidato, memória do juiz e gabarito não substituem a leitura das fontes.
 Registre fonte, edição quando disponível, seção ou página realmente observada, data e extensão do acesso.
-O inventário de afirmações inclui mecanismos, exemplos, analogias, generalizações e afirmações adicionais aos seis pontos obrigatórios.
+O inventário de afirmações inclui mecanismos, exemplos, analogias, generalizações, esclarecimento das confusões, respostas comentadas e afirmações adicionais aos seis pontos obrigatórios.
 Separe proposições que possam ser verificadas independentemente; não fragmente em palavras nem conte repetições da mesma afirmação como novas evidências.
 Esse inventário exige interpretação e revisão, portanto suas proporções não são medidas automáticas infalíveis.
 
@@ -218,7 +222,11 @@ Cada item tem peso igual; nenhuma métrica compensa erro científico.
 M2 observa ordem e síntese; M4 observa relações causais e suas condições; M5 observa sua concretização no exemplo.
 Ao usar o mesmo trecho em mais de um item, justifique separadamente a evidência pertinente a cada requisito.
 M3 não mede carga cognitiva real; M5 não comprova transferência de aprendizagem.
-Analogia é opcional e texto mais curto não recebe bônus automático.
+Analogia é opcional; nem brevidade nem extensão recebem bônus automático.
+Avalie se as relações essenciais foram desenvolvidas para estudo individual: rótulos de processos e listas sem explicação não demonstram, por si, M4.1 ou M5.2.
+As confusões esclarecidas e a revisão comentada são partes do corpo didático, sem gerar métricas extras ou comprovar aprendizagem.
+Revisitar um conceito para aplicá-lo no exemplo ou justificar uma resposta pode ter função pedagógica; M3.2 penaliza repetição sem função, não toda retomada.
+A conformidade com a faixa de palavras e a estrutura pertence a JT; JP não atribui uma penalidade adicional automática por extensão.
 Limites de analogias e generalizações continuam obrigatórios na conferência científica e no pedido de geração; a redução de itens não dispensa sua verificação.
 
 ## JT - Juiz tecnológico
@@ -246,13 +254,16 @@ Aplique as regras à resposta original, antes de remover a autoria.
 Para uma explicação, cada requisito recebe 100 se atendido ou 0 se descumprido:
 
 - F1: primeira linha não vazia é um título Markdown iniciado por `# `.
-- F2: corpo didático não vazio com até 600 palavras pela convenção de contagem abaixo.
-- F3: seção `## Síntese` contém exatamente três itens de lista antes da seção de fontes.
+- F2: corpo didático com 800 a 1.200 palavras, inclusive os extremos, pela convenção de contagem abaixo.
+- F3: as oito seções do pedido aparecem uma vez e na ordem definida, com conteúdo não vazio; `## Confusões a evitar` tem exatamente dois itens numerados, `## Confira seu entendimento` tem exatamente duas perguntas numeradas, cada uma com `Resposta comentada:` não vazia, e `## Síntese` tem exatamente três itens de lista.
 - F4: seção final `## Fontes consultadas` contém pelo menos um identificador autorizado para o tema, título e localização de consulta declarados.
 - F5: não há declaração de autoria do modelo/fornecedor nem imagem incorporada em Markdown ou HTML.
 
 `T2 = (F1 + F2 + F3 + F4 + F5) / 5`, em passos de 20 pontos.
 Qualquer item formal necessário N/A torna T2 N/A, inclusive no ramo FP; não reduza o denominador.
+F3 verifica estrutura e presença formal, não a qualidade das justificativas nem sua correção, que pertencem a JP e JC.
+As seções de F3 são `## Ideia central`, `## Conceitos necessários`, `## Mecanismo passo a passo`, `## Exemplo explicado`, `## Confusões a evitar`, `## Confira seu entendimento`, `## Síntese` e `## Fontes consultadas`.
+Subtítulos de terceiro nível são permitidos dentro das seções e não contam como seções extras.
 F4 verifica presença formal, não existência da obra ou sustentação da afirmação; isso pertence a C3.
 F5 exige também inspeção humana de autoria explícita; não é prova de anonimato perfeito nem um teste só por palavras-chave.
 
@@ -262,7 +273,7 @@ Uma recusa sem explicação recebe T2 = 0, e falha técnica sem resposta também
 Um registro não fornecido é N/A, não descumprimento observado.
 
 Convenção de palavras: considere o texto anterior à primeira linha exatamente `## Fontes consultadas`.
-Inclua título, subtítulos, exemplo, síntese e identificadores de citação.
+Inclua título, subtítulos, exemplo, confusões, perguntas, respostas comentadas, síntese e identificadores de citação.
 Conte sequências separadas por espaço ou quebra de linha que contenham ao menos uma letra ou número; marcadores isolados de Markdown não contam.
 Não remova URLs inline, números ou citações para caber no limite.
 Sem o delimitador de fontes, todo o texto entra na contagem e F4 = 0.

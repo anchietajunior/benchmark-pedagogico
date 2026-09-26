@@ -1,4 +1,4 @@
-# Resultados e registros - protocolo 3.1
+# Resultados e registros - protocolo 3.2
 
 Este é o esquema de armazenamento e consolidação dos quatro papéis.
 Leia em conjunto com o [protocolo](protocolo-pontuacao.md) e o [workflow](../workflow.md).
