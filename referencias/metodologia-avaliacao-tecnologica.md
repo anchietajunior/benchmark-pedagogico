@@ -2,8 +2,9 @@
 
 **NOTA HISTÓRICA DE PESQUISA / NÃO NORMATIVA**
 
-As decisões atuais estão no [Protocolo de pontuação 2.1](protocolo-pontuacao.md) e no [workflow](../workflow.md).
-Esta nota preserva as alternativas pesquisadas antes da revisão; em caso de diferença de escala, normalização ou denominador, prevalece o protocolo 2.1.
+As decisões atuais estão no [Protocolo de pontuação 3.0](protocolo-pontuacao.md) e no [workflow](../workflow.md).
+Esta nota preserva as alternativas pesquisadas antes da revisão; códigos T/J e divisões de papéis abaixo são históricos, não instruções de coleta.
+Em caso de diferença de escala, normalização, denominador ou competência, prevalece o protocolo 3.0 com JC, JP, JT e JE.
 
 Consulta: 25/09/2026.
 Recorte: métodos de julgamento, repetibilidade e desempenho operacional das explicações nos quatro temas.

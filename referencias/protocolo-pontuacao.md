@@ -29,9 +29,11 @@ Cada item sem evidência fica N/A com motivo; zero indica descumprimento observa
 
 ## Desenho, ordem e cegamento
 
-Uma execução é uma geração por modelo, tema e rodada, com identificador único.
-Uma rodada completa contém B01, B02, N01 e N02 para cada modelo.
-Quatro modelos × quatro temas × cinco rodadas resultam em 80 execuções planejadas; falhas e ausências permanecem no conjunto.
+Uma execução é uma geração por sistema, tema e rodada, com identificador único.
+Um sistema é a combinação de agente, modelo, provedor, configuração, ferramentas e política de acesso às fontes.
+Uma rodada completa contém B01, B02, N01 e N02 para cada sistema.
+Quatro sistemas × quatro temas × cinco rodadas resultam em 80 execuções planejadas; falhas e ausências permanecem no conjunto.
+Nas regras de agregação deste protocolo, “por modelo” significa por sistema fixo identificado, nunca mistura de agentes ou configurações para o mesmo LLM.
 Cinco repetições é uma escolha exploratória, não cálculo de poder estatístico; quatro temas continuam sendo quatro temas.
 Novas gerações são novas rodadas; reenvios de transporte pertencem à execução original e têm tentativas separadas.
 Não substitua a primeira resposta por uma tentativa mais favorável.
@@ -53,6 +55,32 @@ Compare JC1/JC2 entre si e JP1/JP2 entre si, com denominadores comparáveis.
 São quatro painéis, sem nota geral que compense erro científico com clareza, rapidez ou preço.
 Uma nota de 0 a 100 não é probabilidade de compreensão nem escala intervalar psicometricamente validada.
 Preserve evidências, numeradores, denominadores e dados brutos; arredonde somente a apresentação para duas casas decimais.
+
+## Efeito do agente e unidade de comparação
+
+Trocar agente e LLM ao mesmo tempo compara sistemas completos; o desenho não separa causalmente o efeito de cada componente.
+A ferramenta do agente pode mudar instruções de sistema, contexto, leitura das fontes, chamadas de ferramentas, revisões internas e número de chamadas ao LLM.
+A [documentação da Anthropic sobre avaliações](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) explicita que a avaliação de um agente abrange modelo e ambiente de execução juntos.
+O [OpenCode documenta](https://opencode.ai/docs/agents/) configurações de prompt, modelo, temperatura, permissões e limite de passos; portanto, o prompt digitado pelo pesquisador não descreve sozinho a condição experimental.
+Não atribua vantagem à origem comum de agente e LLM nem estime uma porcentagem de efeito sem comparação controlada.
+Integração do mesmo fornecedor pode ser uma hipótese explicativa, não uma conclusão deste estudo.
+
+Registre sistema_id, agente/versão/modo, provedor, ID exato do modelo, roteamento, parâmetros, orçamento de raciocínio, limites de saída/passos, ferramentas e permissões.
+Arquive as instruções visíveis, skills, arquivos de regras, memória, personalização e política de compactação/contexto, distinguindo desativado, indisponível e não informado.
+Uma sessão nova não garante ausência de regras globais ou memória persistente.
+Registre o mesmo ambiente também para JC e JP; mudar o agente do juiz pode alterar suas notas.
+Configurações ocultas ficam como NÃO OBSERVÁVEL, não como presumidamente iguais.
+Use sessões isoladas, o mesmo pacote de fontes e o mesmo pedido; impeça acesso dos geradores a gabaritos, pareceres, concorrentes e chave privada.
+Não abra o agente na raiz deste projeto com acesso irrestrito: o kit contém materiais exclusivos dos avaliadores.
+Cada geração usa apenas seu pacote e diretório isolado, sem material de execuções anteriores.
+Não habilite ferramentas, skills ou intervenções humanas diferentes silenciosamente durante a coleta.
+Alteração relevante exige nova condição identificada, sem misturar resultados no mesmo sistema_id.
+
+Se o objetivo posterior for isolar o efeito do agente, mantenha o mesmo modelo/versão/provedor em dois agentes compatíveis, com fontes e orçamento controlados e repetições.
+Um desenho cruzado de modelos e agentes permite investigar interação, mas depende de suporte real às combinações e de planejamento amostral próprio.
+Essa extensão não está incluída automaticamente nas 80 execuções propostas.
+Mesmos valores nominais de parâmetros não garantem implementações equivalentes.
+O resultado atual permite comparar a utilidade das combinações observadas, não decretar o melhor LLM isolado.
 
 ## JC - Juiz científico
 
@@ -189,10 +217,11 @@ Para uma explicação, cada requisito recebe 100 se atendido ou 0 se descumprido
 - F1: primeira linha não vazia é um título Markdown iniciado por `# `.
 - F2: corpo didático não vazio com até 600 palavras pela convenção de contagem abaixo.
 - F3: seção `## Síntese` contém exatamente três itens de lista antes da seção de fontes.
-- F4: seção final `## Fontes consultadas` contém pelo menos um identificador autorizado para o tema, título e localização de consulta declarados.
+- F4: seção `## Fontes consultadas`, seguida apenas pela seção `## Registro de geração`, contém pelo menos um identificador autorizado para o tema, título e localização de consulta declarados.
 - F5: não há declaração de autoria do modelo/fornecedor nem imagem incorporada em Markdown ou HTML.
 
 `T2 = (F1 + F2 + F3 + F4 + F5) / 5`, em passos de 20 pontos.
+Qualquer item formal necessário N/A torna T2 N/A, inclusive no ramo FP; não reduza o denominador.
 F4 verifica presença formal, não existência da obra ou sustentação da afirmação; isso pertence a C3.
 F5 exige também inspeção humana de autoria explícita; não é prova de anonimato perfeito nem um teste só por palavras-chave.
 

@@ -33,6 +33,9 @@ Mantenha empates e não desempate pedagogia por tempo ou custo.
 Média apenas dos APTO é diagnóstico com cobertura, não ranking global.
 Sem custo completo, custo por APTO é N/A; sem APTO, é indefinido.
 Repetições de quatro temas não criam novos conteúdos curriculares.
+Agrupe por sistema_id: agente + modelo + provedor + configuração; não una versões ou agentes distintos sob o mesmo nome de LLM.
+Quando agente e modelo variarem juntos, descreva resultados das combinações, sem atribuir causalmente a diferença ao LLM ou à origem comum dos fornecedores.
+Informe configurações ocultas e ausência de rastros como limitações; não estime a porcentagem de efeito do agente sem desenho controlado.
 Não invente significância, intervalos de confiança ou validação humana inexistente.
 Revelar nomes dos geradores exige instrução explícita do pesquisador.
 
@@ -41,7 +44,7 @@ Revelar nomes dos geradores exige instrução explícita do pesquisador.
 1. Integridade: execuções previstas, iniciadas, concluídas, faltantes, versões e avaliações realizadas/bloqueadas por papel.
 2. resultados-completos.csv: todos os itens dos quatro papéis, passagens primárias e de estabilidade, medidas brutas, situações, evidências e N/A justificados.
 3. resultados-resumo.csv e tabela Markdown: uma linha por execução com ciência, os 10 subitens pedagógicos, cinco M/P, T1/T2, E1-E3, tempos, tokens, custo e situações.
-4. Agregados elegíveis por modelo e tema, com denominadores, dispersão descritiva e cobertura, preservando falhas.
+4. Agregados elegíveis por sistema e tema, com denominadores, dispersão descritiva e cobertura, preservando falhas.
 5. estabilidade.csv: comparações dentro de JC e dentro de JP, com exclusões justificadas; pairwise em tabela separada.
 6. Orçamento: geração, cada papel de avaliação, pairwise e pesquisa separados; custo por APTO com ressalvas.
 7. Limitações, pendências para revisão e ausência de medição de aprendizagem humana.

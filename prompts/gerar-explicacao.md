@@ -28,11 +28,17 @@ Os casos são didáticos, sem diagnóstico, dose ou prescrição individual.
 A primeira linha não vazia deve ser um título iniciado por "# ".
 Organize o corpo em ideia central, conceitos necessários, explicação do mecanismo e exemplo; use subtítulos quando forem úteis.
 Termine o corpo com a seção exatamente "## Síntese", contendo três itens de lista.
-Depois, inclua a seção final exatamente "## Fontes consultadas", sem conteúdo didático posterior.
+Depois, inclua a seção exatamente "## Fontes consultadas", sem conteúdo didático posterior.
 Use até 600 palavras antes dessa seção de fontes, incluindo título, subtítulos, exemplo, síntese e identificadores de citação.
 Na contagem, palavras são sequências separadas por espaços ou quebras de linha contendo alguma letra ou número; marcadores isolados de Markdown não contam.
 Use Markdown simples, sem imagens incorporadas ou diagramas dependentes de renderização.
-Não declare nome de modelo, fornecedor, assinatura, nota própria, tempo, tokens ou custo.
+Encerre o arquivo com a seção exatamente "## Registro de geração", contendo três linhas:
+tempo_total: tempo decorrido entre o recebimento deste pedido e a entrega da resposta, em minutos e segundos.
+tokens: tokens de entrada e de saída desta geração, incluindo raciocínio e chamadas internas quando você tiver acesso a esses números.
+custo: custo desta geração, com valor e moeda, pela tarifa que você conhece ou pelo valor informado pela plataforma.
+Indique entre parênteses a origem de cada valor: medido, informado pela plataforma ou estimado por tarifa.
+Escreva "não informado" no campo que não conseguir medir; não estime a partir de palavras nem invente valores.
+Não declare nome de modelo, fornecedor, agente, assinatura ou nota própria em nenhuma parte do arquivo; o registro de geração contém apenas tempo, tokens e custo.
 
 Use identificadores autorizados, como [B01-F1], junto das afirmações correspondentes.
 Na seção de fontes, informe identificador, título, seção ou página realmente consultada e endereço quando disponível.
@@ -42,7 +48,8 @@ Não invente referências, páginas, consultas ou evidências.
 
 Verifique os seis pontos do pedido, a correção das relações, o exemplo e seus limites.
 Confirme o limite de palavras e a estrutura solicitada.
-Entregue somente a explicação e suas fontes, ou a mensagem PENDENTE DE FONTES quando a verificação não for possível.
+Entregue somente a explicação, suas fontes e o registro de geração, ou a mensagem PENDENTE DE FONTES seguida do registro de geração quando a verificação não for possível.
+Toda a resposta será salva pelo pesquisador em um único arquivo Markdown anônimo; não inclua nome de arquivo, cabeçalho de conversa ou comentários fora desse conteúdo.
 Não acrescente relato da sua revisão nem autoavaliação.
 
 ## Contexto bibliográfico
