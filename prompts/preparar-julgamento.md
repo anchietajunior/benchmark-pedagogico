@@ -18,7 +18,8 @@ Não presuma acesso a um caminho citado, ferramenta de arquivos, ZIP, navegaçã
 
 - [Protocolo completo](../referencias/protocolo-pontuacao.md) e [esquema de registros](../referencias/resultados-e-registros.md).
 - Manifesto ~/Documents/coletas/lote.md, registros em ~/Documents/coletas/entrada/ e comprovantes vinculados; o [modelo do kit](../coleta/lote.md) serve apenas como referência.
-- Pacotes dos temas usados em pacotes/ e eventuais anexos realmente enviados na geração.
+- Metaprompts completos dos temas: [B01](gerar-explicacao-bio-01.md), [B02](gerar-explicacao-bio-02.md), [N01](gerar-explicacao-nut-01.md) e [N02](gerar-explicacao-nut-02.md), além dos anexos realmente enviados.
+- Arquivos atuais de pacotes/ e gerar-explicacao.md são índices, não entradas completas; para coletas antigas, use a cópia efetivamente enviada, nunca o redirecionamento como substituto.
 - [Gabaritos](../referencias/gabaritos-conceituais.md), somente para compor os pacotes científicos.
 - Metaprompts de [ciência](avaliar-ciencia.md), [pedagogia](avaliar-pedagogia.md), [tecnologia](apurar-tecnologia.md), [tempo/custo](apurar-tempo-custo.md) e [consolidação](consolidar-resultados.md).
 - [Modelo do certificado](../modelos/certificado-pedagogico.md).
@@ -26,8 +27,11 @@ Não presuma acesso a um caminho citado, ferramenta de arquivos, ZIP, navegaçã
 
 Confira versão, fase, sistemas e tabela de execuções previstas.
 Se ainda houver registros no antigo diretório coleta/ do projeto, solicite qual lote usar; não mova, una ou sobrescreva dados automaticamente.
-Arquivo E001.md corresponde à linha E001.md do lote; não deduza sistema ou tema pelo estilo da resposta.
-Sem ligação inequívoca, marque essa execução PENDENTE DE IDENTIFICAÇÃO e peça uma correção objetiva.
+Ligue cada arquivo pela coluna “Arquivo coletado” do lote, ou pelo ID planejado explicitamente informado e compatível.
+No formato anterior, E001.md corresponde à linha E001.md do lote.
+Um ID automático não permite deduzir sistema, fase, rodada ou posição; o tema explícito do metaprompt deve ser conferido contra o lote.
+Sem ligação inequívoca, marque PENDENTE DE IDENTIFICAÇÃO e peça ao pesquisador somente os vínculos faltantes em uma lista, sem atribuir o arquivo à próxima linha livre.
+Preserve o ID real, o rótulo planejado e sua correspondência no mapa privado, sem renomear originais, alterar a ordem planejada ou contar os dois IDs como duas gerações.
 Não misture piloto, definitiva, configurações diferentes ou versões de protocolo.
 Campos ainda entre colchetes são não preenchidos, não dados observados.
 Registros-modelo e .gitkeep não são execuções realizadas.
@@ -61,7 +65,8 @@ Se a situação for desconhecida, preserve o valor bruto sem decidir essa classi
 Guarde origem, cobertura, unidades das medidas e modo_entrega: arquivo-direto-v1 ou manual-v1.
 Cabeçalho preenchido pelo gerador só fornece medidas válidas quando há logs, comprovantes ou observação do pesquisador; sem evidência, mantenha N/A.
 A confirmação no chat de que o arquivo foi salvo não pertence ao corpo avaliado.
-Registre como pendência qualquer diferença entre execucao_id do cabeçalho, nome do arquivo e manifesto.
+Registre como pendência qualquer diferença entre execucao_id do cabeçalho e nome do arquivo; o manifesto deve apontar para esse arquivo exato.
+Rótulo planejado diferente do ID automático é permitido somente com vínculo explícito registrado; não é duplicação de execução.
 Tokens totais não permitem deduzir entrada/saída; copie os campos disponíveis sem somar cache/raciocínio novamente.
 Não infira consumo, custo, câmbio, primeiro texto ou horário pela extensão do texto.
 Não confunda gasto de julgamento com gasto da geração.

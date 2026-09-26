@@ -13,8 +13,8 @@ Primeiro vem a correção científica; depois, a qualidade didática estimada.
 ## O que você faz
 
 Siga somente o [workflow](workflow.md) para começar.
-Copie o pedido e informe o ID; com acesso local, o agente salvará o registro em ~/Documents/coletas/entrada/.
-Confira a gravação e complete apenas os dados que dependem de observação externa.
+Copie o [arquivo completo do tema](prompts/gerar-explicacao.md); com acesso local, o agente criará o ID e salvará o registro em ~/Documents/coletas/entrada/.
+Confira a gravação, vincule o nome do arquivo ao planejamento e complete os dados que dependem de observação externa.
 O registro reúne dados privados e resposta original; não é o arquivo enviado aos juízes de conteúdo.
 O metaprompt organizador prepara essa separação e uma fila de arquivos para enviar.
 Não é preciso instalar skills, construir tabelas, calcular notas ou criar códigos anônimos manualmente.
