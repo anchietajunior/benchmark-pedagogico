@@ -18,6 +18,7 @@ export async function herdrCommand(args) {
   const { stdout } = await executeFile('herdr', args, {
     env: { ...process.env, HERDR_ENV: '1' }, timeout: 30000, maxBuffer: 1024 * 1024,
   });
+  if (!stdout.trim() && args[0] === 'pane' && args[1] === 'run') return null;
   const response = JSON.parse(stdout);
   if (response.error) throw new Error(`Herdr: ${JSON.stringify(response.error)}`);
   return response.result;

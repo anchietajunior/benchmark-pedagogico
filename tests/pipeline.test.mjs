@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, readdir, copyFile, symlink, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { sha256 } from '../coletor/config.mjs';
@@ -13,6 +15,38 @@ import { escapeHtml } from '../coletor/html-report.mjs';
 const repositoryRoot = resolve(import.meta.dirname, '..');
 const config = { model: 'modelo-teste', reasoning_effort: 'medium', timeout_seconds: 1 };
 const executionId = 'E00000000000000000001';
+const executeFile = promisify(execFile);
+
+test('Herdr aceita sucesso vazio de pane run e exige JSON nos comandos de consulta', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'bench-herdr-cli-test-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  await writeFile(join(directory, 'herdr'), `#!${process.execPath}\nif (process.argv[3] === 'get') console.log(JSON.stringify({ result: { pane: { pane_id: 'wtest:p2' } } }));\n`, { mode: 0o700 });
+  const script = `import { herdrCommand } from ${JSON.stringify(new URL('../coletor/herdr.mjs', import.meta.url).href)}; console.log(JSON.stringify(await herdrCommand(JSON.parse(process.argv[1]))));`;
+  const options = { env: { ...process.env, PATH: directory } };
+  const run = await executeFile(process.execPath, ['--input-type=module', '-e', script, JSON.stringify(['pane', 'run', 'wtest:p2', 'true'])], options);
+  assert.equal(run.stdout.trim(), 'null');
+  const get = await executeFile(process.execPath, ['--input-type=module', '-e', script, JSON.stringify(['pane', 'get', 'wtest:p2'])], options);
+  assert.equal(JSON.parse(get.stdout).pane.pane_id, 'wtest:p2');
+  await assert.rejects(executeFile(process.execPath, ['--input-type=module', '-e', script, JSON.stringify(['pane', 'current', '--current'])], options), /JSON/);
+});
+
+test('worker inicia por diretório simbólico e registra conclusão sem chamar Codex real', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'bench-worker-link-test-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const workspace = join(directory, 'workspace');
+  const alias = join(directory, 'alias');
+  await mkdir(workspace);
+  await symlink(workspace, alias, 'dir');
+  await copyFile(new URL('../coletor/codex-worker.mjs', import.meta.url), join(workspace, 'worker.mjs'));
+  await writeFile(join(workspace, 'config.json'), JSON.stringify(config));
+  await writeFile(join(workspace, 'pedido.md'), 'Teste local.');
+  await writeFile(join(directory, 'codex'), `#!${process.execPath}\nprocess.stdin.resume();\nconsole.log(JSON.stringify({ type: 'turn.completed' }));\n`, { mode: 0o700 });
+  await executeFile(process.execPath, [join(alias, 'worker.mjs')], { env: { ...process.env, PATH: directory } });
+  const completed = JSON.parse(await readFile(join(workspace, 'concluido.json'), 'utf8'));
+  assert.equal(completed.exit_code, 0);
+  assert.equal(completed.error, null);
+  await assert.rejects(executeFile(process.execPath, [join(alias, 'worker.mjs')], { env: { ...process.env, PATH: directory } }), /EEXIST/);
+});
 
 async function fixture({ missing = false, content = '# Explicação sintética\nTexto de teste.' } = {}) {
   const directory = await mkdtemp(join(tmpdir(), 'bench-pipeline-test-'));

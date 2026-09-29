@@ -16,10 +16,10 @@ async function apiKey() {
   return environment.OPENROUTER_API_KEY;
 }
 
-async function confirm(message) {
+async function confirm() {
   if (!process.stdin.isTTY) throw new Error('Use um terminal interativo ou --confirmar para autorizar as chamadas.');
   const terminal = createInterface({ input: process.stdin, output: process.stdout });
-  try { return await terminal.question(`${message}\nDigite EXECUTAR para começar: `) === 'EXECUTAR'; }
+  try { return await terminal.question('Digite EXECUTAR para começar: ') === 'EXECUTAR'; }
   finally { terminal.close(); }
 }
 
@@ -52,7 +52,7 @@ async function main() {
   }
   const runtime = await checkJudgmentRuntime();
   const key = study ? await apiKey() : null;
-  if (!values.confirmar && !(await confirm(message))) return;
+  if (!values.confirmar && !(await confirm())) return;
   const controller = new AbortController();
   const interrupt = () => controller.abort();
   process.once('SIGINT', interrupt);

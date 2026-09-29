@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { open, readFile, writeFile } from 'node:fs/promises';
+import { open, readFile, writeFile, realpath } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -66,7 +66,7 @@ export async function executeCodexJob(directory) {
   await writeFile(join(directory, 'concluido.json'), JSON.stringify({ ...result, started_at: startedAt, ended_at: new Date().toISOString() }), { flag: 'wx', mode: 0o600 });
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(await realpath(resolve(process.argv[1]))).href) {
   try { await executeCodexJob(import.meta.dirname); }
   catch (error) { console.error(error.message); process.exitCode = 1; }
 }
