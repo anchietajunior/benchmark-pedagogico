@@ -12,10 +12,13 @@ Não cria branches ou worktrees.
 npm run executar -- --simular
 npm run executar
 npm run executar -- --modelo-juiz gpt-6-sol --esforco-juiz medium
+npm run executar -- --retomar
 npm run executar -- --retomar "CAMINHO_DO_LOTE"
 ```
 
 O modo de simulação é estritamente local, sem catálogo remoto, panes ou modelos.
+`--retomar` sem caminho seleciona o lote compatível mais recente pela data de criação em `output_dir`, inclusive quando já concluído, e informa o caminho antes da confirmação.
+Se não houver lote, o comando encerra sem iniciar coleta; para conferir a seleção sem chamadas, use `--retomar --simular`.
 A execução real exige Codex CLI autenticado e as opções `--ignore-user-config`, `--ignore-rules`, `--ephemeral` e `--output-schema`.
 Herdr e opções do Codex são conferidos antes das gerações OpenRouter.
 A confirmação `EXECUTAR` autoriza geração, julgamentos elegíveis e consolidação; `--confirmar` permite autorização explícita em automações.

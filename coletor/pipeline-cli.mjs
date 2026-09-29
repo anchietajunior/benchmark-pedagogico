@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { parseArgs, parseEnv } from 'node:util';
+import { parseEnv } from 'node:util';
 import { createInterface } from 'node:readline/promises';
 import { join, resolve, dirname } from 'node:path';
 import { loadStudy } from './config.mjs';
@@ -7,6 +7,7 @@ import { collectBatch } from './collector.mjs';
 import { checkJudgmentRuntime, readJsonIfPresent } from './herdr.mjs';
 import { judgeBatch, validateJudgeConfig } from './pipeline.mjs';
 import { acquireOutputLock } from './output-lock.mjs';
+import { findLatestBatch, parsePipelineOptions } from './pipeline-options.mjs';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
 
@@ -25,13 +26,15 @@ async function confirm() {
 }
 
 async function main() {
-  const { values } = parseArgs({ options: {
-    simular: { type: 'boolean' }, confirmar: { type: 'boolean' }, retomar: { type: 'string' },
-    'modelo-juiz': { type: 'string' }, 'esforco-juiz': { type: 'string' }, help: { type: 'boolean' },
-  } });
+  const values = parsePipelineOptions(process.argv.slice(2));
   if (values.help) {
-    console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz medium] [--confirmar] [--retomar CAMINHO_DO_LOTE]');
+    console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz medium] [--confirmar] [--retomar [CAMINHO_DO_LOTE]]');
+    console.log('--retomar sem caminho seleciona o lote mais recente em output_dir.');
     return;
+  }
+  if (values.retomar === '') {
+    values.retomar = await findLatestBatch(join(repositoryRoot, 'openrouter.config.json'));
+    console.log(`Lote mais recente selecionado: ${values.retomar}`);
   }
   const saved = values.retomar ? await readJsonIfPresent(join(resolve(values.retomar), 'privado/julgamento.json')) : null;
   const config = {

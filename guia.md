@@ -178,7 +178,14 @@ Os arquivos `resultados-completos.csv`, `resultados-resumo.csv` e `estabilidade.
 
 ## 6. Se o processo for interrompido
 
-Para retomar os julgamentos do mesmo lote, volte à pasta do projeto e execute:
+Para retomar o lote mais recente, volte à pasta do projeto e execute:
+
+```sh
+npm run executar -- --retomar
+```
+
+O comando escolhe o lote pela data de criação em `output_dir` e mostra o caminho antes da confirmação.
+Para escolher um lote específico, informe o caminho:
 
 ```sh
 npm run executar -- --retomar "/caminho/completo/do/lote"
