@@ -2,7 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { readJsonIfPresent } from './herdr.mjs';
+import { readJsonIfPresent } from './artifacts.mjs';
 
 export function parsePipelineOptions(args) {
   const normalizedArgs = args.map((argument, index) => {

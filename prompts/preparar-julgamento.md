@@ -18,7 +18,7 @@ Não presuma acesso a um caminho citado, ferramenta de arquivos, ZIP, navegaçã
 
 - [Protocolo completo](../referencias/protocolo-pontuacao.md) e [esquema de registros](../referencias/resultados-e-registros.md).
 - Manifesto ~/Documents/coletas/lote.md, registros em ~/Documents/coletas/entrada/ e comprovantes vinculados; o [modelo do kit](../coleta/lote.md) serve apenas como referência.
-- Metaprompts completos dos temas: [B01](gerar-explicacao-bio-01.md), [B02](gerar-explicacao-bio-02.md), [N01](gerar-explicacao-nut-01.md) e [N02](gerar-explicacao-nut-02.md), além dos anexos realmente enviados.
+- Metaprompts completos dos temas: [B01](gerar-explicacao-bio-01.md) e [B02](gerar-explicacao-bio-02.md), além dos anexos realmente enviados.
 - Para condicao_experimental: openrouter-v1, use o pedido efetivo em comprovantes/ID/pedido.json, os trechos incorporados e privado/protocolo.md; não substitua esses insumos pelos prompts manuais acima.
 - Arquivos atuais de pacotes/ e gerar-explicacao.md são índices, não entradas completas; para coletas antigas, use a cópia efetivamente enviada, nunca o redirecionamento como substituto.
 - [Gabaritos](../referencias/gabaritos-conceituais.md), somente para compor os pacotes científicos.

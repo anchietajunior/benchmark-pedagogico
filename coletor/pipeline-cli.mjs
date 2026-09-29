@@ -4,7 +4,8 @@ import { createInterface } from 'node:readline/promises';
 import { join, resolve, dirname } from 'node:path';
 import { loadStudy } from './config.mjs';
 import { collectBatch } from './collector.mjs';
-import { checkJudgmentRuntime, readJsonIfPresent } from './herdr.mjs';
+import { readJsonIfPresent } from './artifacts.mjs';
+import { checkJudgmentRuntime } from './claude-judge.mjs';
 import { judgeBatch, validateJudgeConfig } from './pipeline.mjs';
 import { acquireOutputLock } from './output-lock.mjs';
 import { findLatestBatch, parsePipelineOptions } from './pipeline-options.mjs';
@@ -31,9 +32,9 @@ async function confirm() {
 async function main() {
   const values = parsePipelineOptions(process.argv.slice(2));
   if (values.help) {
-    console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz medium] [--confirmar] [--retomar [CAMINHO_DO_LOTE]] [--revalidar] [--nao-abrir]');
+    console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz low|medium|high|xhigh|max] [--confirmar] [--retomar [CAMINHO_DO_LOTE]] [--revalidar] [--nao-abrir]');
     console.log('--retomar sem caminho seleciona o lote mais recente em output_dir.');
-    console.log('--revalidar recupera apenas os arquivos existentes, sem rede, Herdr ou modelos; usa o último lote se nenhum caminho for informado.');
+    console.log('--revalidar recupera apenas os arquivos existentes, sem rede ou modelos; usa o último lote se nenhum caminho for informado.');
     console.log('Respostas incompletas e pareceres sem conclusão válida são descartados das notas e documentados no relatório final.');
     return;
   }
@@ -44,7 +45,7 @@ async function main() {
   }
   const saved = values.retomar ? await readJsonIfPresent(join(resolve(values.retomar), 'privado/julgamento.json')) : null;
   const config = {
-    model: values['modelo-juiz'] ?? saved?.config.model ?? 'gpt-6-sol',
+    model: values['modelo-juiz'] ?? saved?.config.model ?? 'claude-opus-5-5',
     reasoning_effort: values['esforco-juiz'] ?? saved?.config.reasoning_effort ?? 'medium',
     timeout_seconds: saved?.config.timeout_seconds ?? 900,
   };
@@ -63,10 +64,10 @@ async function main() {
   const batch = values.retomar ? await readJsonIfPresent(join(resolve(values.retomar), 'batch.json')) : null;
   if (values.retomar && batch?.condition !== 'openrouter-v1') throw new Error('O diretório não contém lote OpenRouter compatível.');
   const count = study ? study.config.models.length * study.materials.length * study.config.rounds : batch.executions.length;
-  const message = values.revalidar ? 'Revalidação local: nenhuma rede, geração, pane ou chamada de modelo. Relatórios anteriores serão arquivados.' : `${study ? count : 0} novas gerações OpenRouter; até ${count * 6} julgamentos e 1 consolidação Codex (${config.model}, ${config.reasoning_effort}).\nJP depende de APTO científico; somente o consolidador recebe o mapa código-modelo. Chamadas já iniciadas não são reenviadas.`;
+  const message = values.revalidar ? 'Revalidação local: nenhuma rede, geração ou chamada de modelo. Relatórios anteriores serão arquivados.' : `${study ? count : 0} novas gerações OpenRouter; até ${count * 6} julgamentos e 1 consolidação Claude (${config.model}, ${config.reasoning_effort}).\nJP depende de APTO científico; somente o consolidador recebe o mapa código-modelo. Julgamentos concluídos não são repetidos ao retomar.`;
   console.log(message);
   if (values.simular) {
-    console.log('Simulação local concluída: nenhuma rede, pane, geração ou julgamento iniciado.');
+    console.log('Simulação local concluída: nenhuma rede, geração ou julgamento iniciado.');
     return;
   }
   const runtime = values.revalidar ? null : await checkJudgmentRuntime();
@@ -86,7 +87,7 @@ async function main() {
     console.log(`Lote para retomada: ${batchDirectory}`);
     if (controller.signal.aborted) throw new Error('Execução interrompida após a coleta; retome este lote.');
     const result = await judgeBatch(batchDirectory, {
-      repositoryRoot, config, runtime, caller_pane: runtime?.caller_pane, localOnly: Boolean(values.revalidar), signal: controller.signal, onProgress: console.log,
+      repositoryRoot, config, runtime, localOnly: Boolean(values.revalidar), signal: controller.signal, onProgress: console.log,
     });
     const reportPath = join(result.consolidation.directory, 'resultados.html');
     const blocked = Object.values(result.completed).flatMap(Object.values).filter((judgment) => judgment.status === 'BLOQUEADO').length;

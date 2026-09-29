@@ -17,8 +17,6 @@ Sistema significa agente + modelo + configuração; registre os nomes exibidos e
 | --- | --- |
 | Biomedicina | [B01 - Hemostasia e coagulação](prompts/gerar-explicacao-bio-01.md) |
 | Biomedicina | [B02 - Resposta imune e memória](prompts/gerar-explicacao-bio-02.md) |
-| Nutrição | [N01 - Metabolismo energético](prompts/gerar-explicacao-nut-01.md) |
-| Nutrição | [N02 - Regulação do ferro](prompts/gerar-explicacao-nut-02.md) |
 
 Copie o arquivo inteiro: não há campos de tema, bibliografia ou pergunta para preencher.
 A versão 3.2 pede de 800 a 1.200 palavras, com mecanismo desenvolvido, exemplo explicado, duas confusões esclarecidas e duas perguntas com respostas comentadas.

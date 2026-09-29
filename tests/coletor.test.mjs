@@ -8,6 +8,7 @@ import { collectBatch, recoverBatch } from '../coletor/collector.mjs';
 import { verifyModelEndpoints } from '../coletor/catalog.mjs';
 import { initializeConfig } from '../coletor/config.mjs';
 import { receiveGeneration } from '../coletor/openrouter.mjs';
+import { replaceFailedSystem } from '../coletor/replace-system.mjs';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
@@ -381,14 +382,14 @@ test('falha numa conciliação não apaga valores já confirmados', async () => 
 test('todos os temas reutilizam os seis pontos canônicos e fontes específicas', async () => {
   const { directory, config, configPath } = await prepareStudy();
   const topics = [];
-  for (const id of ['B01', 'B02', 'N01', 'N02']) {
+  for (const id of ['B01', 'B02']) {
     const sourceFile = join(directory, `${id}.md`);
     await writeFile(sourceFile, `# ${id}-F1 - Fonte sintética do teste ${id}\nTrecho exclusivo do tema ${id}.`);
     topics.push({ id, source_file: sourceFile, sources_reviewed: true });
   }
   await writeFile(configPath, JSON.stringify({ ...config, topics }));
   const study = await loadStudy(configPath, repositoryRoot);
-  assert.equal(study.materials.length, 4);
+  assert.equal(study.materials.length, 2);
   for (const material of study.materials) {
     const userMessage = material.messages[1].content;
     assert.equal((userMessage.match(/^\d\. /gm) ?? []).length, 6);
@@ -420,4 +421,50 @@ test('recuperar não inventa tempo perdido após encerramento abrupto', async ()
   assert.equal(recovered.records[0].first_text_seconds, null);
   assert.equal(recovered.records[0].telemetry_status, 'PENDENTE');
   assert.equal(recovered.records[0].cost_usd, 0.002);
+});
+
+test('refazer substitui somente o sistema sem texto, preserva a tentativa antiga e atualiza os juízes', async () => {
+  const models = [{ id: 'S01', model: 'vendor/model-fail', provider: 'vendor' }, { id: 'S02', model: 'vendor/model-test', provider: 'vendor' }];
+  const { study } = await prepareStudy({ models });
+  const postedModels = [];
+  const fetchImpl = async (url, options) => {
+    const address = String(url);
+    if (address.endsWith('/endpoints')) {
+      const modelId = address.split('/models/')[1].replace('/endpoints', '');
+      return Response.json({ data: { endpoints: [{ tag: 'vendor', provider_name: 'Vendor', model_id: modelId, status: 0, supported_parameters: ['temperature', 'max_tokens'] }] } });
+    }
+    if (options.method === 'POST') {
+      const model = JSON.parse(options.body).model;
+      postedModels.push(model);
+      if (model === 'vendor/model-fail') return Response.json({ error: { code: 529, message: 'Provider overloaded' } }, { status: 529 });
+      return generationStream();
+    }
+    return metadataResponse();
+  };
+  const { batchDirectory } = await collectBatch(study, { apiKey: 'secret-test-key', fetchImpl, metadataAttempts: 1 });
+  const original = JSON.parse(await readFile(join(batchDirectory, 'batch.json'), 'utf8'));
+  const failed = original.executions.find((execution) => execution.system_id === 'S01');
+  const answered = original.executions.find((execution) => execution.system_id === 'S02');
+  const frozen = (execution) => ({ execution_id: execution.execution_id, system_id: execution.system_id, answer_key: 'Gabarito sintético.' });
+  await writeFile(join(batchDirectory, 'privado/julgamento.json'), JSON.stringify({ models, executions: [frozen(failed), frozen(answered)] }));
+  await assert.rejects(replaceFailedSystem(batchDirectory, 'S02', models[1], { apiKey: 'secret-test-key', fetchImpl }), /só é possível refazer/);
+
+  const newModel = { model: 'vendor/model-new', provider: 'vendor' };
+  await replaceFailedSystem(batchDirectory, 'S01', newModel, { apiKey: 'secret-test-key', fetchImpl, metadataAttempts: 1 });
+  assert.deepEqual(postedModels.toSorted(), ['vendor/model-fail', 'vendor/model-new', 'vendor/model-test']);
+  const batch = JSON.parse(await readFile(join(batchDirectory, 'batch.json'), 'utf8'));
+  const replacement = batch.executions.find((execution) => execution.system_id === 'S01');
+  assert.equal(batch.config.models[0].model, 'vendor/model-new');
+  assert.notEqual(replacement.execution_id, failed.execution_id);
+  assert.equal(replacement.order, failed.order);
+  assert.equal(batch.replacements[0].replaced_executions[0].execution_id, failed.execution_id);
+  assert.ok((await readdir(join(batchDirectory, 'comprovantes'))).includes(failed.execution_id));
+  assert.match(await readFile(join(batchDirectory, 'comprovantes', replacement.execution_id, 'resposta.md'), 'utf8'), /coagulação/);
+  const state = JSON.parse(await readFile(join(batchDirectory, 'privado/julgamento.json'), 'utf8'));
+  assert.equal(state.models[0].model, 'vendor/model-new');
+  assert.equal(state.executions[0].execution_id, replacement.execution_id);
+  assert.match(state.executions[0].content, /coagulação/);
+  assert.equal(state.executions[0].answer_key, 'Gabarito sintético.');
+  assert.deepEqual(state.executions[1], frozen(answered));
+  assert.match(await readFile(join(batchDirectory, 'lote.md'), 'utf8'), /Substituição de sistema/);
 });

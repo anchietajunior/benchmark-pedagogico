@@ -51,7 +51,7 @@ O campo de custo observado do OpenCode é zero, mas isso, isoladamente, não com
 ## Fluxo proposto para o pesquisador
 
 1. Abra um lançador local e escolha Codex, Claude Code ou OpenCode.
-2. Escolha B01, B02, N01 ou N02 e inicie a coleta.
+2. Escolha B01 ou B02 e inicie a coleta.
 3. Receba o caminho do registro e a confirmação `COLETA COMPLETA`, ou uma falha de coleta explícita.
 
 Modelos, versões, configurações, permissões e política de custo serão definidos uma vez por perfil, antes do lote.

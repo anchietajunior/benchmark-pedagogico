@@ -129,7 +129,10 @@ export function validateJudgment(result, identity) {
     checkCalculation(items.get('C1'), average(knowledge));
     checkCalculation(items.get('C2'), average(assertions));
     checkCalculation(items.get('C3'), average(references));
-    const invalidApproval = !assertions.length || [...knowledge, ...assertions, ...references].some((item) => item.score !== 100) || result.blockers.length > 0;
+    const hasSustainedAssertion = assertions.some((item) => item.score === 100);
+    const hasContradictedAssertion = assertions.some((item) => item.score === 0);
+    const hasUnconfirmedEvidence = [...knowledge, ...references].some((item) => item.score !== 100);
+    const invalidApproval = !hasSustainedAssertion || hasContradictedAssertion || hasUnconfirmedEvidence || result.blockers.length > 0;
     if (result.status === 'APTO' && invalidApproval) throw new Error('APTO incompatível com itens ou impedimentos.');
   }
   if (family === 'JP') {

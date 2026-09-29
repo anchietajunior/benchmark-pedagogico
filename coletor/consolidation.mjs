@@ -1,11 +1,10 @@
 import { mkdir, readFile, copyFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { replaceDerivedFile } from './artifacts.mjs';
+import { readJsonIfPresent, replaceDerivedFile } from './artifacts.mjs';
 import { fixedItems, roleFamily } from './judgments.mjs';
-import { readJsonIfPresent } from './herdr.mjs';
 import { writeHtmlReport } from './html-report.mjs';
 import { recordedItems } from './record-results.mjs';
-import { sha256 } from './config.mjs';
+import { sha256, studyTopicIds } from './config.mjs';
 import { assessPipelineCompletion } from './pipeline-completion.mjs';
 
 const completeColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,codigo_publico,papel,passagem,item,nota_0_100,valor_bruto,unidade,numerador,denominador,situacao,execucao_avaliacao,avaliador_config_id,metodo_verificacao,arquivo_origem,evidencia,motivo_na'.split(',');
@@ -64,7 +63,7 @@ function detailedRows(execution, phase, judgments) {
       nota_0_100: item.score, valor_bruto: item.value, unidade: item.unit,
       numerador: item.numerator, denominador: item.denominator, situacao: judgment.status,
       execucao_avaliacao: item.verification_method ? 'APURAÇÃO LOCAL' : judgment.executed ? 'EXECUTADO' : 'NÃO EXECUTADO',
-      avaliador_config_id: item.verification_method ? null : judgment.executed ? 'CODEX-01' : null,
+      avaliador_config_id: item.verification_method ? null : judgment.executed ? 'CLAUDE-01' : null,
       metodo_verificacao: item.verification_method ?? (judgment.result || judgment.partial_items?.includes(item) ? 'LLM' : 'REGISTRO ADMINISTRATIVO'),
       arquivo_origem: item.verification_method ? `comprovantes/${execution.execution_id}/metricas.json` : sourceFile(judgment),
       evidencia: item.evidence, motivo_na: item.reason_na,
@@ -82,7 +81,7 @@ function hasScientificDispute(judgments) {
 function summaryRow(execution, phase, judgments) {
   const available = Object.fromEntries(Object.entries(judgments).map(([role, judgment]) => [role, { partial_items: availableItems(execution, judgment) }]));
   const row = { ...commonFields(execution, phase) };
-  for (const [role, pattern] of [['JC1', /^(K\d|C\d)$/], ['JP1', /^(M\d(?:\.\d)?|P)$/], ['JT', /^T\d$/], ['JE', /^E\d$/]]) {
+  for (const [role, pattern] of [['JC1', /^(K\d|C\d)$/], ['JP1', /^(M\d(?:\.\d)?|P)$/], ['JT', /^(T\d|F\d)$/], ['JE', /^E\d$/]]) {
     for (const id of fixedItems[roleFamily(role)].filter((id) => pattern.test(id))) row[id] = itemValue(available[role], id);
   }
   const efficiency = { latencia_total_s: 'LATENCIA_TOTAL_S', primeiro_texto_s: 'PRIMEIRO_TEXTO_S', tempo_ate_falha_s: 'TEMPO_ATE_FALHA_S', tokens_entrada: 'TOKENS_ENTRADA', tokens_saida: 'TOKENS_SAIDA', custo_geracao_brl: 'CUSTO_GERACAO_BRL', origem_custo: 'ORIGEM_CUSTO', metas_versao: 'METAS_VERSAO' };
@@ -175,10 +174,23 @@ function globalRows(summary) {
     groups.get(key).push(row);
   }
   return [...groups.values()].map((rows) => {
-    const hasFourTopics = rows.length === 4 && new Set(rows.map((row) => row.tema)).size === 4;
-    const eligible = hasFourTopics && rows.every((row) => row.situacao_JC1 === 'APTO' && row.situacao_JP1 === 'CONCLUÍDO' && !row.contestacao_cientifica && row.P !== null);
-    return { sistema_id: rows[0].sistema_id, rodada: rows[0].rodada, elegivel: eligible, P_global: eligible ? mean(rows.map((row) => row.P)) : null, motivo: eligible ? 'Resultado provisório; revisão humana pendente.' : 'Exige quatro temas APTO e quatro P completos, sem contestação.' };
+    const coversStudyTopics = rows.length === studyTopicIds.length && studyTopicIds.every((topic) => rows.some((row) => row.tema === topic));
+    const eligible = coversStudyTopics && rows.every((row) => row.situacao_JC1 === 'APTO' && row.situacao_JP1 === 'CONCLUÍDO' && !row.contestacao_cientifica && row.P !== null);
+    return { sistema_id: rows[0].sistema_id, rodada: rows[0].rodada, elegivel: eligible, P_global: eligible ? mean(rows.map((row) => row.P)) : null, motivo: eligible ? 'Resultado provisório; revisão humana pendente.' : `Exige ${studyTopicIds.join(' e ')} com APTO e P completos, sem contestação.` };
   });
+}
+
+async function readClaudeUsage(directory) {
+  let output;
+  try { output = JSON.parse(await readFile(join(directory, 'saida.json'), 'utf8')); }
+  catch (error) { if (error.code === 'ENOENT' || error instanceof SyntaxError) return null; throw error; }
+  const usage = output.usage;
+  const counts = [usage?.input_tokens, usage?.cache_creation_input_tokens, usage?.cache_read_input_tokens, usage?.output_tokens];
+  if (!counts.every((count) => Number.isSafeInteger(count) && count >= 0)) return null;
+  return {
+    input: usage.input_tokens + usage.cache_creation_input_tokens + usage.cache_read_input_tokens,
+    cache: usage.cache_read_input_tokens, output: usage.output_tokens,
+  };
 }
 
 async function judgmentBudget(batchDirectory, completed) {
@@ -197,18 +209,11 @@ async function judgmentBudget(batchDirectory, completed) {
         let files;
         try { files = await readdir(directory); }
         catch (error) { if (error.code === 'ENOENT') continue; throw error; }
-        if (!files.some((filename) => ['envio.json', 'iniciado.json', 'concluido.json', 'aceito.json'].includes(filename))) continue;
+        if (!files.some((filename) => ['envio.json', 'concluido.json', 'aceito.json'].includes(filename))) continue;
       }
       const completion = await readJsonIfPresent(join(directory, 'concluido.json'));
-      let events = '';
-      try { events = await readFile(join(directory, 'eventos.jsonl'), 'utf8'); }
-      catch (error) { if (error.code !== 'ENOENT') throw error; }
-      let turns = [];
-      let invalidEvents = false;
-      try { turns = events.split('\n').filter(Boolean).map((line) => JSON.parse(line)).filter((entry) => entry.type === 'turn.completed'); }
-      catch (error) { if (!(error instanceof SyntaxError)) throw error; invalidEvents = true; }
-      const knownTokens = (field) => turns.length && turns.every((turn) => Number.isSafeInteger(turn.usage?.[field]) && turn.usage[field] >= 0) ? turns.reduce((sum, turn) => sum + turn.usage[field], 0) : null;
-      rows.push({ categoria: isConsolidator ? 'consolidação' : 'julgamento', papel: judgment.role, codigo: judgment.code, inicio: completion?.started_at, fim: completion?.ended_at, tokens_entrada: knownTokens('input_tokens'), tokens_cache: knownTokens('cached_input_tokens'), tokens_saida: knownTokens('output_tokens'), custo_brl: null, motivo_na: `${invalidEvents ? 'Eventos incompletos ou JSON inválido; consumo do julgamento não confirmado. ' : ''}Codex CLI não comprova cobrança marginal; assinatura não é custo por resposta.` });
+      const usage = await readClaudeUsage(directory);
+      rows.push({ categoria: isConsolidator ? 'consolidação' : 'julgamento', papel: judgment.role, codigo: judgment.code, inicio: completion?.started_at, fim: completion?.ended_at, tokens_entrada: usage?.input ?? null, tokens_cache: usage?.cache ?? null, tokens_saida: usage?.output ?? null, custo_brl: null, motivo_na: `${usage ? '' : 'Saída ausente ou JSON inválido; consumo do julgamento não confirmado. '}saida.json traz o custo de tabela do Claude Code; assinatura não comprova cobrança marginal.` });
     }
   }
   return rows;
@@ -252,7 +257,7 @@ export async function consolidateResults(batchDirectory, state, completed, optio
     ...completion.discards.map((discard) => `- DESCARTADO ${discard.system_id}/${discard.topic}/${discard.stage}: ${discard.reason}`), '',
     ...completion.missing_measurements.map((measure) => `- N/A ${measure.system_id}/${measure.topic}/${measure.stage}: ${measure.reason}`), '',
     `Protocolo 3.2; fase ${state.phase}; ${summary.length} execuções planejadas preservadas.`,
-    'Consolidação programática v1; os pareceres são do Codex e permanecem provisórios até revisão humana.',
+    'Consolidação programática v1; os pareceres são do Claude e permanecem provisórios até revisão humana.',
     `${budget.filter((row) => row.categoria === 'julgamento').length} chamadas de julgamento e ${budget.filter((row) => row.categoria === 'consolidação').length} consolidação(ões) registradas; ${pending} pendências administrativas ou de avaliação.`,
     `${approved} APTO primários; custo conhecido de geração: ${knownCosts.some((value) => value !== null) ? `R$ ${partialCost}` : 'N/A - nenhuma cobrança confirmada'}; cobertura ${knownCosts.filter((value) => value !== null).length}/${knownCosts.length}.`,
     `Custo por APTO primário: ${costPerApproved}. Inclui todas as gerações do lote, inclusive falhas.`,
@@ -261,7 +266,7 @@ export async function consolidateResults(batchDirectory, state, completed, optio
     '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...summary.map((row) => `| ${row.execucao_id} | ${row.sistema_id} | ${row.tema} | ${row.rodada} | ${row.situacao_JC1} | ${row.situacao_JP1} | ${row.P ?? 'N/A'} | ${row.T1 ?? 'N/A'} | ${row.T2 ?? 'N/A'} | ${row.E1 ?? 'N/A'} | ${row.E2 ?? 'N/A'} | ${row.E3 ?? 'N/A'} |`), '',
     'As tabelas completas preservam os itens e motivos de N/A; agregados.csv mostra a cobertura e a dispersão dos resultados elegíveis por sistema e tema.',
-    'global-por-rodada.csv exige os quatro temas com APTO e P completos. Um piloto com um tema não produz média global.',
+    `global-por-rodada.csv exige os temas do estudo (${studyTopicIds.join(' e ')}) com APTO e P completos. Um lote com um só tema não produz média global.`,
     'JC2/JP2 são estabilidade, nunca substitutos de JC1/JP1. Inventários A/V não foram alinhados semanticamente para concordância.',
     'Desacordos de JC e alertas de JP exigem revisão especializada. Não há medição de compreensão ou aprendizagem humana.',
     'A detecção de identidade é conservadora e não garante anonimato estilístico. F5 e fontes exigem revisão humana.',

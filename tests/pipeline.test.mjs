@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, mkdir, readFile, writeFile, readdir, copyFile, symlink, rm, realpath } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, readdir, rm } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
@@ -8,8 +8,7 @@ import { join, resolve } from 'node:path';
 import { sha256 } from '../coletor/config.mjs';
 import { judgeBatch, identityConcern } from '../coletor/pipeline.mjs';
 import { fixedItems, roleFamily, validateJudgment, renderJudgePrompt, judgmentSchemaFor, assertSchema } from '../coletor/judgments.mjs';
-import { runHerdrJob, readArchivedHerdrResult } from '../coletor/herdr.mjs';
-import { codexArguments, codexEnvironment } from '../coletor/codex-worker.mjs';
+import { claudeArguments, claudeEnvironment, runClaudeJob } from '../coletor/claude-judge.mjs';
 import { buildModelRanking, escapeHtml, renderResultsHtml } from '../coletor/html-report.mjs';
 import { recoverValidItems } from '../coletor/judgment-recovery.mjs';
 import { openReport } from '../coletor/report-output.mjs';
@@ -97,8 +96,39 @@ test('HTML exibe somente uma tabela de ranking com nomes escapados e falhas em z
   const html = renderResultsHtml(state, summary);
   assert.equal(html.match(/<table>/g).length, 1);
   assert.match(html, /<td>1<\/td><td>&lt;script&gt;alert\(&quot;modelo&quot;\)&lt;\/script&gt;&amp;<\/td><td>75,25<\/td><td>CONCLUÍDO<\/td>/);
-  assert.match(html, /<td>2<\/td><td>vendor\/model-2<\/td><td>0<\/td><td>ERRO<\/td>/);
+  assert.match(html, /<td>2<\/td><td>vendor\/model-2<\/td><td>0<\/td><td>ERRO<\/td><td>N\/A<\/td><td>N\/A<\/td><td>N\/A<\/td>/);
   assert.doesNotMatch(html, /<script>|<details>|Material usado|Notas por execução|Leitura do consolidador/);
+});
+
+test('HTML explica abaixo da tabela os critérios científicos, acadêmicos, tecnológicos e de custo', async () => {
+  const { state, summary } = rankingFixture([90]);
+  const answerKeys = await readFile(join(repositoryRoot, 'referencias/gabaritos-conceituais.md'), 'utf8');
+  state.config = { model: 'claude-teste', reasoning_effort: 'medium' };
+  state.protocol = 'Protocolo sintético.\nPúblico: graduando de Biomedicina do teste.\n';
+  state.executions[0].topic = 'B01';
+  state.executions[0].answer_key = answerKeys.split(/(?=^## )/m).find((part) => part.startsWith('## B01 -'));
+  const html = renderResultsHtml(state, summary, new Map(), { rate: 5.2132, date: '2026-09-28' });
+  const criteria = html.slice(html.indexOf('</table>'));
+  for (const expected of ['Científico - juiz JC', 'Acadêmico - juiz JP', 'Tecnológico - juiz JT', 'Custos - juiz JE', 'B01 - Hemostasia e coagulação', 'Plaquetas aderem ao local', 'M4 Explicação causal', 'F2 - o corpo didático tem de 800 a 1.200 palavras', 'claude-teste', 'R$\u00a05,2132 por dólar, cotação de 28/09/2026', 'o público definido no protocolo: graduando de Biomedicina do teste.']) {
+    assert.ok(criteria.includes(expected), expected);
+  }
+  assert.equal(criteria.match(/<ol>/g).length, 1);
+  assert.equal(html.match(/<table>/g).length, 1);
+  assert.ok(criteria.includes('&quot;# &quot;'));
+});
+
+test('colunas por dimensão exigem o dado em todas as execuções do modelo e não viram zero', () => {
+  const { state, summary } = rankingFixture([90, 80]);
+  Object.assign(summary[0], { F1: 100, F2: 0, F3: 100, F4: 100 });
+  Object.assign(summary[1], { F1: 100, F2: 100, F3: 100, F4: null });
+  state.executions.push({ ...state.executions[0], execution_id: 'E3' });
+  summary.push({ ...summary[0], execucao_id: 'E3', P: 100, F2: 100 });
+  const costs = new Map([['E1', 0.2], ['E3', 0.4], ['E2', null]]);
+  const [first, second] = buildModelRanking(state, summary, costs);
+  assert.deepEqual([first.system_id, first.academic_score, first.technological_score], ['S1', 95, 87.5]);
+  assert.ok(Math.abs(first.cost_brl - 0.3) < 1e-9);
+  assert.deepEqual([second.system_id, second.academic_score, second.technological_score, second.cost_brl], ['S2', 80, null, null]);
+  assert.match(renderResultsHtml(state, summary, costs), /<td>95<\/td><td>87,5<\/td><td>R\$\s0,30<\/td>/);
 });
 
 test('cobertura distingue notas de leitura do texto original incorporado', () => {
@@ -109,39 +139,60 @@ test('cobertura distingue notas de leitura do texto original incorporado', () =>
   assert.deepEqual(coverage.answer_key_sources_not_supplied, ['B01-F1']);
 });
 
-test('Herdr aceita sucesso vazio de pane run e exige JSON nos comandos de consulta', async (context) => {
-  const directory = await mkdtemp(join(tmpdir(), 'bench-herdr-cli-test-'));
-  context.after(() => rm(directory, { recursive: true, force: true }));
-  await writeFile(join(directory, 'herdr'), `#!${process.execPath}\nif (process.argv[3] === 'get') console.log(JSON.stringify({ result: { pane: { pane_id: 'wtest:p2' } } }));\n`, { mode: 0o700 });
-  const script = `import { herdrCommand } from ${JSON.stringify(new URL('../coletor/herdr.mjs', import.meta.url).href)}; console.log(JSON.stringify(await herdrCommand(JSON.parse(process.argv[1]))));`;
-  const options = { env: { ...process.env, PATH: directory } };
-  const run = await executeFile(process.execPath, ['--input-type=module', '-e', script, JSON.stringify(['pane', 'run', 'wtest:p2', 'true'])], options);
-  assert.equal(run.stdout.trim(), 'null');
-  const get = await executeFile(process.execPath, ['--input-type=module', '-e', script, JSON.stringify(['pane', 'get', 'wtest:p2'])], options);
-  assert.equal(JSON.parse(get.stdout).pane.pane_id, 'wtest:p2');
-  await assert.rejects(executeFile(process.execPath, ['--input-type=module', '-e', script, JSON.stringify(['pane', 'current', '--current'])], options), /JSON/);
+async function fakeClaude(context, script) {
+  const directory = await mkdtemp(join(tmpdir(), 'bench-claude-test-'));
+  const originalPath = process.env.PATH;
+  context.after(async () => {
+    process.env.PATH = originalPath;
+    await rm(directory, { recursive: true, force: true });
+  });
+  await writeFile(join(directory, 'claude'), `#!${process.execPath}\n${script}\n`, { mode: 0o700 });
+  process.env.PATH = `${directory}:${originalPath}`;
+  return directory;
+}
+
+test('juiz Claude recebe o pedido pela entrada, arquiva a saída e não repete chamada concluída', async (context) => {
+  const directory = await fakeClaude(context, `
+let prompt = '';
+process.stdin.setEncoding('utf8').on('data', (chunk) => { prompt += chunk; }).on('end', () => {
+  const schemaIndex = process.argv.indexOf('--json-schema');
+  console.log(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, structured_output: { prompt, schema: JSON.parse(process.argv[schemaIndex + 1]) }, usage: { input_tokens: 5, cache_creation_input_tokens: 10, cache_read_input_tokens: 2, output_tokens: 7 } }));
+});`);
+  const task = join(directory, 'tarefa');
+  const job = { prompt: 'Pedido sintético.', schema: { type: 'object' }, config };
+  assert.deepEqual(await runClaudeJob(task, job), { prompt: 'Pedido sintético.', schema: { type: 'object' } });
+  assert.equal(await readFile(join(task, 'pedido.md'), 'utf8'), 'Pedido sintético.');
+  assert.equal(JSON.parse(await readFile(join(task, 'concluido.json'), 'utf8')).exit_code, 0);
+  await rm(join(directory, 'claude'));
+  assert.deepEqual(await runClaudeJob(task, job), { prompt: 'Pedido sintético.', schema: { type: 'object' } });
+  await assert.rejects(runClaudeJob(task, { ...job, prompt: 'Outro pedido.' }), /Insumos do julgamento mudaram/);
 });
 
-test('worker inicia por diretório simbólico e registra conclusão sem chamar Codex real', async (context) => {
-  const directory = await mkdtemp(join(tmpdir(), 'bench-worker-link-test-'));
-  context.after(() => rm(directory, { recursive: true, force: true }));
-  const workspace = join(directory, 'workspace');
-  const alias = join(directory, 'alias');
-  await mkdir(workspace);
-  await symlink(workspace, alias, 'dir');
-  await copyFile(new URL('../coletor/codex-worker.mjs', import.meta.url), join(workspace, 'worker.mjs'));
-  await writeFile(join(workspace, 'config.json'), JSON.stringify(config));
-  await writeFile(join(workspace, 'contexto.json'), JSON.stringify({ label: 'JC1: Qteste' }));
-  await writeFile(join(workspace, 'pedido.md'), 'Teste local.');
-  await writeFile(join(directory, 'codex'), `#!${process.execPath}\nprocess.stdin.resume();\nconsole.log(JSON.stringify({ type: 'turn.completed' }));\n`, { mode: 0o700 });
-  const execution = await executeFile(process.execPath, [join(alias, 'worker.mjs')], { env: { ...process.env, PATH: directory } });
-  assert.match(execution.stdout, /JC1: Qteste/);
-  assert.match(execution.stdout, /Aguardando.*Codex/);
-  assert.match(execution.stdout, /concluiu.*validação/);
-  const completed = JSON.parse(await readFile(join(workspace, 'concluido.json'), 'utf8'));
-  assert.equal(completed.exit_code, 0);
-  assert.equal(completed.error, null);
-  await assert.rejects(executeFile(process.execPath, [join(alias, 'worker.mjs')], { env: { ...process.env, PATH: directory } }), /EEXIST/);
+test('erro reportado pelo Claude chega ao parecer pendente com a mensagem original', async (context) => {
+  const directory = await fakeClaude(context, `
+process.stdin.resume().on('end', () => {
+  console.log(JSON.stringify({ type: 'result', subtype: 'success', is_error: true, result: 'Limite de uso atingido.' }));
+  process.exitCode = 1;
+});`);
+  await assert.rejects(runClaudeJob(join(directory, 'tarefa'), { prompt: 'Teste.', schema: {}, config }), /Claude reportou erro: Limite de uso atingido/);
+});
+
+test('chamada encerrada sem parecer é arquivada e refeita na tentativa seguinte', async (context) => {
+  const directory = await fakeClaude(context, `
+const { existsSync, writeFileSync } = await import('node:fs');
+const marker = new URL('./falhou', import.meta.url);
+process.stdin.resume().on('end', () => {
+  if (existsSync(marker)) return console.log(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, structured_output: { tentativa: 2 } }));
+  writeFileSync(marker, '');
+  console.log(JSON.stringify({ type: 'result', subtype: 'success', is_error: true, result: 'Limite de sessão atingido.' }));
+  process.exitCode = 1;
+});`);
+  const task = join(directory, 'tarefa');
+  const job = { prompt: 'Teste.', schema: {}, config };
+  await assert.rejects(runClaudeJob(task, job), /Limite de sessão/);
+  assert.deepEqual(await runClaudeJob(task, job), { tentativa: 2 });
+  const [attempt] = await readdir(join(task, 'tentativas'));
+  assert.match(await readFile(join(task, 'tentativas', attempt, 'saida.json'), 'utf8'), /Limite de sessão/);
 });
 
 async function fixture({ missing = false, content = '# Explicação sintética\nTexto de teste.' } = {}) {
@@ -223,7 +274,8 @@ test('fluxo completo isola papéis, preserva certificados e retoma sem novos jul
   assert.match(html, /vendor\/secret-model/);
   assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td>/);
   assert.equal(consolidator.mapa_privado[0].codigos.JP1, pedagogical.code);
-  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO' }]);
+  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO', academic_score: 100, technological_score: 100, cost_brl: 0.05 }]);
+  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td><td>100<\/td><td>100<\/td><td>R\$\s0,05<\/td>/);
   assert.ok(!html.includes(scientific.code));
   const global = await readFile(join(directory, 'consolidado/global-por-rodada.csv'), 'utf8');
   assert.match(global, /"false","N\/A"/);
@@ -310,6 +362,8 @@ test('falha terminal de um juiz não interrompe os demais nem a geração do HTM
   assert.ok(calls.includes('JC2'));
   assert.ok(calls.includes('JE'));
   assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /vendor\/secret-model/);
+  const resumed = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => judgment(inputFromPrompt(job.prompt)) });
+  assert.equal(resumed.completed[executionId].JC1.status, 'APTO');
 });
 
 test('registros de tempo e tokens permanecem publicados quando JT e JE falham', async () => {
@@ -376,25 +430,6 @@ test('recuperação parcial não mistura versões ou códigos e não aceita dupl
   assert.equal(partial.find((item) => item.id === 'K1').score, 100);
 });
 
-test('recupera JSON da mensagem final íntegra mantendo a auditoria de isolamento', async (context) => {
-  const directory = await mkdtemp(join(tmpdir(), 'bench-json-recovery-'));
-  context.after(() => rm(directory, { recursive: true, force: true }));
-  const response = { code: 'Qfixture' };
-  const events = [
-    { type: 'turn.started' },
-    { type: 'item.completed', item: { type: 'agent_message', text: `\`\`\`json\n${JSON.stringify(response)}\n\`\`\`` } },
-    { type: 'turn.completed' },
-  ];
-  await writeFile(join(directory, 'resultado.json'), '{');
-  await writeFile(join(directory, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
-  await writeFile(join(directory, 'concluido.json'), JSON.stringify({ exit_code: 0, timed_out: false, error: null }));
-  assert.deepEqual(await readArchivedHerdrResult(directory), response);
-  assert.equal(await readFile(join(directory, 'resultado.json'), 'utf8'), '{');
-  events.splice(1, 0, { type: 'item.completed', item: { type: 'command_execution' } });
-  await writeFile(join(directory, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
-  await assert.rejects(readArchivedHerdrResult(directory), /ferramentas/);
-});
-
 test('bibliografia ausente do material é identificada sem confundir fonte alternativa com aprovação', () => {
   const coverage = sourceCoverage([{ role: 'user', content: '## Material bibliográfico fornecido\n## B01-F3 - fonte alternativa\nNotas de leitura disponíveis.' }], 'Conferir B01-F1 e B01-F3.', 'B01');
   assert.deepEqual(coverage.supplied_source_ids, ['B01-F3']);
@@ -429,21 +464,21 @@ test('parecer JT de ramo incompatível não publica T2 nem os componentes de out
   assert.equal(technical.partial_items.some((item) => /^(T2|FP?\d)$/.test(item.id)), false);
 });
 
-test('eventos truncados não interrompem a consolidação nem inventam tokens do julgamento', async () => {
+test('saída truncada não interrompe a consolidação nem inventa tokens do julgamento', async () => {
   const directory = await fixture();
   await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
     const input = inputFromPrompt(job.prompt);
     if (input.role === 'JC1') {
       await mkdir(path, { recursive: true });
-      await writeFile(join(path, 'envio.json'), JSON.stringify({ workspace: path }));
-      await writeFile(join(path, 'concluido.json'), JSON.stringify({ exit_code: 1, timed_out: false, error: 'Falha sintética.' }));
-      await writeFile(join(path, 'eventos.jsonl'), '{');
-      throw new Error('Worker encerrou com eventos truncados.');
+      await writeFile(join(path, 'envio.json'), JSON.stringify({ request_sha256: 'teste' }));
+      await writeFile(join(path, 'concluido.json'), JSON.stringify({ exit_code: 1, timed_out: false, error: null }));
+      await writeFile(join(path, 'saida.json'), '{');
+      throw new Error('Claude encerrou com saída truncada.');
     }
     return judgment(input);
   } });
   const budget = await readFile(join(directory, 'consolidado/orcamento-julgamentos.csv'), 'utf8');
-  assert.match(budget, /Eventos incompletos/);
+  assert.match(budget, /Saída ausente ou JSON inválido/);
   assert.match(budget, /"N\/A","N\/A","N\/A"/);
   assert.match(await readFile(join(directory, 'consolidado/relatorio.md'), 'utf8'), /Consolidação do lote/);
 });
@@ -648,6 +683,18 @@ test('item sem nota nem medida aceita motivo de inaplicabilidade, mas medida con
   assert.throws(() => validateJudgment(result, input), /falta evidência/);
 });
 
+test('APTO aceita afirmação periférica não verificável, mas não afirmação contradita', () => {
+  const input = { code: 'Qteste', topic: 'B01', round: 1, role: 'JC1' };
+  const result = judgment(input);
+  const unverifiable = { ...result.items.find((item) => item.id === 'A1'), id: 'A2', score: null, value: 'NÃO VERIFICÁVEL', evidence: '', reason_na: 'Detalhe periférico ausente das fontes incorporadas.' };
+  result.items.push(unverifiable);
+  result.items.find((item) => item.id === 'C2').score = null;
+  assert.equal(validateJudgment(result, input), result);
+  Object.assign(unverifiable, { score: 0, value: 'CONTRADITA', evidence: 'Fonte sintética contradiz a afirmação.', reason_na: '' });
+  result.items.find((item) => item.id === 'C2').score = 50;
+  assert.throws(() => validateJudgment(result, input), /APTO incompatível/);
+});
+
 test('inventário não verificável aceita justificativa da falta de fonte sem perder a decisão científica', () => {
   const input = { code: 'Qteste', topic: 'B01', round: 1, role: 'JC1' };
   const result = judgment(input, 'PENDENTE');
@@ -695,16 +742,15 @@ test('retomada consulta julgamento já enviado com o contrato arquivado antes da
   const runJob = async (path, job) => {
     const input = inputFromPrompt(job.prompt);
     if (input.role !== 'JC1') return judgment(input);
-    if (submitted) return runHerdrJob(path, job, { command: async () => ({}) });
+    if (submitted) return runClaudeJob(path, job);
     submitted = true;
     const archivedJob = { ...job, prompt: job.prompt.replace(/## Contrato de saída[\s\S]*?(?=## Entradas da chamada)/, '## Contrato anterior\n\n') };
     await mkdir(path, { recursive: true });
     await writeFile(join(path, 'pedido.md'), archivedJob.prompt);
     await writeFile(join(path, 'schema.json'), JSON.stringify(archivedJob.schema));
-    await writeFile(join(path, 'envio.json'), JSON.stringify({ workspace: path, pane_id: 'wtest:p2', request_sha256: sha256(JSON.stringify(archivedJob)) }));
+    await writeFile(join(path, 'envio.json'), JSON.stringify({ request_sha256: sha256(JSON.stringify(archivedJob)) }));
     await writeFile(join(path, 'concluido.json'), JSON.stringify({ exit_code: 0, timed_out: false, error: null }));
-    await writeFile(join(path, 'resultado.json'), JSON.stringify(judgment(input)));
-    await writeFile(join(path, 'eventos.jsonl'), JSON.stringify({ type: 'turn.completed' }));
+    await writeFile(join(path, 'saida.json'), JSON.stringify({ subtype: 'success', is_error: false, structured_output: judgment(input) }));
     controller.abort();
     throw new Error('Coordenador interrompido após envio.');
   };
@@ -713,32 +759,33 @@ test('retomada consulta julgamento já enviado com o contrato arquivado antes da
   assert.equal(result.completed[executionId].JC1.status, 'APTO');
 });
 
-test('envio Herdr incerto não duplica o comando ao retomar', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'bench-herdr-test-'));
-  const commands = [];
-  const command = async (args) => {
-    commands.push(args);
-    if (args[1] === 'split') return { pane: { pane_id: 'wtest:p2' } };
-    throw new Error('Conexão perdida depois do envio.');
-  };
-  const job = { prompt: 'Somente teste local.', schema: {}, config };
-  await assert.rejects(runHerdrJob(directory, job, { caller_pane: 'wtest:p1', command, workspaceRoot: directory }), /Conexão perdida/);
-  const controller = new AbortController();
-  controller.abort();
-  await assert.rejects(runHerdrJob(directory, job, { caller_pane: 'wtest:p1', command, signal: controller.signal }), /não será|sem reenviar/);
-  assert.equal(commands.filter((args) => args[1] === 'run').length, 1);
-});
-
-test('worker Codex recebe configuração isolada e não herda chaves da coleta', () => {
-  const args = codexArguments('/tmp/neutral', config);
-  for (const flag of ['--no-daemon', '--ignore-user-config', '--ignore-rules', '--ephemeral', 'skip_host_skill_discovery', 'project_doc_max_bytes=0', 'web_search="disabled"', 'suppress_unstable_features_warning=true']) assert.ok(args.includes(flag));
-  for (const feature of ['code_mode', 'code_mode_host']) assert.equal(args[args.indexOf(feature) - 1], '--disable');
+test('juiz Claude roda isolado e não herda chaves da coleta nem da sessão chamadora', () => {
+  const args = claudeArguments({ config, schema: { type: 'object' } });
+  for (const [flag, value] of [['--setting-sources', ''], ['--tools', ''], ['--model', 'modelo-teste'], ['--effort', 'medium'], ['--json-schema', '{"type":"object"}'], ['--output-format', 'json']]) assert.equal(args[args.indexOf(flag) + 1], value);
+  for (const flag of ['--system-prompt', '--strict-mcp-config', '--disable-slash-commands', '--no-session-persistence']) assert.ok(args.includes(flag));
   assert.equal(args.includes('--resume'), false);
-  assert.deepEqual(codexEnvironment({ HOME: '/user', PATH: '/bin', OPENROUTER_API_KEY: 'secret', OPENAI_API_KEY: 'secret', HERDR_PANE_ID: 'private' }), { HOME: '/user', PATH: '/bin' });
+  assert.deepEqual(claudeEnvironment({ HOME: '/user', PATH: '/bin', OPENROUTER_API_KEY: 'secret', ANTHROPIC_API_KEY: 'secret', CLAUDECODE: '1' }), { HOME: '/user', PATH: '/bin' });
 });
 
 test('HTML escapa valores como texto sem permitir código executável', () => {
   assert.equal(escapeHtml('<script>alert("x")</script> & nota'), '&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; nota');
+});
+
+test('média global por rodada exige B01 e B02 aprovados para o mesmo modelo', async () => {
+  const directory = await fixture();
+  const batchPath = join(directory, 'batch.json');
+  const batch = JSON.parse(await readFile(batchPath, 'utf8'));
+  const secondTopicId = 'E00000000000000000002';
+  batch.executions.push({ ...batch.executions[0], execution_id: secondTopicId, topic: 'B02' });
+  await writeFile(batchPath, JSON.stringify(batch));
+  await mkdir(join(directory, 'comprovantes', secondTopicId));
+  for (const name of ['pedido.json', 'resposta.md', 'metricas.json']) {
+    const source = await readFile(join(directory, 'comprovantes', executionId, name), 'utf8');
+    await writeFile(join(directory, 'comprovantes', secondTopicId, name), source.replaceAll(executionId, secondTopicId).replaceAll('"B01"', '"B02"'));
+  }
+  await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => judgment(inputFromPrompt(job.prompt)) });
+  const global = await readFile(join(directory, 'consolidado/global-por-rodada.csv'), 'utf8');
+  assert.match(global, /"S01","1","true","100"/);
 });
 
 test('vários modelos mantêm códigos únicos, nomes só no consolidador e ordem invertida na estabilidade', async () => {
@@ -755,79 +802,18 @@ test('vários modelos mantêm códigos únicos, nomes só no consolidador e orde
     await writeFile(join(directory, 'comprovantes', secondId, name), source.replaceAll(executionId, secondId).replaceAll('S01', 'S02'));
   }
   const calls = [];
-  await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+  const dispatchedJC2 = [];
+  const onProgress = (message) => { if (/^JC2: Q[0-9a-f]+$/.test(message)) dispatchedJC2.push(message.slice(5)); };
+  await judgeBatch(directory, { repositoryRoot, config, onProgress, runJob: async (path, job) => {
     const input = inputFromPrompt(job.prompt);
     calls.push(input);
     if (input.role !== 'CONSOLIDADOR') assert.doesNotMatch(job.prompt, /secret-model|hidden-model/);
     return judgment(input);
   } });
   const state = JSON.parse(await readFile(join(directory, 'privado/julgamento.json'), 'utf8'));
-  assert.deepEqual(calls.filter((call) => call.role === 'JC2').map((call) => call.code), state.executions.toReversed().map((execution) => execution.codes.JC2));
+  assert.deepEqual(dispatchedJC2, state.executions.toReversed().map((execution) => execution.codes.JC2));
   assert.equal(new Set(calls.filter((call) => call.role !== 'CONSOLIDADOR').map((call) => call.code)).size, 12);
   const html = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
   assert.match(html, /vendor\/secret-model/);
   assert.match(html, /another\/hidden-model/);
-});
-
-test('simulador de transporte arquiva saída e rejeita ferramentas inesperadas', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'bench-herdr-output-test-'));
-  let workspace;
-  const command = async (args) => {
-    if (args[1] === 'split') {
-      workspace = args[args.indexOf('--cwd') + 1];
-      return { pane: { pane_id: 'wtest:p2' } };
-    }
-    if (args[1] === 'run') {
-      await writeFile(join(workspace, 'resultado.json'), JSON.stringify({ response: 'sintética' }));
-      await writeFile(join(workspace, 'eventos.jsonl'), `${JSON.stringify({ type: 'item.completed', item: { type: 'command_execution' } })}\n${JSON.stringify({ type: 'turn.completed' })}\n`);
-      await writeFile(join(workspace, 'concluido.json'), JSON.stringify({ exit_code: 0, timed_out: false, error: null }));
-    }
-    return {};
-  };
-  await assert.rejects(runHerdrJob(directory, { prompt: 'Teste', schema: {}, config }, { caller_pane: 'wtest:p1', command, workspaceRoot: directory }), /ferramentas/);
-  assert.ok((await readdir(directory)).includes('resultado.json'));
-});
-
-test('avisos conhecidos permanecem arquivados sem reaparecer no terminal e erros reais bloqueiam', async (context) => {
-  const directory = await mkdtemp(join(tmpdir(), 'bench-codex-warnings-test-'));
-  context.after(() => rm(directory, { recursive: true, force: true }));
-  const events = [
-    { type: 'thread.started', thread_id: 'fixture' },
-    { type: 'item.completed', item: { type: 'error', message: 'Under-development features enabled: skip_host_skill_discovery. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /user/.codex/config.toml.' } },
-    { type: 'item.completed', item: { type: 'error', message: 'Code Mode is unavailable because code-mode host is disabled. Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.' } },
-    { type: 'turn.started' },
-    { type: 'item.completed', item: { type: 'agent_message', text: '{}' } },
-    { type: 'turn.completed' },
-  ];
-  const messages = [];
-  const commands = [];
-  let workspace;
-  const command = async (args) => {
-    commands.push(args[1]);
-    if (args[1] === 'split') {
-      workspace = args[args.indexOf('--cwd') + 1];
-      assert.ok(workspace.startsWith(await realpath(directory)));
-      return { pane: { pane_id: 'wtest:p2' } };
-    }
-    if (args[1] === 'run') {
-      await writeFile(join(workspace, 'resultado.json'), '{}');
-      await writeFile(join(workspace, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
-      await writeFile(join(workspace, 'concluido.json'), JSON.stringify({ exit_code: 0, timed_out: false, error: null }));
-    }
-    if (args[1] === 'get') return { pane: { cwd: workspace, foreground_cwd: workspace } };
-    return {};
-  };
-  const job = { prompt: 'Teste local.', schema: {}, config };
-  const options = { command, caller_pane: 'wtest:p1', workspaceRoot: directory, label: 'JC1: Qteste', onProgress: (message) => messages.push(message) };
-  assert.deepEqual(await runHerdrJob(directory, job, options), {});
-  assert.equal(messages.filter((message) => message.startsWith('Aviso Codex:')).length, 0);
-  assert.equal(await readFile(join(directory, 'eventos.jsonl'), 'utf8'), events.map((event) => JSON.stringify(event)).join('\n'));
-  assert.equal(commands.filter((name) => name === 'close').length, 1);
-  assert.equal(JSON.parse(await readFile(join(workspace, 'contexto.json'), 'utf8')).label, 'JC1: Qteste');
-  events.splice(4, 0, { type: 'item.completed', item: { type: 'error', message: 'Falha inesperada no julgamento.' } });
-  await writeFile(join(directory, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
-  await assert.rejects(runHerdrJob(directory, job, options), /Falha inesperada no julgamento/);
-  events[4].item.message = events[1].item.message;
-  await writeFile(join(directory, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
-  await assert.rejects(runHerdrJob(directory, job, options), /Codex reportou erro/);
 });

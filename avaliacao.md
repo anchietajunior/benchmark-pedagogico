@@ -58,7 +58,7 @@ Salve os arquivos produzidos em ~/Documents/coletas/consolidado/:
 - relatorio.md: tabelas, cobertura, limitações, orçamento e pendências.
 
 Confira por amostragem a correspondência entre resposta, código e parecer, além da preservação de N/A.
-O piloto não sustenta um vencedor global de quatro temas.
+O piloto não sustenta um vencedor global dos dois temas.
 Para uma apresentação HTML posterior, use o [metaprompt de ranking](prompts/ranquear-resultados.md) sobre os resultados conferidos.
 
 Os critérios continuam no [protocolo 3.2](referencias/protocolo-pontuacao.md).

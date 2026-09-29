@@ -6,9 +6,10 @@ import { initializeConfig, loadStudy } from './config.mjs';
 import { collectBatch, recoverBatch } from './collector.mjs';
 import { verifyModelEndpoints } from './catalog.mjs';
 import { acquireOutputLock } from './output-lock.mjs';
+import { replaceFailedSystem } from './replace-system.mjs';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
-const commands = ['configurar', 'conferir', 'coletar', 'recuperar'];
+const commands = ['configurar', 'conferir', 'coletar', 'recuperar', 'refazer'];
 
 async function readApiKey() {
   if (process.env.OPENROUTER_API_KEY) return process.env.OPENROUTER_API_KEY;
@@ -35,7 +36,7 @@ async function confirmCollection(count) {
 async function main() {
   const [command, ...args] = process.argv.slice(2);
   if (!commands.includes(command)) {
-    console.log('Uso: npm run configurar | conferir | coletar | recuperar -- CAMINHO_DO_LOTE');
+    console.log('Uso: npm run configurar | conferir | coletar | recuperar -- CAMINHO_DO_LOTE | refazer -- CAMINHO_DO_LOTE SISTEMA [--confirmar]');
     if (command && command !== '--help') process.exitCode = 1;
     return;
   }
@@ -54,6 +55,26 @@ async function main() {
       const result = await recoverBatch(args[0], { apiKey });
       console.log(`Telemetria consultada sem gerar explicações: ${result.batchDirectory}`);
       if (result.records.some((record) => record.telemetry_status !== 'COMPLETA')) process.exitCode = 2;
+    } finally { await release(); }
+    return;
+  }
+  if (command === 'refazer') {
+    const [batchPath, systemId, ...flags] = args;
+    if (!batchPath || !systemId || flags.some((flag) => flag !== '--confirmar')) throw new Error('Uso: npm run refazer -- CAMINHO_DO_LOTE SISTEMA [--confirmar]');
+    const config = JSON.parse(await readFile(join(repositoryRoot, 'openrouter.config.json'), 'utf8'));
+    const model = config.models.find((candidate) => candidate.id === systemId);
+    if (!model) throw new Error(`${systemId} não está em openrouter.config.json.`);
+    const batch = JSON.parse(await readFile(join(resolve(batchPath), 'batch.json'), 'utf8'));
+    const count = batch.executions.filter((execution) => execution.system_id === systemId).length;
+    console.log(`${systemId}: ${count} geração(ões) sem texto serão refeitas com ${model.model} (${model.provider}), usando os pedidos congelados do lote.`);
+    if (!flags.includes('--confirmar') && !(await confirmCollection(count))) {
+      console.log('Cancelado antes de qualquer chamada.');
+      return;
+    }
+    const release = await acquireOutputLock(dirname(resolve(batchPath)));
+    try {
+      const result = await replaceFailedSystem(batchPath, systemId, model, { apiKey, onProgress: console.log });
+      console.log(`Para julgar somente as novas gerações: npm run executar -- --retomar ${JSON.stringify(result.batchDirectory)}`);
     } finally { await release(); }
     return;
   }

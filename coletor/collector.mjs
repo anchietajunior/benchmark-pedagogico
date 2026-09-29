@@ -7,7 +7,7 @@ import { measureRecord } from './metrics.mjs';
 import { archiveBatch, writeJson, renderEntry, replaceDerivedFile, saveSummary } from './artifacts.mjs';
 import { verifyModelEndpoints } from './catalog.mjs';
 
-function executionId() {
+export function generateExecutionId() {
   let digits = '';
   for (let index = 0; index < 4; index += 1) digits += String(randomInt(100000)).padStart(5, '0');
   return `E${digits}`;
@@ -20,8 +20,8 @@ function planExecutions(study, catalogChecks) {
     const roundExecutions = [];
     for (const model of study.config.models) {
       for (const material of study.materials) {
-        let id = executionId();
-        while (ids.has(id)) id = executionId();
+        let id = generateExecutionId();
+        while (ids.has(id)) id = generateExecutionId();
         ids.add(id);
         roundExecutions.push({
           execution_id: id, system_id: model.id, topic: material.topic, round,
@@ -53,7 +53,7 @@ async function lookupMetadata(evidenceDirectory, generationId, options) {
   return combined;
 }
 
-async function collectExecution(study, batchDirectory, execution, options) {
+export async function collectExecution(study, batchDirectory, execution, options) {
   const evidenceDirectory = join(batchDirectory, 'comprovantes', execution.execution_id);
   await mkdir(evidenceDirectory, { mode: 0o700 });
   const model = study.config.models.find((candidate) => candidate.id === execution.system_id);

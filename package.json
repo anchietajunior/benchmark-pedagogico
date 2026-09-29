@@ -11,6 +11,7 @@
     "conferir": "node coletor/cli.mjs conferir",
     "coletar": "node coletor/cli.mjs coletar",
     "recuperar": "node coletor/cli.mjs recuperar",
+    "refazer": "node coletor/cli.mjs refazer",
     "test": "node --test"
   }
 }

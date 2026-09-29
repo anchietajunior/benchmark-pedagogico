@@ -1,6 +1,8 @@
 # Protocolo de pontuação 3.2
 
 Versão: 3.2, de 26 de setembro de 2026.
+Em 29 de setembro de 2026, o estudo passou a usar somente os temas B01 e B02; N01 e N02 foram retirados, e as regras de média global foram ajustadas para os dois temas.
+Na mesma data, o público-alvo passou a ser somente o graduando de Biomedicina, sem Nutrição.
 Esta revisão pede material de estudo desenvolvido, com 800 a 1.200 palavras, mecanismo passo a passo, exemplo interpretado, duas confusões esclarecidas e duas perguntas com respostas comentadas.
 F2 passa a verificar a faixa de extensão e F3 a estrutura didática; os quatro papéis, fórmulas, seis pontos científicos por tema, fontes e 10 subcritérios pedagógicos são preservados.
 A faixa é uma decisão operacional a testar no piloto, não um limiar validado de aprendizagem.
@@ -82,12 +84,12 @@ Os resultados de geração e julgamento são preservados independentemente de ap
 
 Uma execução é uma geração por sistema, tema e rodada, com identificador único.
 Um sistema é a combinação de agente, modelo, provedor, configuração, ferramentas e política de acesso às fontes.
-Uma rodada completa contém B01, B02, N01 e N02 para cada sistema.
+Uma rodada completa contém B01 e B02 para cada sistema.
 O desenho anterior de quatro sistemas × quatro temas × cinco rodadas previa 80 execuções.
-Com os seis modelos selecionados para OpenRouter, o mesmo desenho teria 120 execuções; o piloto configurado usa somente B01 e uma rodada, com seis gerações.
+Com os seis modelos selecionados para OpenRouter, com dois temas o desenho teria 60 execuções; o piloto configurado usa somente B01 e uma rodada, com seis gerações.
 O manifesto congelado define o número efetivamente planejado; falhas e ausências permanecem no conjunto.
 Nas regras de agregação deste protocolo, “por modelo” significa por sistema fixo identificado, nunca mistura de agentes ou configurações para o mesmo LLM.
-Cinco repetições é uma escolha exploratória, não cálculo de poder estatístico; quatro temas continuam sendo quatro temas.
+Cinco repetições é uma escolha exploratória, não cálculo de poder estatístico; dois temas continuam sendo dois temas.
 Novas gerações são novas rodadas; reenvios de transporte pertencem à execução original e têm tentativas separadas.
 Não substitua a primeira resposta por uma tentativa mais favorável.
 
@@ -202,7 +204,7 @@ Se identificar possível erro científico, registre REVISÃO CIENTÍFICA SOLICIT
 Encaminhe a ocorrência à revisão especializada e preserve os julgamentos originais.
 Outras avaliações pedagógicas incompletas recebem PENDENTE; uma avaliação com os 10 itens válidos recebe CONCLUÍDO.
 Essas situações pedagógicas não substituem APTO/CORRIGIR/PENDENTE do juiz científico.
-Público: graduando de saúde com noções de células, tecidos, órgãos, proteínas e nutrientes, ainda sem domínio do mecanismo solicitado.
+Público: graduando de Biomedicina com noções de células, tecidos, órgãos, proteínas e nutrientes, ainda sem domínio do mecanismo solicitado.
 Avalie o corpo didático, não o tamanho da lista de referências.
 
 Cada uma das cinco métricas tem dois subcritérios, totalizando 10 itens: M1.1/M1.2, M2.1/M2.2, M3.1/M3.2, M4.1/M4.2 e M5.1/M5.2.
@@ -376,8 +378,8 @@ Reporte APTO/CORRIGIR/PENDENTE/AUSENTE e as situações de JP separadamente.
 Ausência de JP por reprovação científica é bloqueio previsto, não falha do avaliador.
 
 Em cada tema e rodada, classifique por P os APTO em JC1 com JP1 CONCLUÍDO e 10 subnotas válidas, mantendo empates.
-Uma média global da rodada exige quatro APTO em JC1 e quatro P completos de JP1 por modelo, em lote completo.
-Uma média pedagógica geral das cinco rodadas exige 20 APTO em JC1 e 20 P completos de JP1 por modelo.
+Uma média global da rodada exige dois APTO em JC1 e dois P completos de JP1 por modelo (B01 e B02), em lote completo.
+Uma média pedagógica geral das cinco rodadas exige 10 APTO em JC1 e 10 P completos de JP1 por modelo.
 Não faça ranking geral apenas com os sobreviventes; distribuições condicionadas aos APTO são diagnósticas e mostram n elegível/n previsto.
 Se ninguém satisfizer a elegibilidade, não há vencedor global recomendável.
 Desacordo científico ou alerta de JP que afete elegibilidade torna a recomendação provisória até revisão especializada.
@@ -412,8 +414,8 @@ O juiz recebe certificados mínimos, textos, pedido e fontes; não recebe notas 
 Uma suspeita científica torna a comparação INVIÁVEL e segue à revisão, sem reclassificação por JP.
 Depois de desfazer os códigos, vitória consistente exige a mesma resposta vencedora nas duas ordens; EMPATE nas duas é empate.
 Qualquer outra combinação válida é INCONSISTENTE; preserve inviáveis, ausentes e inválidas separadamente.
-Com quatro candidatos, quatro temas e cinco rodadas, todos os pares nas duas ordens representam até 240 chamadas adicionais.
-Até 80 × 2 = 160 chamadas científicas e até 160 pedagógicas compõem a avaliação individual completa; JT/JE podem ser apurados sem LLM.
+Com quatro candidatos, dois temas e cinco rodadas, todos os pares nas duas ordens representam até 120 chamadas adicionais.
+Até 40 × 2 = 80 chamadas científicas e até 80 pedagógicas compõem a avaliação individual completa; JT/JE podem ser apurados sem LLM.
 Custos de avaliação são separados do custo de geração E3.
 
 ## Base e limites

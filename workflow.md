@@ -1,9 +1,9 @@
 # Coleta, julgamento e resultados
 
-Você configura uma vez e depois executa `npm run executar` dentro do Herdr.
+Você configura uma vez e depois executa `npm run executar` em qualquer terminal.
 Para seguir desde a abertura do terminal até o HTML no navegador, use o [guia de execução](guia.md).
 O coletor envia cada pedido diretamente ao OpenRouter, sem skills, memória, navegação ou acesso do modelo ao projeto.
-São necessários Node.js 24 ou superior, Herdr ativo e Codex CLI autenticado; não precisa executar `npm install`.
+São necessários Node.js 24 ou superior e Claude Code CLI instalado e autenticado; não precisa executar `npm install`.
 
 Nesta máquina, o piloto B01 já está configurado: seis modelos, uma rodada, cotação, notas bibliográficas e o corpo textual original autorizado de B01-F3.
 Se a chave já está no `.env`, vá direto ao passo 2; não precisa editar `openrouter.config.json` para esse teste.
@@ -29,7 +29,7 @@ Preencha somente estes pontos:
 - `fontes/openrouter/B01.md`: os trechos bibliográficos autorizados para os seis pontos de B01, com identificação da obra, seção/página e origem.
   Depois da conferência humana, marque `sources_reviewed: true` no tema B01 da configuração.
 
-Os seis modelos escolhidos já estão configurados: Opus 5.5, Fable 5.1, GPT-6 Astra, DeepSeek V4.1 Flash, Muse Spark 1.3 e Gemini 3.8 Flash.
+Os seis modelos escolhidos já estão configurados: Opus 5, Fable 5.1, GPT-6 Astra, DeepSeek V4.1 Flash, Muse Spark 1.3 e Gemini 3.8 Flash.
 O piloto começa com B01 e uma rodada: seis explicações.
 Use a [bibliografia por tema](referencias/bibliografia-por-tema.md) para preparar as fontes.
 Os arquivos criados são modelos vazios, não fontes científicas já verificadas; não basta colar links ou marcar a conferência sem fornecer os trechos.
@@ -42,11 +42,11 @@ npm run executar -- --simular
 npm run executar
 ```
 
-`--simular` verifica a configuração local e mostra as quantidades sem rede, panes ou inferência.
-`executar` confere Herdr/Codex e pede que você digite `EXECUTAR` antes das chamadas.
-No piloto de seis explicações, há seis gerações OpenRouter, até 36 julgamentos e uma consolidação Codex.
-O avaliador padrão é `gpt-6-sol`, esforço `medium`; informe outro com `--modelo-juiz ID` antes de iniciar o lote.
-As chamadas Codex usam a conta autenticada e podem consumir sua franquia/créditos.
+`--simular` verifica a configuração local e mostra as quantidades sem rede ou inferência.
+`executar` confere `claude --version` e pede que você digite `EXECUTAR` antes das chamadas.
+No piloto de seis explicações, há seis gerações OpenRouter, até 36 julgamentos e uma consolidação Claude.
+O avaliador padrão é `claude-opus-5-5`, esforço `medium`; informe outro com `--modelo-juiz ID` e `--esforco-juiz NIVEL` antes de iniciar o lote.
+As chamadas Claude usam a conta autenticada e podem consumir sua franquia/créditos.
 Para conferir apenas o catálogo público, use `npm run conferir`; para somente coletar, use `npm run coletar`.
 Use uma chave OpenRouter com limite de gastos definido na conta e sem BYOK, para evitar cobrança externa não contabilizada.
 
@@ -54,16 +54,15 @@ Cada geração usa somente o pedido e as fontes do tema.
 A ordem é sorteada e registrada antes da primeira chamada.
 O programa salva explicações, recusas e falhas; não pede versões melhores nem reenvia gerações automaticamente.
 Tempos, tokens e custos vêm do programa e do serviço, nunca da autodeclaração do modelo.
-Os juízes recebem códigos opacos em processos Codex novos, executados em panes Herdr.
+Os juízes recebem códigos opacos em subprocessos `claude -p` novos, sem ferramentas nem configurações do usuário.
 JC1 libera JP1 e JC2 libera JP2 somente com APTO consistente; JE aguarda a situação operacional de JT.
-Somente a sessão separada do consolidador recebe a correspondência código-modelo e compõe o relatório identificado.
+Somente a chamada separada do consolidador recebe a correspondência código-modelo e compõe o relatório identificado.
 
 ## 3. Abra o resultado
 
 O terminal mostra a pasta criada dentro de `~/Documents/coletas/openrouter/`.
 Cada comando de coleta cria um lote novo, sem tocar nas coletas antigas.
 Durante o processamento, acompanhe as linhas de coleta, os papéis `JC1`, `JC2`, `JP1`, `JP2`, `JT`, `JE` e a mensagem `CONSOLIDADOR` no terminal principal.
-Os panes dos juízes podem ficar sem texto porque suas saídas são gravadas em arquivos.
 O [guia](guia.md#4-acompanhe-o-andamento) mostra como consultar os registros durante a execução.
 
 Ao aparecer `Resultados: .../consolidado/resultados.html`, copie o caminho do lote e, no macOS, abra o arquivo no Safari:
@@ -81,7 +80,7 @@ CORRIGIR é uma decisão científica final desfavorável; APTO continua obrigat�
 
 | Arquivo | O que fazer |
 | --- | --- |
-| `consolidado/resultados.html` | Abrir no navegador: ranking por pontuação, com posição, modelo, pontuação e status. |
+| `consolidado/resultados.html` | Abrir no navegador: ranking por pontuação geral, com status, acadêmico, tecnológico e custo por explicação. |
 | `consolidado/resultados-completos.csv` | Consultar todos os itens, passagens, evidências e motivos de N/A. |
 | `consolidado/estabilidade.csv` | Comparar as duas passagens de cada papel. |
 | `RESUMO.md` | Conferir a coleta OpenRouter e suas pendências; não indica conclusão dos julgamentos. |
@@ -99,9 +98,9 @@ Se houver interrupção, retome o mesmo lote:
 npm run executar -- --retomar "CAMINHO_DO_LOTE"
 ```
 
-A retomada não gera novas explicações nem repete julgamentos já enviados.
-Parecer inválido permanece pendente; envio sem confirmação é consultado no mesmo pane, sem reenvio automático.
-Veja [limites e recuperação](referencias/pipeline-herdr.md), incluindo F5 e revisão humana.
+A retomada não gera novas explicações nem repete julgamentos já concluídos.
+Parecer inválido permanece pendente; chamada que terminou sem parecer, por erro ou limite de uso, e chamada interrompida são refeitas com o mesmo pedido arquivado.
+Veja [limites e recuperação](referencias/pipeline-claude.md), incluindo F5 e revisão humana.
 
 Se houver telemetria pendente, copie o comando `npm run recuperar -- "CAMINHO_DO_LOTE"` mostrado em `RESUMO.md`.
 Ele consulta os dados da geração existente, sem produzir outra explicação, e acrescenta comprovantes sem alterar o original.

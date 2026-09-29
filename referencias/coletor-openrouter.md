@@ -15,7 +15,7 @@ IDs e endpoints consultados no catálogo público em 28 de setembro de 2026:
 
 | Sistema | Modelo solicitado | Endpoint do provedor |
 | --- | --- | --- |
-| S01 | [anthropic/claude-opus-5.5](https://openrouter.ai/anthropic/claude-opus-5.5) | anthropic |
+| S01 | [anthropic/claude-opus-5](https://openrouter.ai/anthropic/claude-opus-5) | anthropic |
 | S02 | [anthropic/claude-fable-5.1](https://openrouter.ai/anthropic/claude-fable-5.1) | anthropic |
 | S03 | [openai/gpt-6-astra](https://openrouter.ai/openai/gpt-6-astra) | openai |
 | S04 | [deepseek/deepseek-v4.1-flash](https://openrouter.ai/deepseek/deepseek-v4.1-flash) | deepseek |
@@ -29,6 +29,7 @@ IDs sem data não garantem imutabilidade dos pesos; compare também a versão de
 
 O piloto usa max_tokens de 8.192 e reasoning.effort medium para todos.
 Temperature foi omitido porque os endpoints diretos de Opus 5.5, Fable 5.1 e GPT-6 Astra não o listaram como suportado.
+Em 2026-09-29, S01 passou de anthropic/claude-opus-5.5 para anthropic/claude-opus-5, depois de a geração do Opus 5.5 falhar com HTTP 529 do provedor.
 Ausência do parâmetro não significa temperatura zero ou igualdade de amostragem entre modelos.
 Mesmo nível nominal de raciocínio também não garante igual esforço computacional.
 O teto de tokens não é meta de extensão; o prompt continua pedindo de 800 a 1.200 palavras.
@@ -59,21 +60,20 @@ Ela é uma referência fixa para comparação, não a taxa efetiva do cartão; n
 O arquivo local B01 contém notas de leitura de B01-F2, F3, F4 e F5, identificadas na [bibliografia](bibliografia-por-tema.md), preparadas por IA e ainda sem revisão humana.
 Não contém cópia de livros nem o texto de OpenStax: a página atual declara restrição à ingestão em LLMs sem autorização prévia.
 O material do piloto é diferente do pacote originalmente sugerido; não misture seus resultados com coletas de outra bibliografia ou condição.
+Em 2026-09-29, B02 foi preparado da mesma forma, com notas de leitura de B02-F3 a F5 e o texto original das seções consultadas de F3 e F4; F1 e F2 ficaram sem material porque o NCBI Bookshelf exigiu verificação humana.
 Esses arquivos locais ficam fora do Git; esta seção descreve a preparação nesta máquina, não promete configuração pronta em outra cópia do repositório.
 
-Para incluir os quatro temas, substitua topics na configuração pelo bloco abaixo somente depois de preencher e conferir os quatro arquivos:
+Para incluir os dois temas, substitua topics na configuração pelo bloco abaixo somente depois de preencher e conferir os dois arquivos:
 
 ```json
 "topics": [
   { "id": "B01", "source_file": "fontes/openrouter/B01.md", "sources_reviewed": true },
-  { "id": "B02", "source_file": "fontes/openrouter/B02.md", "sources_reviewed": true },
-  { "id": "N01", "source_file": "fontes/openrouter/N01.md", "sources_reviewed": true },
-  { "id": "N02", "source_file": "fontes/openrouter/N02.md", "sources_reviewed": true }
+  { "id": "B02", "source_file": "fontes/openrouter/B02.md", "sources_reviewed": true }
 ]
 ```
 
-Com seis modelos, quatro temas e rounds igual a 1, o comando planeja 24 chamadas pagas.
-Com rounds igual a 5, seriam 120; a mudança não dispensa planejamento amostral, metas e revisão humana.
+Com seis modelos, dois temas e rounds igual a 1, o comando planeja 12 chamadas pagas.
+Com rounds igual a 5, seriam 60; a mudança não dispensa planejamento amostral, metas e revisão humana.
 
 ## O que entra na API
 
@@ -134,6 +134,13 @@ Se o processo for encerrado abruptamente, o custo ainda pode ser recuperável pe
 Sem ID recuperável não se adivinha a execução pela hora, modelo ou última atividade da conta.
 Não reinicie coletar para recuperar dados: esse comando cria outro lote e novas chamadas pagas.
 Uma interrupção que deixe linhas não executadas exige registrar a decisão de continuar em outro lote; não confunda ausência de registro com falha do modelo.
+
+refazer (`npm run refazer -- CAMINHO_DO_LOTE SISTEMA`) gera de novo, no mesmo lote, as execuções de um sistema cujas tentativas terminaram sem texto.
+O modelo vem do cadastro atual do sistema em openrouter.config.json; pedido, fontes, parâmetros, tema, rodada e ordem vêm do lote congelado.
+O catálogo do novo modelo é conferido antes do POST, e cada execução substituta recebe um novo ID.
+Sistemas com resposta textual ou conclusão normal são recusados antes de qualquer chamada.
+batch.json passa a listar a execução substituta e guarda a original em replacements; lote.md recebe a seção Substituição de sistema.
+Se os juízes já tiverem começado, privado/julgamento.json troca somente a execução substituída, com novos códigos anônimos.
 
 COMPLETA indica campos obrigatórios presentes e consistentes; não significa APTO científico.
 ready_for_comparison é triagem operacional da medição, não elegibilidade acadêmica ou nota.

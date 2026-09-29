@@ -1,16 +1,17 @@
 # Avaliação de explicações de IA
 
-Use `npm run executar` para coletar pelo OpenRouter, julgar em sessões Codex isoladas no Herdr e produzir `consolidado/resultados.html`.
+Use `npm run executar` para coletar pelo OpenRouter, julgar com chamadas isoladas do Claude Code e produzir `consolidado/resultados.html`.
 Os juízes recebem códigos anônimos; somente a sessão do consolidador recebe o mapa desses códigos para os nomes dos modelos.
-O HTML mostra somente o ranking: posição, nome do modelo, pontuação de 0 a 100 e status.
+O HTML mostra o ranking: posição, nome do modelo, pontuação geral de 0 a 100, status, acadêmico, tecnológico e custo por explicação.
+Abaixo da tabela, a seção Como as respostas foram avaliadas descreve os critérios científicos, acadêmicos, tecnológicos e de custo usados pelos juízes.
 Modelos sem avaliação pedagógica completa aparecem com pontuação 0 e status ERRO; APTO científico permanece obrigatório.
 O coletor registra tempo, tokens e custo automaticamente.
 Uma chamada por explicação, sem skills, histórico compartilhado ou ferramentas do modelo.
 Os resultados vão para um lote novo em ~/Documents/coletas/openrouter/.
 
-Comece pelo [guia de execução](guia.md): iniciar no Herdr, acompanhar as etapas e abrir o HTML no navegador.
+Comece pelo [guia de execução](guia.md): abrir um terminal, acompanhar as etapas e abrir o HTML no navegador.
 O [workflow](workflow.md) detalha a preparação dos arquivos da coleta.
-O fluxo completo exige Node.js 24 ou superior, Herdr ativo e Codex CLI autenticado; não há dependências npm para instalar.
+O fluxo completo exige Node.js 24 ou superior e Claude Code CLI instalado e autenticado; não há dependências npm para instalar.
 O piloto já lista os seis modelos escolhidos e começa com B01, uma rodada.
 Chave de API, cotação e trechos bibliográficos verificados precisam ser fornecidos antes de gerar conteúdo pago.
 
@@ -21,11 +22,12 @@ O relatório abre no navegador após conclusão das etapas automáticas; use `--
 Respostas incompletas não são enviadas aos juízes; pareceres sem conclusão válida são descartados das notas.
 O processamento encerra com o ranking no HTML; os motivos dos descartes e os comprovantes permanecem arquivados.
 CORRIGIR é uma decisão científica final desfavorável e mantém pedagogia bloqueada; PENDENTE de um parecer vira descarte, sem nota aproveitada.
-Para apagar os lotes gerados e os temporários dos julgamentos antes de recomeçar, execute `npm run apagar`.
+Se a geração de um modelo falhar sem texto, troque ou mantenha o modelo em `openrouter.config.json` e execute `npm run refazer -- CAMINHO_DO_LOTE S01`; depois, `npm run executar -- --retomar`.
+Para apagar os lotes gerados antes de recomeçar, execute `npm run apagar`.
 Esse comando preserva código, configuração, credenciais e fontes; a remoção dos resultados é definitiva.
 `npm run coletar` continua disponível para fazer somente a coleta e seguir com organização manual.
 O [guia técnico](referencias/coletor-openrouter.md) explica a configuração, as evidências e os limites de medição.
-O [guia do fluxo completo](referencias/pipeline-herdr.md) explica isolamento, retomada e consolidação identificada.
+O [guia do fluxo completo](referencias/pipeline-claude.md) explica isolamento, retomada e consolidação identificada.
 
 ## Pedidos manuais preservados
 
@@ -35,10 +37,8 @@ Não misture as duas condições experimentais.
 
 - [gerar-explicacao-bio-01.md](prompts/gerar-explicacao-bio-01.md) - Biomedicina 01 - Hemostasia e coagulação.
 - [gerar-explicacao-bio-02.md](prompts/gerar-explicacao-bio-02.md) - Biomedicina 02 - Resposta imune e memória.
-- [gerar-explicacao-nut-01.md](prompts/gerar-explicacao-nut-01.md) - Nutrição 01 - Metabolismo energético.
-- [gerar-explicacao-nut-02.md](prompts/gerar-explicacao-nut-02.md) - Nutrição 02 - Absorção e regulação do ferro.
 
-Os quatro pedidos solicitam uma pequena aula de 800 a 1.200 palavras, com mecanismo explicado, exemplo desenvolvido, confusões esclarecidas e revisão comentada.
+Os dois pedidos solicitam uma pequena aula de 800 a 1.200 palavras, com mecanismo explicado, exemplo desenvolvido, confusões esclarecidas e revisão comentada.
 O [workflow](workflow.md) explica como conferir a coleta e preparar os juízes.
 
 | Arquivo | Para que serve |

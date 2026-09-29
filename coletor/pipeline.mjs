@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { writeJson, replaceDerivedFile } from './artifacts.mjs';
+import { readJsonIfPresent, writeJson, replaceDerivedFile } from './artifacts.mjs';
 import { sha256 } from './config.mjs';
-import { readJsonIfPresent, readArchivedHerdrResult, runHerdrJob } from './herdr.mjs';
+import { readArchivedClaudeResult, runClaudeJob } from './claude-judge.mjs';
 import { fixedItems, optionalItems, judgmentSchemaFor, pedagogicalCertificate, renderJudgePrompt, roleFamily, validateJudgment } from './judgments.mjs';
 import { consolidateResults } from './consolidation.mjs';
 import { recoverValidItems } from './judgment-recovery.mjs';
@@ -15,8 +15,8 @@ const templates = { JC: 'avaliar-ciencia.md', JP: 'avaliar-pedagogia.md', JT: 'a
 const passes = ['JC1', 'JC2', 'JP1', 'JP2', 'JT', 'JE'];
 
 export function validateJudgeConfig(config) {
-  if (!config || typeof config.model !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,100}$/.test(config.model)) throw new Error('Informe --modelo-juiz com o ID do modelo Codex.');
-  if (!['low', 'medium', 'high', 'xhigh'].includes(config.reasoning_effort)) throw new Error('Esforço do juiz inválido.');
+  if (!config || typeof config.model !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,100}$/.test(config.model)) throw new Error('Informe --modelo-juiz com o ID do modelo Claude.');
+  if (!['low', 'medium', 'high', 'xhigh', 'max'].includes(config.reasoning_effort)) throw new Error('Esforço do juiz inválido.');
   if (!Number.isSafeInteger(config.timeout_seconds) || config.timeout_seconds < 1 || config.timeout_seconds > 3600) throw new Error('Timeout do juiz deve estar entre 1 e 3600 segundos.');
 }
 
@@ -69,12 +69,33 @@ function compatibleOutputBranch(branch, execution) {
   return !execution.content?.trim() && emptyBranches.includes(branch) && emptyBranches.includes(expected);
 }
 
+export async function freezeExecution(batchDirectory, execution, models, answerKey) {
+  if (!/^E\d{20}$/.test(execution.execution_id)) throw new Error('ID de execução inválido no lote.');
+  if (!models.some((model) => model.id === execution.system_id)) throw new Error('Execução sem modelo correspondente no manifesto.');
+  const evidence = join(batchDirectory, 'comprovantes', execution.execution_id);
+  const request = await readJsonIfPresent(join(evidence, 'pedido.json'));
+  const record = await readJsonIfPresent(join(evidence, 'metricas.json'));
+  const content = await readTextIfPresent(join(evidence, 'resposta.md'));
+  if (request && sha256(JSON.stringify(request.messages)) !== execution.prompt_sha256) throw new Error('Pedido diverge do hash arquivado.');
+  if (record && record.execution_id !== execution.execution_id) throw new Error('Métricas de outra execução.');
+  const material = await readJsonIfPresent(join(batchDirectory, 'privado/pedidos', `${execution.topic}.json`));
+  const messages = request?.messages ?? material?.messages;
+  if (!messages?.length) throw new Error('Pedido efetivo indisponível para o julgamento.');
+  const codes = Object.fromEntries(passes.map((role) => [role, `Q${randomUUID().replaceAll('-', '')}`]));
+  return {
+    execution_id: execution.execution_id, system_id: execution.system_id, topic: execution.topic, round: execution.round,
+    codes, record, content, messages, answer_key: answerKey,
+    content_sha256: content === null ? null : sha256(content),
+    identity_concern: content === null ? null : identityConcern(content, models),
+  };
+}
+
 async function freezeInputs(batchDirectory, repositoryRoot, config, runtime) {
   const statePath = join(batchDirectory, 'privado/julgamento.json');
   const previous = await readJsonIfPresent(statePath);
   if (previous) {
     if (config && JSON.stringify(previous.config) !== JSON.stringify(config)) throw new Error('Configuração dos juízes mudou; retome sem alterar modelo ou esforço.');
-    if (runtime && previous.runtime && runtime.codex_version !== previous.runtime.codex_version) throw new Error('A versão do Codex mudou desde o início do julgamento; não misture configurações silenciosamente.');
+    if (runtime && previous.runtime && runtime.claude_version !== previous.runtime.claude_version) throw new Error('A versão do Claude Code mudou desde o início do julgamento; não misture configurações silenciosamente.');
     return previous;
   }
   validateJudgeConfig(config);
@@ -89,24 +110,7 @@ async function freezeInputs(batchDirectory, repositoryRoot, config, runtime) {
   const answerKeys = await readFile(join(repositoryRoot, 'referencias/gabaritos-conceituais.md'), 'utf8');
   const executions = [];
   for (const execution of batch.executions) {
-    if (!/^E\d{20}$/.test(execution.execution_id)) throw new Error('ID de execução inválido no lote.');
-    if (!batch.config.models.some((model) => model.id === execution.system_id)) throw new Error('Execução sem modelo correspondente no manifesto.');
-    const evidence = join(batchDirectory, 'comprovantes', execution.execution_id);
-    const request = await readJsonIfPresent(join(evidence, 'pedido.json'));
-    const record = await readJsonIfPresent(join(evidence, 'metricas.json'));
-    const content = await readTextIfPresent(join(evidence, 'resposta.md'));
-    if (request && sha256(JSON.stringify(request.messages)) !== execution.prompt_sha256) throw new Error('Pedido diverge do hash arquivado.');
-    if (record && record.execution_id !== execution.execution_id) throw new Error('Métricas de outra execução.');
-    const material = await readJsonIfPresent(join(batchDirectory, 'privado/pedidos', `${execution.topic}.json`));
-    const messages = request?.messages ?? material?.messages;
-    if (!messages?.length) throw new Error('Pedido efetivo indisponível para o julgamento.');
-    const codes = Object.fromEntries(passes.map((role) => [role, `Q${randomUUID().replaceAll('-', '')}`]));
-    executions.push({
-      execution_id: execution.execution_id, system_id: execution.system_id, topic: execution.topic, round: execution.round,
-      codes, record, content, messages, answer_key: answerKeySection(answerKeys, execution.topic),
-      content_sha256: content === null ? null : sha256(content),
-      identity_concern: content === null ? null : identityConcern(content, batch.config.models),
-    });
+    executions.push(await freezeExecution(batchDirectory, execution, batch.config.models, answerKeySection(answerKeys, execution.topic)));
   }
   const state = {
     schema_version: 1, config, runtime, frozen_at: new Date().toISOString(), phase: batch.config.phase,
@@ -204,10 +208,11 @@ async function judgeExecution(batchDirectory, state, execution, role, completed,
   if (existing) return validateSavedResult(taskDirectory, existing, identity, execution, completed);
   const rejected = await readJsonIfPresent(join(taskDirectory, 'pendente.json'));
   if (rejected?.raw_result) return validateSavedResult(taskDirectory, rejected.raw_result, identity, execution, completed);
-  if (rejected || options.localOnly) {
+  if (rejected && !options.localOnly) await rm(join(taskDirectory, 'pendente.json'));
+  else if (rejected || options.localOnly) {
     if (await readJsonIfPresent(join(taskDirectory, 'concluido.json'))) {
       try {
-        const archived = await readArchivedHerdrResult(taskDirectory);
+        const archived = await readArchivedClaudeResult(taskDirectory);
         return await validateSavedResult(taskDirectory, archived, identity, execution, completed);
       } catch (error) { return { ...identity, status: 'PENDENTE', executed: true, result: null, reason: error.message }; }
     }
@@ -260,23 +265,26 @@ export async function judgeBatch(directory, options = {}) {
     const state = await freezeInputs(batchDirectory, options.repositoryRoot, options.config, options.runtime);
     const coverage = state.executions.map((execution) => sourceCoverage(execution.messages, execution.answer_key, execution.topic));
     await replaceDerivedFile(join(batchDirectory, 'privado/cobertura-fontes.json'), `${JSON.stringify(coverage, null, 2)}\n`);
-    const runnerOptions = { ...options, runJob: options.runJob ?? runHerdrJob };
+    const runnerOptions = { ...options, runJob: options.runJob ?? runClaudeJob };
     const completed = Object.fromEntries(state.executions.map((execution) => [execution.execution_id, {}]));
+    const judgeInQueue = async (execution, role) => {
+      if (options.signal?.aborted) throw new Error('Julgamento interrompido; retome pelo diretório deste lote.');
+      options.onProgress?.(`${role}: ${execution.codes[role]}`);
+      try { completed[execution.execution_id][role] = await judgeExecution(batchDirectory, state, execution, role, completed[execution.execution_id], runnerOptions); }
+      catch (error) {
+        if (options.signal?.aborted) throw error;
+        completed[execution.execution_id][role] = administrativeResult({ code: execution.codes[role], topic: execution.topic, round: execution.round, role }, 'PENDENTE', `Arquivo ou contrato indisponível: ${error.message}`);
+      }
+      const judgment = discardUnfinishedJudgment(completed[execution.execution_id][role]);
+      completed[execution.execution_id][role] = judgment;
+      options.onProgress?.(`${role}: ${execution.codes[role]} - ${judgment.status}${judgment.reason ? `: ${judgment.reason}` : ''}`);
+      await replaceDerivedFile(join(batchDirectory, 'privado/fila-julgamento.json'), `${JSON.stringify(completed, null, 2)}\n`);
+    };
     for (const role of passes) {
       const ordered = role.endsWith('2') ? state.executions.toReversed() : state.executions;
-      for (const execution of ordered) {
-        if (options.signal?.aborted) throw new Error('Julgamento interrompido; retome pelo diretório deste lote.');
-        options.onProgress?.(`${role}: ${execution.codes[role]}`);
-        try { completed[execution.execution_id][role] = await judgeExecution(batchDirectory, state, execution, role, completed[execution.execution_id], runnerOptions); }
-        catch (error) {
-          if (options.signal?.aborted) throw error;
-          completed[execution.execution_id][role] = administrativeResult({ code: execution.codes[role], topic: execution.topic, round: execution.round, role }, 'PENDENTE', `Arquivo ou contrato indisponível: ${error.message}`);
-        }
-        const judgment = discardUnfinishedJudgment(completed[execution.execution_id][role]);
-        completed[execution.execution_id][role] = judgment;
-        options.onProgress?.(`${role}: ${execution.codes[role]} - ${judgment.status}${judgment.reason ? `: ${judgment.reason}` : ''}`);
-        await replaceDerivedFile(join(batchDirectory, 'privado/fila-julgamento.json'), `${JSON.stringify(completed, null, 2)}\n`);
-      }
+      const outcomes = await Promise.allSettled(ordered.map((execution) => judgeInQueue(execution, role)));
+      const failure = outcomes.find((outcome) => outcome.status === 'rejected');
+      if (failure) throw failure.reason;
     }
     const consolidation = await consolidateResults(batchDirectory, state, completed, runnerOptions);
     return { batchDirectory, completed, consolidation };

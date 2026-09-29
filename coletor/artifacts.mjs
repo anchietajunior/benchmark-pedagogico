@@ -3,6 +3,11 @@ import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import { recordsCsv } from './metrics.mjs';
 
+export async function readJsonIfPresent(path) {
+  try { return JSON.parse(await readFile(path, 'utf8')); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+}
+
 export async function writeJson(path, value) {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
 }
@@ -124,7 +129,7 @@ export async function archiveBatch(batchDirectory, batch, study) {
   await writeFile(join(batchDirectory, 'lote.md'), renderManifest(batch), { flag: 'wx', mode: 0o600 });
   await writeFile(join(batchDirectory, 'privado/protocolo.md'), study.protocol, { flag: 'wx', mode: 0o600 });
   for (const material of study.materials) await writeJson(join(batchDirectory, 'privado/pedidos', `${material.topic}.json`), material);
-  for (const filename of ['cli.mjs', 'config.mjs', 'openrouter.mjs', 'metrics.mjs', 'artifacts.mjs', 'collector.mjs', 'catalog.mjs', 'pipeline-cli.mjs', 'pipeline-options.mjs', 'pipeline-completion.mjs', 'pipeline.mjs', 'herdr.mjs', 'codex-worker.mjs', 'judgments.mjs', 'judgment-recovery.mjs', 'record-results.mjs', 'source-coverage.mjs', 'report-output.mjs', 'consolidation.mjs', 'html-report.mjs', 'output-lock.mjs']) {
+  for (const filename of ['cli.mjs', 'config.mjs', 'openrouter.mjs', 'metrics.mjs', 'artifacts.mjs', 'collector.mjs', 'catalog.mjs', 'pipeline-cli.mjs', 'pipeline-options.mjs', 'pipeline-completion.mjs', 'pipeline.mjs', 'claude-judge.mjs', 'replace-system.mjs', 'judgments.mjs', 'judgment-recovery.mjs', 'record-results.mjs', 'source-coverage.mjs', 'report-output.mjs', 'consolidation.mjs', 'html-report.mjs', 'html-criteria.mjs', 'output-lock.mjs']) {
     const code = await readFile(join(import.meta.dirname, filename), 'utf8');
     await writeFile(join(batchDirectory, 'privado/coletor', filename), code, { flag: 'wx', mode: 0o600 });
   }

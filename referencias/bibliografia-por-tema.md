@@ -58,6 +58,21 @@ Fontes-base para consulta:
 - B02-F2: Alberts, B. et al. *Molecular Biology of the Cell*, 4ª ed., Garland Science, 2002, seção [The Adaptive Immune System](https://www.ncbi.nlm.nih.gov/sites/books/NBK21070/).
   Conferir funções das células B e T e distinção entre respostas mediadas por anticorpos e por células.
 
+Fontes adicionais do piloto OpenRouter preparado em 2026-09-29:
+
+- B02-F3: Marshall, J. S.; Warrington, R.; Watson, W.; Kim, H. L. [An introduction to immunology and immunopathology](https://doi.org/10.1186/s13223-018-0278-1), Allergy, Asthma & Clinical Immunology, 2018;14(Suppl 2):49.
+  [Texto e licença CC BY 4.0](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6156898/fullTextXML).
+- B02-F4: Bugya, Z. et al. [Multiple Levels of Immunological Memory and Their Association with Vaccination](https://doi.org/10.3390/vaccines9020174), Vaccines, 2021;9(2):174.
+  [Texto e licença CC BY 4.0](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC7922266/fullTextXML).
+- B02-F5: Clem, A. S. [Fundamentals of vaccine immunology](https://doi.org/10.4103/0974-777X.77299), Journal of Global Infectious Diseases, 2011;3(1):73.
+  [Texto e licença CC BY-NC-SA 3.0](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC3068582/fullTextXML).
+
+F1 e F2 não puderam ser consultadas na preparação: o NCBI Bookshelf exigiu verificação humana de acesso.
+O pacote local contém notas de leitura de F3 a F5 e o texto original em inglês das seções consultadas de F3 e F4; os XML originais e seus hashes foram preservados localmente.
+As notas de F5 omitem trechos em que o artigo simplifica a distribuição do MHC de classe II e a via de apresentação por tipo de patógeno.
+A preparação por IA não é revisão humana, e a inclusão do texto não assegura APTO das futuras respostas.
+Os identificadores F1 e F2 foram preservados; nenhuma outra obra os reutiliza.
+
 Obra complementar consolidada:
 
 - Abbas, A. K.; Lichtman, A. H.; Pillai, S. *Imunologia Celular e Molecular*, 10ª ed., Guanabara Koogan, 2023.
@@ -65,38 +80,6 @@ Obra complementar consolidada:
   Os capítulos completos dessa edição não foram consultados na preparação deste kit.
 
 As fontes-base antigas sustentam mecanismos fundamentais; não devem ser usadas para atribuir eficácia ou recomendações atuais a vacinas específicas.
-
-## N01 - Metabolismo energético após a refeição e no jejum
-
-Fontes-base para consulta:
-
-- N01-F1: OpenStax, *Anatomy and Physiology 2e*, seção [24.5, Metabolic States of the Body](https://openstax.org/books/anatomy-and-physiology-2e/pages/24-5-metabolic-states-of-the-body).
-  Conferir integração entre estados alimentado e pós-absortivo, armazenamento e mobilização de combustíveis.
-- N01-F2: *Endotext*, capítulo [Glucagon Physiology](https://www.ncbi.nlm.nih.gov/sites/books/NBK279127/).
-  Conferir funções do glucagon e produção hepática de glicose.
-- N01-F3: *StatPearls*, capítulo [Biochemistry, Glycogen](https://www.ncbi.nlm.nih.gov/sites/books/NBK539802/).
-  Conferir a diferença entre as funções dos estoques hepático e muscular.
-
-Obra complementar consolidada:
-
-- *Princípios de Bioquímica de Lehninger*, 8ª ed., Artmed, 2022, indicada no [plano de Nutrição e Metabolismo do UniRios, 2024.2](https://www.unirios.edu.br/arquivos/files/cursos/nutricao/2024/2_semestre/2p/nutricao_e_metabolismo.pdf).
-  Consultar os trechos sobre glicogênio e integração hormonal do metabolismo na edição fornecida.
-  A indicação curricular foi conferida; os capítulos completos dessa edição não foram consultados na preparação deste kit.
-
-## N02 - Absorção e regulação do ferro
-
-Fontes-base para consulta:
-
-- N02-F1: NIH Office of Dietary Supplements, [Iron: Fact Sheet for Health Professionals](https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/).
-  Conferir formas alimentares, biodisponibilidade, transporte, armazenamento e limitações da ferritina na presença de inflamação.
-- N02-F2: Nemeth, E. et al. [Hepcidin regulates cellular iron efflux by binding to ferroportin and inducing its internalization](https://pubmed.ncbi.nlm.nih.gov/15514116/), *Science*, 2004, 306(5704):2090-2093, DOI 10.1126/science.1104742.
-  O resumo acessível descreve o mecanismo hepcidina-ferroportina; não alegar consulta ao artigo integral quando apenas o resumo tiver sido acessado.
-
-Obra complementar consolidada:
-
-- Cozzolino, S. M. F. *Biodisponibilidade de nutrientes*, 7ª ed., Manole, 2024, indicada no [plano de Nutrição e Metabolismo do UniRios, 2024.2](https://www.unirios.edu.br/arquivos/files/cursos/nutricao/2024/2_semestre/2p/nutricao_e_metabolismo.pdf).
-  Consultar os trechos sobre ferro na edição disponibilizada pelo pesquisador.
-  A indicação curricular foi conferida; os capítulos completos dessa edição não foram consultados na preparação deste kit.
 
 ## Divergências e extensão da conferência
 

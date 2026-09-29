@@ -18,7 +18,7 @@ Não substitua a verificação por conhecimento de memória nem invente fontes o
 
 ## Leitor e profundidade
 
-O leitor é um graduando de Biomedicina ou Nutrição com noções de célula, tecido, órgão, proteínas e nutrientes, mas sem domínio do mecanismo pedido.
+O leitor é um graduando de Biomedicina com noções de célula, tecido, órgão, proteínas e nutrientes, mas sem domínio do mecanismo pedido.
 Escreva uma pequena aula autossuficiente, com linguagem simples e profundidade delimitada pelo tema.
 Defina termos no primeiro uso e apresente a função dos componentes antes de suas relações.
 Desenvolva cada um dos seis pontos: o que acontece, quais componentes participam, como ou por que acontece e qual a consequência relevante.

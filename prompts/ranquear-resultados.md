@@ -15,8 +15,8 @@ Mostre APTO incompleto, PENDENTE, CORRIGIR e AUSENTE em grupos fora do ranking, 
 Não desempate P por tempo, custo ou T1/T2.
 Recomendação afetada por desacordo científico fica provisória até revisão.
 
-Média global da rodada exige os quatro temas APTO com P completo por sistema.
-Média geral das cinco rodadas exige 20 APTO e 20 P completos por sistema.
+Média global da rodada exige os dois temas (B01 e B02) APTO com P completo por sistema.
+Média geral das cinco rodadas exige 10 APTO e 10 P completos por sistema.
 Uma média apenas dos sobreviventes é diagnóstico com n elegível/n previsto, não ranking global.
 No piloto, apresente somente os temas/rodadas realizados e suas limitações, sem extrapolar ao estudo completo.
 Agrupe por sistema_id, sem misturar agentes, modelos, versões ou configurações.

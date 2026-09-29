@@ -7,7 +7,7 @@ Esta nota preserva as alternativas pesquisadas antes da revisão; códigos T/J e
 Em caso de diferença de escala, normalização, denominador ou competência, prevalece o protocolo 3.2 com JC, JP, JT e JE.
 
 Consulta: 25/09/2026.
-Recorte: métodos de julgamento, repetibilidade e desempenho operacional das explicações nos quatro temas.
+Recorte: métodos de julgamento, repetibilidade e desempenho operacional das explicações nos dois temas.
 As escolhas abaixo são propostas locais, não requisitos das fontes citadas.
 
 ## Métodos de julgamento e verificações objetivas
@@ -38,8 +38,8 @@ Execuções de um modelo podem variar mesmo com o mesmo pedido; temperatura zero
 A necessidade de quantificar essa variabilidade é investigada por [Blackwell, Barry e Cohn, 2024](https://arxiv.org/abs/2410.03492).
 
 Proposta exploratória: cinco gerações por modelo e tema, em sessões independentes, conservando configurações e fontes.
-Com quatro modelos e quatro temas, isso produziria 80 explicações em cinco rodadas completas.
-Com os seis modelos do novo coletor, seriam 120; o piloto configurado usa apenas B01 e uma rodada.
+Com quatro modelos e dois temas, isso produziria 40 explicações em cinco rodadas completas.
+Com os seis modelos do novo coletor, seriam 60; o piloto configurado usa apenas B01 e uma rodada.
 O manifesto de cada lote define o desenho efetivo, sem misturar condições experimentais.
 Cinco é uma escolha exploratória de repetições, não um tamanho amostral validado ou garantia de poder estatístico.
 Intercalar a ordem dos modelos entre rodadas e registrar condições de execução.

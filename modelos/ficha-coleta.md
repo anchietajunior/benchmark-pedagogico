@@ -19,7 +19,7 @@ N/A significa dado indisponível, nunca zero.
 - custo: N/A - não registrado; copiar valor, moeda e origem ou indicar indisponibilidade
 - cobertura_uso_custo: desconhecida - indicar toda a execução ou parcial somente quando comprovável
 - comprovantes: N/A - indicar nomes dos prints/logs disponíveis
-- pedido_e_anexos: arquivo gerar-explicacao-bio-01/02.md ou gerar-explicacao-nut-01/02.md do tema, integral; registrar eventual ID fornecido e anexos
+- pedido_e_anexos: arquivo gerar-explicacao-bio-01/02.md do tema, integral; registrar eventual ID fornecido e anexos
 - ocorrencias: [nenhuma ou descrever intervenções, falhas, reenvios e mudanças de configuração]
 
 Tokens/custo devem ter origem identificada: painel, log, cobrança ou estimativa com tarifa, fonte, data e cálculo.

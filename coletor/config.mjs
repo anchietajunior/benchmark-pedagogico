@@ -6,9 +6,9 @@ import { dirname, join, resolve, isAbsolute } from 'node:path';
 const TOPICS = {
   B01: 'prompts/pedidos/B01-hemostasia.md',
   B02: 'prompts/pedidos/B02-memoria-imunologica.md',
-  N01: 'prompts/pedidos/N01-metabolismo-energetico.md',
-  N02: 'prompts/pedidos/N02-metabolismo-do-ferro.md',
 };
+
+export const studyTopicIds = Object.keys(TOPICS);
 
 export function sha256(content) {
   return createHash('sha256').update(content).digest('hex');
@@ -67,7 +67,7 @@ function validateConfig(config) {
   const topicIds = new Set();
   for (const topic of config.topics) {
     requireKeys(topic, ['id', 'source_file', 'sources_reviewed', 'pilot_sources_prepared'], 'Tema');
-    requireCondition(Object.hasOwn(TOPICS, topic.id) && !topicIds.has(topic.id), 'Tema inválido ou repetido: use B01, B02, N01 ou N02.');
+    requireCondition(Object.hasOwn(TOPICS, topic.id) && !topicIds.has(topic.id), `Tema inválido ou repetido: use ${studyTopicIds.join(' ou ')}.`);
     topicIds.add(topic.id);
     requireCondition(filledText(topic.source_file), `${topic.id}: informe source_file.`);
     requireCondition(typeof topic.sources_reviewed === 'boolean', `${topic.id}: sources_reviewed deve ser true ou false.`);

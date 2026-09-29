@@ -15,7 +15,7 @@ Não apresente uma explicação como verificada nessa situação.
 
 ## Explique para este leitor
 
-O leitor é um graduando de Biomedicina ou Nutrição com noções de célula, tecido, órgão, proteínas e nutrientes, mas sem domínio do mecanismo pedido.
+O leitor é um graduando de Biomedicina com noções de célula, tecido, órgão, proteínas e nutrientes, mas sem domínio do mecanismo pedido.
 Escreva uma pequena aula para estudo individual: o leitor deve conseguir acompanhar o raciocínio sem recorrer às fontes para preencher etapas essenciais.
 Defina termos novos no primeiro uso e apresente a função dos componentes antes de explicar suas relações.
 Desenvolva os seis pontos do pedido: em cada um, explique o que acontece, quais componentes participam, como ou por que isso ocorre e qual é a consequência relevante.

@@ -26,7 +26,7 @@ Dados técnicos autodeclarados na explicação não são cobrança ou cronometra
 5. Confira C1-C3, M1-M5/P, T1/T2 e E1-E3 com os itens e registros originais, documentando erratas exclusivamente aritméticas.
 6. Una JC1, JP1, JT e JE na tabela primária por execução; preserve JC2/JP2 para estabilidade.
 7. Compare pedagogia somente com APTO em JC1, JP1 CONCLUÍDO e os 10 códigos válidos sem duplicatas.
-8. Aplique a elegibilidade global: quatro APTO/quatro P por rodada; 20 APTO/20 P nas cinco rodadas.
+8. Aplique a elegibilidade global: dois APTO/dois P por rodada (B01 e B02); 10 APTO/10 P nas cinco rodadas.
 9. Compare JC1/JC2 dentro de ciência e JP1/JP2 dentro de pedagogia; não calcule concordância entre papéis distintos.
 10. Mantenha desacordos científicos e alertas de JP provisórios até revisão especializada, sem adjudicar a verdade.
 11. Calcule custo por APTO usando JC1 e todos os custos de geração do recorte, incluindo falhas, sem duplicar gerações por número de juízes.
@@ -46,7 +46,7 @@ Separe protocolos 3.1 e 3.2: a nova extensão altera a tarefa e seus custos; nã
 Mantenha empates e não desempate pedagogia por tempo ou custo.
 Média apenas dos APTO é diagnóstico com cobertura, não ranking global.
 Sem custo completo, custo por APTO é N/A; sem APTO, é indefinido.
-Repetições de quatro temas não criam novos conteúdos curriculares.
+Repetições dos dois temas não criam novos conteúdos curriculares.
 Agrupe por sistema_id: agente + modelo + provedor + configuração; não una versões ou agentes distintos sob o mesmo nome de LLM.
 Quando agente e modelo variarem juntos, descreva resultados das combinações, sem atribuir causalmente a diferença ao LLM ou à origem comum dos fornecedores.
 Informe configurações ocultas e ausência de rastros como limitações; não estime a porcentagem de efeito do agente sem desenho controlado.
