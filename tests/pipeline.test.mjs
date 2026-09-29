@@ -10,7 +10,7 @@ import { judgeBatch, identityConcern } from '../coletor/pipeline.mjs';
 import { fixedItems, roleFamily, validateJudgment, renderJudgePrompt, judgmentSchemaFor, assertSchema } from '../coletor/judgments.mjs';
 import { runHerdrJob, readArchivedHerdrResult } from '../coletor/herdr.mjs';
 import { codexArguments, codexEnvironment } from '../coletor/codex-worker.mjs';
-import { escapeHtml, renderResultsHtml } from '../coletor/html-report.mjs';
+import { buildModelRanking, escapeHtml, renderResultsHtml } from '../coletor/html-report.mjs';
 import { recoverValidItems } from '../coletor/judgment-recovery.mjs';
 import { openReport } from '../coletor/report-output.mjs';
 import { sourceCoverage } from '../coletor/source-coverage.mjs';
@@ -39,18 +39,66 @@ test('decisão científica pendente é descartada e o processamento encerra com 
   assert.equal(shouldOpenReport(finalized, { 'nao-abrir': true }), false);
 });
 
-test('HTML mostra o material bibliográfico efetivamente recebido e referências ausentes', () => {
-  const material = {
-    topic: 'B01', codes: {}, messages: [{ role: 'user', content: '## Material bibliográfico fornecido\nNotas de leitura: B01-F2, B01-F3.' }],
-    answer_key: 'Gabarito: B01-F1 e B01-F2.',
-  };
-  const state = { phase: 'PILOTO', frozen_at: 'data de teste', models: [], executions: [material, material] };
-  const narrative = { title: 'Teste', summary: 'Teste', observations: [], limitations: [] };
-  const html = renderResultsHtml(state, [], [], {}, narrative);
-  assert.match(html, /Material usado na validação científica/);
-  assert.match(html, /<td>B01-F2, B01-F3<\/td>/);
-  assert.match(html, /<td>B01-F1<\/td>/);
-  assert.equal(html.match(/Notas\/paráfrases fornecidas/g).length, 1);
+function rankingFixture(scores) {
+  const models = scores.map((score, index) => ({ id: `S${index + 1}`, model: `vendor/model-${index + 1}` }));
+  const executions = models.map((model, index) => ({ execution_id: `E${index + 1}`, system_id: model.id, content: 'Explicação completa.', record: { operational_status: 'conclusão normal', output_branch: 'explicação' } }));
+  const summary = executions.map((execution, index) => ({ execucao_id: execution.execution_id, sistema_id: execution.system_id, situacao_JC1: 'APTO', situacao_JP1: 'CONCLUÍDO', contestacao_cientifica: false, P: scores[index] }));
+  return { state: { models, executions }, summary };
+}
+
+test('ranking ordena pontuações, mantém todos os modelos e distingue nota zero de erro', () => {
+  const { state, summary } = rankingFixture([70, 95, null, 95, 0]);
+  const ranking = buildModelRanking(state, summary);
+  assert.deepEqual(ranking.map((model) => [model.rank, model.system_id, model.score, model.status]), [
+    [1, 'S2', 95, 'CONCLUÍDO'], [1, 'S4', 95, 'CONCLUÍDO'], [3, 'S1', 70, 'CONCLUÍDO'], [4, 'S5', 0, 'CONCLUÍDO'], [4, 'S3', 0, 'ERRO'],
+  ]);
+});
+
+test('ranking não aproveita notas sem APTO, parecer final ou resposta completa nem com contestação', () => {
+  const { state, summary } = rankingFixture(Array(6).fill(100));
+  summary[0].situacao_JC1 = 'CORRIGIR';
+  summary[1].situacao_JP1 = 'DESCARTADO';
+  summary[2].contestacao_cientifica = true;
+  state.executions[3].record.operational_status = 'truncamento';
+  state.executions[4].content = '';
+  summary.pop();
+  assert.ok(buildModelRanking(state, summary).every((model) => model.score === 0 && model.status === 'ERRO'));
+});
+
+test('ranking exige P numérico válido e inclui modelos sem execução', () => {
+  const { state, summary } = rankingFixture([undefined, NaN, Infinity, -1, 101, '90']);
+  state.models.push({ id: 'S7', model: 'vendor/no-execution' });
+  const ranking = buildModelRanking(state, summary);
+  assert.equal(ranking.length, 7);
+  assert.ok(ranking.every((model) => model.score === 0 && model.status === 'ERRO'));
+});
+
+test('ranking usa todas as execuções previstas, sem média apenas dos sobreviventes', () => {
+  const { state, summary } = rankingFixture([80, 95]);
+  state.executions.push({ ...state.executions[0], execution_id: 'E3' });
+  summary.push({ ...summary[0], execucao_id: 'E3', P: 100 });
+  const original = structuredClone({ state, summary });
+  assert.deepEqual(buildModelRanking(state, summary).map((model) => model.score), [95, 90]);
+  assert.deepEqual({ state, summary }, original);
+  summary.pop();
+  const incomplete = buildModelRanking(state, summary).find((model) => model.system_id === 'S1');
+  assert.equal(incomplete.score, 0);
+  assert.equal(incomplete.status, 'ERRO');
+});
+
+test('ranking arredonda antes de ordenar para que pontuações exibidas iguais empatem', () => {
+  const { state, summary } = rankingFixture([90.001, 90.002, 80.125]);
+  assert.deepEqual(buildModelRanking(state, summary).map((model) => [model.rank, model.score]), [[1, 90], [1, 90], [3, 80.13]]);
+});
+
+test('HTML exibe somente uma tabela de ranking com nomes escapados e falhas em zero', () => {
+  const { state, summary } = rankingFixture([75.25, null]);
+  state.models[0].model = '<script>alert("modelo")</script>&';
+  const html = renderResultsHtml(state, summary);
+  assert.equal(html.match(/<table>/g).length, 1);
+  assert.match(html, /<td>1<\/td><td>&lt;script&gt;alert\(&quot;modelo&quot;\)&lt;\/script&gt;&amp;<\/td><td>75,25<\/td><td>CONCLUÍDO<\/td>/);
+  assert.match(html, /<td>2<\/td><td>vendor\/model-2<\/td><td>0<\/td><td>ERRO<\/td>/);
+  assert.doesNotMatch(html, /<script>|<details>|Material usado|Notas por execução|Leitura do consolidador/);
 });
 
 test('cobertura distingue notas de leitura do texto original incorporado', () => {
@@ -58,9 +106,7 @@ test('cobertura distingue notas de leitura do texto original incorporado', () =>
   const coverage = sourceCoverage(messages, 'B01-F1', 'B01');
   assert.deepEqual(coverage.original_source_ids, ['B01-F3']);
   assert.equal(coverage.reading_notes, true);
-  const state = { phase: 'PILOTO', frozen_at: 'teste', models: [], executions: [{ topic: 'B01', codes: {}, messages, answer_key: 'B01-F1' }] };
-  const html = renderResultsHtml(state, [], [], {}, { title: 'Teste', summary: 'Teste', observations: [], limitations: [] });
-  assert.match(html, /Texto original: B01-F3; notas\/paráfrases/);
+  assert.deepEqual(coverage.answer_key_sources_not_supplied, ['B01-F1']);
 });
 
 test('Herdr aceita sucesso vazio de pane run e exige JSON nos comandos de consulta', async (context) => {
@@ -175,8 +221,10 @@ test('fluxo completo isola papéis, preserva certificados e retoma sem novos jul
   assert.doesNotMatch(summary, /secret-model/);
   const html = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
   assert.match(html, /vendor\/secret-model/);
-  assert.ok(html.includes(scientific.code));
-  assert.ok(html.includes(pedagogical.code));
+  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td>/);
+  assert.equal(consolidator.mapa_privado[0].codigos.JP1, pedagogical.code);
+  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO' }]);
+  assert.ok(!html.includes(scientific.code));
   const global = await readFile(join(directory, 'consolidado/global-por-rodada.csv'), 'utf8');
   assert.match(global, /"false","N\/A"/);
   await judgeBatch(directory, { repositoryRoot, runJob: () => { throw new Error('Retomada não deve chamar modelo.'); } });
@@ -277,7 +325,8 @@ test('registros de tempo e tokens permanecem publicados quando JT e JE falham', 
   assert.match(rows, /"JE","UNICA","CUSTO_GERACAO_BRL","N\/A","0.05"/);
   assert.match(rows, /"JT","UNICA","T1","N\/A"/);
   const html = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
-  assert.match(html, /Falha sintética do avaliador/);
+  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td>/);
+  assert.match(await readFile(join(directory, 'consolidado/relatorio.md'), 'utf8'), /Falha sintética do avaliador/);
 });
 
 test('CLI revalida sem runtime Herdr, credencial ou chamada de rede', async () => {
@@ -413,7 +462,7 @@ test('revisão após recuperar parecer usa síntese local sem nova chamada do co
   await judgeBatch(directory, { repositoryRoot, runJob: () => { throw new Error('Nenhum consolidador adicional deve ser enviado.'); } });
   const html = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
   assert.doesNotMatch(html, /Nenhum consolidador adicional/);
-  assert.match(html, /Consolidação local/);
+  assert.match(html, /<td>0<\/td><td>ERRO<\/td>/);
   const revisions = await readdir(join(directory, 'consolidado/revisoes'));
   assert.ok(revisions.length > 0);
   const archived = await readFile(join(directory, 'consolidado/revisoes', revisions[0], 'resultados.html'), 'utf8');
@@ -525,6 +574,7 @@ test('descarte de JP2 preserva contestação científica e exclui P dos agregado
   assert.match(summary, /"true","true"/);
   const aggregates = await readFile(join(directory, 'consolidado/agregados.csv'), 'utf8');
   assert.match(aggregates, /"S01","B01","1","1","1","1","0"/);
+  assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /<td>0<\/td><td>ERRO<\/td>/);
 });
 
 test('autoria explícita bloqueia conteúdo sem reescrever original', async () => {
@@ -537,7 +587,7 @@ test('autoria explícita bloqueia conteúdo sem reescrever original', async () =
     return judgment(input);
   } });
   assert.deepEqual(roles, []);
-  assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /Descartes da avaliação/);
+  assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /<td>0<\/td><td>ERRO<\/td>/);
   assert.equal(await readFile(join(directory, 'comprovantes', executionId, 'resposta.md'), 'utf8'), content);
   assert.equal(identityConcern('O mecanismo tem uma meta fisiológica.', [{ model: 'meta/modelo', provider: 'meta' }]), null);
 });
@@ -687,7 +737,7 @@ test('worker Codex recebe configuração isolada e não herda chaves da coleta',
   assert.deepEqual(codexEnvironment({ HOME: '/user', PATH: '/bin', OPENROUTER_API_KEY: 'secret', OPENAI_API_KEY: 'secret', HERDR_PANE_ID: 'private' }), { HOME: '/user', PATH: '/bin' });
 });
 
-test('HTML trata texto do consolidador como texto e não como código executável', () => {
+test('HTML escapa valores como texto sem permitir código executável', () => {
   assert.equal(escapeHtml('<script>alert("x")</script> & nota'), '&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; nota');
 });
 

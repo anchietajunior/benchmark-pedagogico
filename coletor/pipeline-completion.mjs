@@ -52,7 +52,7 @@ export function assessPipelineCompletion(state, completed) {
     discarded_generations: discardedGenerations,
     discarded_judgments: Object.values(completed).flatMap(Object.values).filter((judgment) => judgment.status === 'DESCARTADO').length,
     discards, missing_measurements: missingMeasurements, issues,
-    limitation: 'Somente respostas completas e pareceres finais validados participam das notas. CORRIGIR é uma decisão científica final e mantém pedagogia bloqueada. Descartes e medidas ausentes não viram zero. Revisão humana não realizada.',
+    limitation: 'Somente respostas completas e pareceres finais validados participam das notas. CORRIGIR é uma decisão científica final e mantém pedagogia bloqueada. Descartes e medidas ausentes ficam N/A nos registros; o ranking HTML apresenta modelos sem avaliação pedagógica completa com 0 e ERRO. Revisão humana não realizada.',
   };
 }
 

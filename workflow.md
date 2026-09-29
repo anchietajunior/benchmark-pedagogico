@@ -76,12 +76,12 @@ open -a Safari "$DIRETORIO_DO_LOTE/consolidado/resultados.html"
 Substitua o caminho de exemplo pelo diretório mostrado no terminal.
 O navegador abre automaticamente após conclusão das etapas automáticas; o HTML é local e não exige servidor.
 Respostas incompletas são descartadas antes dos julgamentos; pareceres incompletos ou inválidos são descartados das notas.
-O fluxo encerra com resultados válidos, descartes explícitos no HTML e motivos em `consolidado/status-fluxo.json`.
+O fluxo encerra com o ranking no HTML; modelos sem avaliação pedagógica completa aparecem com 0 e ERRO, e os motivos ficam em `consolidado/status-fluxo.json`.
 CORRIGIR é uma decisão científica final desfavorável; APTO continua obrigatório para a pedagogia.
 
 | Arquivo | O que fazer |
 | --- | --- |
-| `consolidado/resultados.html` | Abrir no navegador: modelos identificados, códigos anônimos dos pareceres, notas, cobertura e limitações. |
+| `consolidado/resultados.html` | Abrir no navegador: ranking por pontuação, com posição, modelo, pontuação e status. |
 | `consolidado/resultados-completos.csv` | Consultar todos os itens, passagens, evidências e motivos de N/A. |
 | `consolidado/estabilidade.csv` | Comparar as duas passagens de cada papel. |
 | `RESUMO.md` | Conferir a coleta OpenRouter e suas pendências; não indica conclusão dos julgamentos. |

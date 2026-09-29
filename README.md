@@ -2,7 +2,8 @@
 
 Use `npm run executar` para coletar pelo OpenRouter, julgar em sessões Codex isoladas no Herdr e produzir `consolidado/resultados.html`.
 Os juízes recebem códigos anônimos; somente a sessão do consolidador recebe o mapa desses códigos para os nomes dos modelos.
-O HTML identifica cada modelo e mantém os códigos dos pareceres nas tabelas.
+O HTML mostra somente o ranking: posição, nome do modelo, pontuação de 0 a 100 e status.
+Modelos sem avaliação pedagógica completa aparecem com pontuação 0 e status ERRO; APTO científico permanece obrigatório.
 O coletor registra tempo, tokens e custo automaticamente.
 Uma chamada por explicação, sem skills, histórico compartilhado ou ferramentas do modelo.
 Os resultados vão para um lote novo em ~/Documents/coletas/openrouter/.
@@ -18,7 +19,7 @@ Para conferir a configuração sem rede ou inferência, execute `npm run executa
 Para recuperar os pareceres já gravados e atualizar o HTML sem chamadas, execute `npm run executar -- --revalidar`.
 O relatório abre no navegador após conclusão das etapas automáticas; use `--nao-abrir` para somente gravar os resultados.
 Respostas incompletas não são enviadas aos juízes; pareceres sem conclusão válida são descartados das notas.
-O processamento encerra com resultados válidos e uma tabela de descartes por modelo e etapa; os comprovantes permanecem arquivados.
+O processamento encerra com o ranking no HTML; os motivos dos descartes e os comprovantes permanecem arquivados.
 CORRIGIR é uma decisão científica final desfavorável e mantém pedagogia bloqueada; PENDENTE de um parecer vira descarte, sem nota aproveitada.
 Para apagar os lotes gerados e os temporários dos julgamentos antes de recomeçar, execute `npm run apagar`.
 Esse comando preserva código, configuração, credenciais e fontes; a remoção dos resultados é definitiva.

@@ -21,7 +21,7 @@ O modo de simulação é estritamente local, sem catálogo remoto, panes ou mode
 O modo `--revalidar` usa somente arquivos existentes, dispensa runtime Herdr e credenciais e não inicia chamadas; sem caminho, seleciona o lote mais recente.
 Ao concluir as etapas automáticas, o programa abre o HTML no navegador padrão; `--nao-abrir` desativa a abertura.
 Resposta incompleta é descartada antes dos juízes; parecer sem conclusão válida é descartado das notas.
-O fluxo encerra com resultados válidos e exclusões documentadas no HTML, que abre no navegador.
+O fluxo encerra com o ranking no HTML, que abre no navegador; modelos sem avaliação completa aparecem com 0 e ERRO.
 Use `--revalidar` para aplicar a política aos arquivos existentes sem chamadas.
 `--retomar` sem caminho seleciona o lote compatível mais recente pela data de criação em `output_dir`, inclusive quando já concluído, e informa o caminho antes da confirmação.
 Se não houver lote, o comando encerra sem iniciar coleta; para conferir a seleção sem chamadas, use `--retomar --simular`.
@@ -45,8 +45,8 @@ A configuração e a versão do Codex são congeladas antes do primeiro julgamen
 
 Cada passagem usa um código `Q...` distinto, sem modelo, sistema ou posição codificados no nome.
 JC2/JP2 usam ordem inversa da passagem primária, sobre a ordem sorteada da coleta.
-O código recebido por JC1 aparece ao lado do nome do modelo na tabela por execução do HTML.
-A seção de correspondência contém os códigos de todos os papéis.
+Os códigos de todas as passagens permanecem nos CSV e no mapa privado do consolidador.
+O HTML apresenta somente posição, nome do modelo, pontuação e status.
 O nome mostrado é o ID exato do modelo solicitado, conforme o manifesto, sem inferir uma identidade comercial a partir do estilo.
 O pesquisador autorizou a identificação apenas no relatório consolidado; os juízes continuam sem acesso ao mapa.
 
@@ -116,25 +116,27 @@ Falha de JT/JE não apaga as medidas instrumentadas; ausência de custo confirma
 ## Consolidação identificada
 
 O código reúne as notas aceitas, mantém todas as execuções planejadas e calcula cobertura, agregados condicionais e estabilidade.
-Uma sessão nova do consolidador recebe então o mapa privado e compõe título, resumo, observações e limitações de `resultados.html`.
+Uma sessão nova do consolidador recebe então o mapa privado, o ranking calculado e os resultados detalhados; sua síntese fica arquivada para auditoria.
 Essa chamada só é iniciada depois de processar cada etapa ou registrar seu descarte; se nenhuma resposta for elegível, a síntese é local.
 JC pode terminar em APTO ou CORRIGIR; PENDENTE ou parecer inválido é descartado integralmente das notas, sem manter itens isolados como resultados.
 JP exige APTO da passagem correspondente; seu parecer também precisa de conclusão válida para fornecer notas.
 JT/JE devem declarar CONCLUÍDO após apurar os itens disponíveis; valores N/A justificados não provam o dado, e status PENDENTE descarta o parecer.
 CORRIGIR continua registrado como resultado científico desfavorável, sem iniciar uma substituição automática do texto.
-Um renderizador local monta o HTML com esses textos e com as tabelas provenientes dos registros validados.
-O consolidador não pode alterar notas nas tabelas, códigos ou nomes durante a composição do relatório.
+Um renderizador local monta o HTML com uma única tabela de ranking, sem inserir a narrativa do consolidador.
+O ranking usa a média de P primário de todas as execuções previstas por modelo, exigindo JC1 APTO, JP1 CONCLUÍDO e ausência de contestação científica em cada execução.
+Sem todas as notas P válidas, o modelo aparece com pontuação 0 e status ERRO; nos demais casos, o status é CONCLUÍDO.
+Esse zero é uma regra de apresentação; as notas ausentes continuam N/A nos CSV, e uma nota P válida de zero continua CONCLUÍDO.
+As pontuações são arredondadas a duas casas decimais, ordenadas em ordem decrescente e recebem a mesma posição quando empatadas.
+O consolidador não pode alterar notas, nomes ou posições durante a composição do relatório.
 Mudanças após a revalidação produzem uma revisão local identificada, sem nova chamada ao consolidador; o conjunto anterior de HTML e CSV fica arquivado em `consolidado/revisoes/`.
-Se a sessão do consolidador falhar ou o comando for local, o renderizador gera uma síntese local identificada e conserva as tabelas e pendências.
+Se a sessão do consolidador falhar ou o comando for local, o renderizador conserva o ranking calculado e arquiva uma síntese local.
 O HTML é independente, responsivo, sem scripts, dependências externas ou conteúdo de modelo executável; todos os textos são escapados.
 
-O relatório inclui resultados por modelo/tema, notas por execução e os códigos usados em todas as passagens.
-O HTML também mostra as fontes incorporadas, referências do gabarito sem material e o uso de notas ou paráfrases.
-Uma tabela mostra os motivos científicos de JC1/JC2; outra identifica os descartes por modelo e etapa.
+Os CSV e pareceres incluem resultados por modelo/tema, notas por execução, códigos das passagens, material científico e motivos das decisões.
 `consolidado/status-fluxo.json` registra descartes, cobertura e medições ausentes, separando encerramento automático de revisão humana.
 Os CSV detalhados continuam disponíveis e preservam inventários, evidências, ausências e bloqueios.
 Desacordos JC1/JC2 e alertas JP ficam provisórios; não se escolhe a passagem mais favorável.
-Média condicional dos APTO não vira ranking global.
+O ranking desta atividade exige cobertura completa das execuções previstas; não usa a média apenas dos APTO sobreviventes.
 Uma média global por rodada só existe com os quatro temas, APTO e P completos sem contestação científica.
 O programa não calcula significância nem demonstra aprendizagem humana.
 

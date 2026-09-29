@@ -163,7 +163,7 @@ Respostas com erro, timeout, truncamento ou texto vazio são descartadas antes d
 Recusa, PENDENTE DE FONTES e autoria que comprometa o anonimato também impedem o envio dessa resposta aos juízes.
 Parecer sem decisão final ou que falhe na validação recebe DESCARTADO e não fornece notas ao relatório.
 O processamento encerra com resultados válidos e descartes documentados; essa conclusão não significa que todos os modelos obtiveram notas.
-Se todas as respostas forem descartadas, o HTML informa ausência de resultados elegíveis e é montado localmente, sem chamada ao consolidador.
+Se todas as respostas forem descartadas, todos os modelos aparecem no ranking com 0 e ERRO; o HTML é montado localmente, sem chamada ao consolidador.
 Para aplicar essas regras aos arquivos existentes e abrir o relatório sem chamadas:
 
 ```sh
@@ -185,17 +185,26 @@ open -a Safari "$DIRETORIO_DO_LOTE/consolidado/resultados.html"
 Você também pode abrir o arquivo pelo menu de abertura do seu navegador preferido.
 O relatório é um arquivo local independente e não precisa de servidor web.
 
-No navegador, confira:
+O HTML contém apenas uma tabela de ranking, ordenada da maior pontuação para a menor:
 
-1. **Resultados por modelo e tema:** nome do modelo, quantidade prevista, APTO e cobertura da média pedagógica.
-2. **Notas por execução:** código usado em JC1, nome do modelo, tema, rodada, notas, tempo e custo.
-3. **Códigos utilizados em todos os julgamentos:** clique para expandir a correspondência de cada passagem com seu modelo.
-4. **Leitura do consolidador e limitações:** observações, pendências e cuidados para interpretar os resultados.
-5. **Decisões científicas e motivos:** decisões de JC1/JC2 e motivos registrados; a tabela **Descartes da avaliação** identifica as exclusões.
+| Coluna | Significado |
+| --- | --- |
+| Posição | Colocação pela pontuação; valores iguais empatam. |
+| Modelo | Nome exato do modelo solicitado na coleta. |
+| Pontuação | P pedagógico primário, de 0 a 100; se houver várias execuções previstas, a média de todas elas. |
+| Status | CONCLUÍDO quando todas as execuções têm P válido, JC1 APTO, JP1 CONCLUÍDO e nenhuma contestação científica; ERRO nos demais casos. |
+
+Sem uma avaliação pedagógica completa, a linha do modelo recebe 0 e ERRO.
+Uma nota P válida de zero aparece como 0 e CONCLUÍDO.
+As pontuações são arredondadas a duas casas decimais antes da ordenação.
+Uma execução sem nota válida impede calcular a média do modelo apenas com as execuções restantes.
+JC2/JP2 verificam estabilidade; o ranking não escolhe a passagem com maior nota.
+Ausência de tempo ou custo não impede usar um P válido.
 
 Os juízes receberam somente seus códigos e materiais permitidos.
 A sessão do consolidador recebeu o mapa código-modelo para produzir esse relatório identificado.
-N/A significa ausência ou inaplicabilidade, nunca nota zero.
+Nos CSV e pareceres, N/A continua indicando ausência ou inaplicabilidade.
+O zero de uma linha ERRO é uma regra de apresentação do ranking, não uma nota científica ou pedagógica atribuída pelo juiz.
 F5 e T2 do ramo explicação aguardam inspeção humana; E1-E3 ficam N/A enquanto não houver metas pré-fixadas.
 Concluir as etapas automáticas não substitui a revisão humana prevista no protocolo.
 
@@ -232,7 +241,7 @@ npm run executar -- --revalidar
 ```
 
 O comando usa o lote mais recente; acrescente `--retomar "/caminho/do/lote"` para escolher outro.
-Ele não pede confirmação de chamadas porque só realiza operações locais; ao encerrar o processamento, abre o HTML com os resultados válidos e descartes.
+Ele não pede confirmação de chamadas porque só realiza operações locais; ao encerrar o processamento, abre o HTML com o ranking atualizado.
 Relatórios anteriores ficam em `consolidado/revisoes/`, e cada decisão de revalidação fica em um arquivo imutável em `revalidacoes/` junto ao parecer original.
 `revalidado.json` aponta para a decisão atual, e os CSV identificam o arquivo imutável usado em cada revisão.
 Julgamentos que nunca foram realizados continuam identificados como ausentes ou bloqueados; esse modo não cria novas avaliações.
@@ -246,7 +255,7 @@ Se aparecer uma mensagem de trava após encerramento abrupto, siga a orientaçã
 Se aparecer `Não foi possível concluir: ...`, leia o motivo e preserve o lote para investigação.
 Uma falha individual de juiz é registrada e o fluxo continua para os demais modelos e para a geração do HTML.
 Quando houver exclusões, o terminal informa `Fluxo encerrado com descartes`, detalha os motivos e mostra `Resultados:` com o caminho do HTML.
-Descartes registrados são situações finais e não exigem uma nova tentativa; não são convertidos em nota zero.
+Descartes registrados são situações finais e não exigem uma nova tentativa; o HTML apresenta os modelos sem avaliação completa com 0 e ERRO, e os registros detalhados preservam N/A e os motivos.
 Revalidar recupera erros do validador, mas não cria texto faltante, não muda CORRIGIR para APTO nem refaz a ciência com uma bibliografia nova.
 
 ## 7. Apagar os resultados e recomeçar

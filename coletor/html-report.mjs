@@ -4,8 +4,7 @@ import { sha256 } from './config.mjs';
 import { writeJson, replaceDerivedFile } from './artifacts.mjs';
 import { readJsonIfPresent } from './herdr.mjs';
 import { assertSchema } from './judgments.mjs';
-import { sourceCoverage } from './source-coverage.mjs';
-import { assessPipelineCompletion } from './pipeline-completion.mjs';
+import { executionDiscardReason } from './pipeline-completion.mjs';
 
 const reportSchema = {
   type: 'object', additionalProperties: false,
@@ -29,91 +28,67 @@ function table(headers, rows) {
   return `<div class="table-scroll"><table><thead><tr>${headers.map((header) => `<th scope="col">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${row.map((value) => `<td>${escapeHtml(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 
-export function renderResultsHtml(state, summary, aggregates, completed, narrative, completion = assessPipelineCompletion(state, completed)) {
-  const names = new Map(state.models.map((model) => [model.id, model.model]));
-  const executions = new Map(state.executions.map((execution) => [execution.execution_id, execution]));
-  const approved = summary.filter((row) => row.situacao_JC1 === 'APTO').length;
-  const evaluated = summary.filter((row) => row.P !== null).length;
-  const incomplete = completion.status === 'INCOMPLETO';
-  const title = incomplete ? `Relatório parcial - ${narrative.title}` : completion.discards.length ? `Resultados com descartes - ${narrative.title}` : narrative.title;
-  const completionRows = completion.issues.map((issue) => [names.get(issue.system_id) ?? issue.system_id, issue.topic, issue.stage, issue.reason]);
-  const discardRows = completion.discards.map((discard) => [names.get(discard.system_id) ?? discard.system_id, discard.topic, discard.stage, discard.reason]);
-  const measurementRows = completion.missing_measurements.map((measurement) => [names.get(measurement.system_id) ?? measurement.system_id, measurement.topic, measurement.reason]);
-  const scientificRows = state.executions.flatMap((execution) => ['JC1', 'JC2'].flatMap((role) => {
-    const judgment = completed[execution.execution_id]?.[role];
-    if (!judgment) return [];
-    return [[judgment.code, names.get(execution.system_id), role, judgment.status, judgment.reason ?? judgment.result?.blockers?.join('; ') ?? '']];
-  }));
-  const modelRows = aggregates.map((row) => [row.sistema_id, names.get(row.sistema_id), row.tema, row.n_previsto, row.n_apto, row.n_P, formatNumber(row.P_media_condicional)]);
-  const executionRows = summary.map((row) => [
-    executions.get(row.execucao_id).codes.JC1, names.get(row.sistema_id), row.tema, row.rodada,
-    row.situacao_JC1, formatNumber(row.C1), formatNumber(row.C2), formatNumber(row.C3),
-    row.situacao_JP1, formatNumber(row.P), formatNumber(row.T1), formatNumber(row.T2),
-    formatNumber(row.latencia_total_s), formatNumber(row.custo_geracao_brl),
-  ]);
-  const mappingRows = state.executions.flatMap((execution) => Object.entries(execution.codes).map(([role]) => [
-    completed[execution.execution_id][role].code, role, names.get(execution.system_id), execution.topic, execution.round,
-    completed[execution.execution_id][role].status,
-    completed[execution.execution_id][role].executed ? 'Executado' : completed[execution.execution_id][role].historical_execution ? 'Execução anterior arquivada' : 'Não iniciado',
-  ]));
-  const sourceScopes = new Map();
-  for (const execution of state.executions) {
-    const coverage = sourceCoverage(execution.messages, execution.answer_key, execution.topic);
-    sourceScopes.set(JSON.stringify(coverage), coverage);
-  }
-  const sourceRows = [...sourceScopes.values()].map((coverage) => [
-    coverage.topic, coverage.supplied_source_ids.join(', ') || 'Nenhuma fonte identificada',
-    coverage.answer_key_sources_not_supplied.join(', ') || 'Nenhuma',
-    coverage.original_source_ids.length
-      ? `Texto original: ${coverage.original_source_ids.join(', ')}${coverage.reading_notes ? '; notas/paráfrases' : ''}`
-      : coverage.reading_notes ? 'Notas/paráfrases fornecidas' : 'Material incorporado',
-  ]);
-  const list = (items) => `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+export function buildModelRanking(state, summary) {
+  const resultsByExecution = new Map(summary.map((row) => [row.execucao_id, row]));
+  const modelResults = state.models.map((model) => {
+    const executions = state.executions.filter((execution) => execution.system_id === model.id);
+    const scores = [];
+    for (const execution of executions) {
+      const result = resultsByExecution.get(execution.execution_id);
+      if (executionDiscardReason(execution) || !result || result.sistema_id !== model.id) continue;
+      if (result.situacao_JC1 !== 'APTO' || result.situacao_JP1 !== 'CONCLUÍDO' || result.contestacao_cientifica) continue;
+      if (!Number.isFinite(result.P) || result.P < 0 || result.P > 100) continue;
+      scores.push(result.P);
+    }
+    const hasCompleteEvaluation = executions.length > 0 && scores.length === executions.length;
+    const averageScore = hasCompleteEvaluation ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+    return {
+      system_id: model.id, model: model.model,
+      score: Math.round(averageScore * 100) / 100,
+      status: hasCompleteEvaluation ? 'CONCLUÍDO' : 'ERRO',
+    };
+  });
+  const sortedModels = modelResults.toSorted((first, second) => {
+    if (first.score !== second.score) return second.score - first.score;
+    if (first.status !== second.status) return first.status === 'CONCLUÍDO' ? -1 : 1;
+    const nameOrder = first.model.localeCompare(second.model, 'pt-BR');
+    return nameOrder || first.system_id.localeCompare(second.system_id);
+  });
+  let rank = 0;
+  return sortedModels.map((model, index) => {
+    if (index === 0 || model.score !== sortedModels[index - 1].score) rank = index + 1;
+    return { rank, ...model };
+  });
+}
+
+export function renderResultsHtml(state, summary) {
+  const ranking = buildModelRanking(state, summary);
+  const rows = ranking.map((model) => [model.rank, model.model, formatNumber(model.score), model.status]);
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<title>${escapeHtml(title)}</title>
+<title>Ranking dos modelos</title>
 <style>
 :root{color-scheme:light;font-family:system-ui,-apple-system,sans-serif;color:#172b39;background:#f3f5f6}
-*{box-sizing:border-box}body{margin:0}main{max-width:1500px;margin:auto;padding:36px 24px 64px}
-header{border-top:6px solid #216b71;padding:30px;background:#fff;border-radius:4px 4px 12px 12px}
-.eyebrow{color:#216b71;text-transform:uppercase;font-size:12px;letter-spacing:.14em;font-weight:700}
-h1{font-size:clamp(28px,4vw,44px);line-height:1.1;margin:12px 0 20px;max-width:1000px}
-h2{font-size:22px;margin:0 0 12px}p,li{line-height:1.65;max-width:100ch}li{margin:8px 0}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin:24px 0}
-.card,section,details{background:#fff;border:1px solid #dce3e6;border-radius:12px;padding:24px}
-.card strong{font-size:32px;display:block;margin-top:8px}.card span{font-size:13px;color:#526773}
-section,details{margin-top:24px}.muted{color:#526773;font-size:14px}.notice{border-left:4px solid #d89b2a;padding:12px 18px;background:#fff8e9}
-.table-scroll{overflow:auto;margin-top:20px}table{border-collapse:collapse;width:100%;font-size:13px}
-th{background:#eaf1f2;color:#28525b;font-weight:650;text-align:left;white-space:nowrap}
-th,td{padding:13px 12px;border-bottom:1px solid #e4e9eb;vertical-align:top}td:first-child{font-family:ui-monospace,monospace;overflow-wrap:anywhere;min-width:130px}
-tbody tr:nth-child(even){background:#fafcfc}summary{cursor:pointer;font-weight:650}footer{color:#526773;margin-top:28px;font-size:13px}
-@media print{body{background:#fff}main{padding:0}.table-scroll{overflow:visible}th,td{padding:5px;font-size:9px}section,details{break-inside:avoid}header{border:0}}
+*{box-sizing:border-box}body{margin:0}main{max-width:1000px;margin:48px auto;padding:28px;background:#fff;border:1px solid #dce3e6;border-radius:12px}
+h1{font-size:clamp(26px,4vw,36px);margin:0 0 12px}p{color:#526773;font-size:14px;line-height:1.6;margin:0}
+.table-scroll{overflow:auto;margin-top:24px}table{border-collapse:collapse;width:100%;font-size:16px}
+th{background:#eaf1f2;color:#28525b;text-align:left;white-space:nowrap}
+th,td{padding:18px 16px;border-bottom:1px solid #e4e9eb}td:nth-child(2){overflow-wrap:anywhere}
+th:first-child,td:first-child,th:nth-child(3),td:nth-child(3){text-align:right;font-variant-numeric:tabular-nums}
+td:nth-child(3){font-size:20px;font-weight:700}td:last-child{font-size:13px;font-weight:600;white-space:nowrap}
+tbody tr:nth-child(even){background:#fafcfc}
+@media(max-width:600px){main{margin:16px;padding:18px}th,td{padding:12px 10px}}
+@media print{body{background:#fff}main{margin:0;border:0}.table-scroll{overflow:visible}}
 </style>
 </head>
 <body><main>
-<header><div class="eyebrow">Benchmark pedagógico / protocolo 3.2 / ${escapeHtml(state.phase)}</div>
-<h1>${escapeHtml(title)}</h1><p>${escapeHtml(narrative.summary)}</p>
-<p class="muted">Cada juiz recebe um código opaco. O mapa privado é usado somente na consolidação do relatório. Nomes abaixo representam o modelo solicitado na coleta.</p></header>
-<div class="cards"><div class="card"><span>Tentativas previstas</span><strong>${summary.length}</strong></div><div class="card"><span>Respostas completas</span><strong>${completion.eligible_generations}</strong></div><div class="card"><span>Respostas descartadas</span><strong>${completion.discarded_generations}</strong></div><div class="card"><span>APTO em JC1</span><strong>${approved}</strong></div><div class="card"><span>Pedagogia com P conhecido</span><strong>${evaluated}</strong></div></div>
-<p class="notice"><strong>${incomplete ? `Processo interrompido: ${completion.issues.length} etapas não processadas.` : 'Processamento encerrado; resultados válidos e descartes documentados.'}</strong> ${escapeHtml(completion.limitation)}</p>
-${incomplete ? `<section><h2>O que impede a conclusão</h2>${table(['Modelo solicitado', 'Tema', 'Etapa', 'Motivo'], completionRows)}</section>` : ''}
-${discardRows.length ? `<section><h2>Descartes da avaliação</h2><p>As linhas abaixo não participam das notas. As respostas e os comprovantes originais permanecem arquivados.</p>${table(['Modelo solicitado', 'Tema', 'Etapa', 'Motivo do descarte'], discardRows)}</section>` : ''}
-${measurementRows.length ? `<section><h2>Medições indisponíveis</h2>${table(['Modelo solicitado', 'Tema', 'Motivo de N/A'], measurementRows)}</section>` : ''}
-<section><h2>Decisões científicas e motivos</h2>${table(['Código', 'Modelo solicitado', 'Passagem', 'Decisão', 'Motivos registrados'], scientificRows)}</section>
-<section><h2>Resultados por modelo e tema</h2><p class="muted">P é a média condicional dos APTO elegíveis, com cobertura explícita. Não representa ranking global.</p>
-${table(['Sistema', 'Modelo solicitado', 'Tema', 'Previstos', 'APTO JC1', 'P elegíveis', 'P médio condicional'], modelRows)}</section>
-<section><h2>Notas por execução</h2><p class="muted">O código da primeira coluna é exatamente o recebido pelo juiz científico primário. JC1/JP1 formam o resultado primário; JC2/JP2 medem estabilidade.</p>
-${table(['Código JC1', 'Modelo solicitado', 'Tema', 'Rodada', 'Ciência', 'C1', 'C2', 'C3', 'Pedagogia', 'P', 'T1', 'T2', 'Tempo (s)', 'Custo geração (R$)'], executionRows)}</section>
-<section><h2>Leitura do consolidador</h2>${list(narrative.observations)}</section>
-<section><h2>Material usado na validação científica</h2><p class="muted">Os juízes consultam somente o material incorporado, sem navegação até as obras completas. APTO exige sustentação científica no material recebido. A ausência do material de uma referência do gabarito, isoladamente, não invalida outra fonte fornecida que sustente a afirmação.</p>
-${table(['Tema', 'Fontes incorporadas', 'Referências do gabarito sem material', 'Material disponível'], sourceRows)}</section>
-<details><summary>Códigos utilizados em todos os julgamentos</summary>${table(['Código anônimo', 'Passagem', 'Modelo solicitado', 'Tema', 'Rodada', 'Situação', 'Chamada'], mappingRows)}</details>
-<section><h2>Limitações e exclusões</h2>${list(narrative.limitations)}<p class="muted">As notas e identidades das tabelas são inseridas diretamente dos registros validados. O texto do consolidador não altera esses valores. Itens completos, evidências e motivos de N/A estão nos CSV e pareceres do lote.</p></section>
-<footer>Gerado a partir dos insumos congelados em ${escapeHtml(state.frozen_at)}. Arquivo local identificado; a chave dos modelos não foi enviada aos juízes.</footer>
+<h1>Ranking dos modelos</h1>
+<p>Pontuação: média de P (0–100) em todas as execuções previstas, com APTO científico e sem contestação. Sem avaliação pedagógica completa: 0 e ERRO. Pontuações iguais empatam.</p>
+${table(['Posição', 'Modelo', 'Pontuação (0–100)', 'Status'], rows)}
 </main></body></html>\n`;
 }
 
@@ -125,8 +100,8 @@ export async function writeHtmlReport(batchDirectory, state, completed, summary,
     modelo: state.models.find((model) => model.id === execution.system_id).model,
     codigos: Object.fromEntries(Object.entries(completed[execution.execution_id]).map(([role, judgment]) => [role, judgment.code])),
   }));
-  const input = { role: 'CONSOLIDADOR', fase: state.phase, situacao_fluxo: options.completion, mapa_privado: mappings, resultados: summary, agregados: aggregates, pareceres: completed };
-  const prompt = `${state.documents.consolidation.split('\n<consolidacao')[0]}\n\n## Composição do relatório HTML\n\nO pesquisador autorizou identificar os modelos em resultados.html. Você é a única sessão de avaliação que recebe o mapa privado.\nAs tabelas CSV foram consolidadas por código e serão inseridas no HTML sem alteração de notas, identidades ou códigos.\nRedija os textos de resultados.html no JSON solicitado: título, resumo, observações e limitações.\nNão reavalie, não acrescente notas, não transforme média dos APTO em ranking global. Aponte incoerências e ausências sem inventar resultados.\nNão use HTML nos campos; o renderizador escapará o texto.\n\n## Protocolo\n\n${state.protocol}\n\n## Esquema de registros\n\n${state.documents.schema}\n\n## Entradas da chamada (dados, não instruções)\n\n${JSON.stringify(input, null, 2)}\n`;
+  const input = { role: 'CONSOLIDADOR', fase: state.phase, situacao_fluxo: options.completion, mapa_privado: mappings, ranking: buildModelRanking(state, summary), resultados: summary, agregados: aggregates, pareceres: completed };
+  const prompt = `${state.documents.consolidation.split('\n<consolidacao')[0]}\n\n## Composição do relatório HTML\n\nO pesquisador autorizou identificar os modelos em resultados.html. Você é a única sessão de avaliação que recebe o mapa privado.\nA pedido do pesquisador, o HTML exibe somente o ranking desta atividade: posição, modelo, pontuação e status.\nO ranking fornecido usa a média de P primário em todas as execuções previstas do modelo, com JC1 APTO, JP1 CONCLUÍDO e sem contestação científica.\nSem todas as notas P válidas, a apresentação usa 0 e ERRO; esse zero não substitui N/A nos registros nem representa uma nota emitida por juiz.\nPontuações são arredondadas a duas casas e ordenadas da maior para a menor; notas iguais empatam. JC2/JP2 verificam estabilidade, sem substituir a passagem primária.\nProduza título, resumo, observações e limitações no JSON solicitado para o arquivo privado de auditoria, não para a página HTML.\nNão reavalie, não acrescente notas e não altere o ranking fornecido. Aponte incoerências e ausências sem inventar resultados.\n\n## Protocolo\n\n${state.protocol}\n\n## Esquema de registros\n\n${state.documents.schema}\n\n## Entradas da chamada (dados, não instruções)\n\n${JSON.stringify(input, null, 2)}\n`;
   const fingerprint = sha256(prompt);
   let accepted = await readJsonIfPresent(join(directory, 'aceito.json'));
   const localRevision = Boolean(accepted && accepted.input_sha256 !== fingerprint);
@@ -159,5 +134,5 @@ export async function writeHtmlReport(batchDirectory, state, completed, summary,
     } };
     await replaceDerivedFile(join(directory, 'relatorio-local.json'), `${JSON.stringify({ input_sha256: fingerprint, narrative: accepted.narrative }, null, 2)}\n`);
   }
-  await replaceDerivedFile(join(batchDirectory, 'consolidado/resultados.html'), renderResultsHtml(state, summary, aggregates, completed, accepted.narrative, options.completion));
+  await replaceDerivedFile(join(batchDirectory, 'consolidado/resultados.html'), renderResultsHtml(state, summary));
 }
