@@ -102,7 +102,7 @@ export async function writeHtmlReport(batchDirectory, state, completed, summary,
   if (accepted && accepted.input_sha256 !== fingerprint) throw new Error('Insumos do consolidador mudaram; preserve a revisão anterior.');
   if (!accepted) {
     options.onProgress?.('CONSOLIDADOR: montando resultados.html com o mapa privado de modelos.');
-    const result = await options.runJob(directory, { prompt, schema: reportSchema, config: state.config }, options);
+    const result = await options.runJob(directory, { prompt, schema: reportSchema, config: state.config }, { ...options, label: 'CONSOLIDADOR: resultados.html' });
     assertSchema(result, reportSchema);
     accepted = { input_sha256: fingerprint, narrative: result };
     await writeJson(join(directory, 'aceito.json'), accepted);

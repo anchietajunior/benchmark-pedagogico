@@ -48,7 +48,7 @@ O lote permanece pendente para revisão quando não é possível fornecer um pac
 
 ## Isolamento das sessões
 
-Cada chamada inicia um novo `codex exec` em diretório temporário neutro, com apenas pedido, schema, configuração e executor.
+Cada chamada inicia um novo `codex exec` em `~/Documents/tmp/bench-juiz-...`, com pedido, schema, configuração, identificação anônima da tarefa e executor.
 O processo não reutiliza conversas nem o daemon compartilhado e ignora configurações pessoais e regras de execução.
 O catálogo de skills do host, instruções AGENTS, memória, plugins, apps, hooks, shell, navegador, busca, imagens e subagentes são desativados pelos controles da CLI.
 O executor filtra o ambiente do processo, sem encaminhar a chave OpenRouter, variáveis dos panes ou chaves API de inferência.
@@ -57,12 +57,17 @@ Os parâmetros seguem a [referência oficial de configuração](https://learn.ch
 
 As fontes acessíveis ao juiz são os trechos congelados; URLs não significam navegação ou leitura integral.
 Eventos com uso de ferramentas ou término incompatível impedem a aceitação do parecer.
+Os dois avisos conhecidos sobre `skip_host_skill_discovery` experimental e Code Mode indisponível são aceitos apenas antes do início do turno.
+Outros eventos de erro interrompem o julgamento com a mensagem registrada, sem reenviar a chamada.
 Configuração, diretório neutro e auditoria de eventos limitam o contexto; não constituem uma máquina virtual ou prova de comportamento interno do serviço.
-A integração real com inferência ainda exige um piloto autorizado; a implementação foi validada com transportes sintéticos.
+Os testes usam transportes sintéticos e registros de um piloto já executado pelo operador, sem novas chamadas pagas.
 
 O Herdr abre um pane sem mudar o foco do usuário.
+O pane mostra papel, código anônimo, modelo julgador, diretório e tempo decorrido a cada 15 segundos, além da conclusão ou falha.
 O executor grava eventos, resultado estruturado, erros e conclusão em arquivos privados.
+O registro de conclusão é publicado por renomeação após a gravação completa, evitando leitura de JSON parcial.
 Após arquivar, tenta fechar somente o pane criado, se ele estiver novamente no shell do diretório esperado.
+Essa verificação usa os caminhos reais, incluindo a equivalência entre `/var` e `/private/var` no macOS, mesmo quando o resultado foi rejeitado.
 Uma interrupção do coordenador pode deixar o processo no pane até terminar ou atingir timeout.
 Não feche outros panes para recuperar o lote.
 

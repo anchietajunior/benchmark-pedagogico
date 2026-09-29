@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdtemp, mkdir, readFile, writeFile, copyFile, realpath } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { sha256 } from './config.mjs';
@@ -46,6 +46,43 @@ async function archiveWorkerFiles(workspace, directory) {
   }
 }
 
+function isKnownStartupWarning(message) {
+  if (message === 'Code Mode is unavailable because code-mode host is disabled. Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.') return true;
+  return /^Under-development features enabled: skip_host_skill_discovery\. Under-development features are incomplete and may behave unpredictably\. To suppress this warning, set `suppress_unstable_features_warning = true` in [^\r\n]+\.$/.test(message);
+}
+
+function validateEvents(events, onProgress) {
+  const entries = events.split('\n').filter((line) => line.trim()).map((line) => JSON.parse(line));
+  let turnStarted = false;
+  for (const entry of entries) {
+    if (entry.type === 'turn.started') turnStarted = true;
+    if (entry.item?.type === 'error') {
+      if (entry.type === 'item.completed' && !turnStarted && isKnownStartupWarning(entry.item.message)) {
+        onProgress?.(`Aviso Codex: ${entry.item.message}`);
+        continue;
+      }
+      throw new Error(`Codex reportou erro: ${entry.item.message ?? 'sem descrição'}. Chamada preservada sem reenvio.`);
+    }
+    if (entry.item && !['agent_message', 'reasoning'].includes(entry.item.type)) throw new Error(`O julgamento usou ferramentas ou eventos não previstos (${entry.item.type}); resultado pendente por isolamento.`);
+    if (entry.type === 'turn.failed' || entry.type === 'error') throw new Error('Eventos do Codex não confirmam conclusão íntegra.');
+  }
+  if (!entries.some((entry) => entry.type === 'turn.completed')) throw new Error('Eventos do Codex não confirmam conclusão íntegra.');
+}
+
+async function closeFinishedPane(directory, launch, command, onProgress) {
+  if (await readJsonIfPresent(join(directory, 'pane-finalizado.json'))) return;
+  try {
+    const { pane } = await command(['pane', 'get', launch.pane_id]);
+    if (!pane || pane.agent || !pane.cwd || !pane.foreground_cwd) return;
+    const workspace = await realpath(launch.workspace);
+    if (await realpath(pane.cwd) !== workspace || await realpath(pane.foreground_cwd) !== workspace) return;
+    await command(['pane', 'close', launch.pane_id]);
+    await writeJson(join(directory, 'pane-finalizado.json'), { closed_at: new Date().toISOString() });
+  } catch (error) {
+    onProgress?.(`Parecer arquivado; não foi possível fechar o pane ${launch.pane_id}: ${error.message}`);
+  }
+}
+
 export async function runHerdrJob(directory, job, options) {
   const command = options.command ?? herdrCommand;
   await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -53,10 +90,13 @@ export async function runHerdrJob(directory, job, options) {
   let launch = await readJsonIfPresent(join(directory, 'envio.json'));
   if (launch && launch.request_sha256 !== requestHash) throw new Error('Insumos do julgamento mudaram; preserve o lote e crie uma revisão explícita.');
   if (!launch) {
-    const workspace = await mkdtemp(join(tmpdir(), 'bench-juiz-'));
+    const workspaceRoot = options.workspaceRoot ?? join(homedir(), 'Documents', 'tmp');
+    await mkdir(workspaceRoot, { recursive: true, mode: 0o700 });
+    const workspace = await realpath(await mkdtemp(join(workspaceRoot, 'bench-juiz-')));
     await writeFile(join(workspace, 'pedido.md'), job.prompt, { flag: 'wx', mode: 0o600 });
     await writeJson(join(workspace, 'schema.json'), job.schema);
     await writeJson(join(workspace, 'config.json'), job.config);
+    await writeJson(join(workspace, 'contexto.json'), { label: options.label ?? 'Avaliação' });
     await copyFile(new URL('./codex-worker.mjs', import.meta.url), join(workspace, 'worker.mjs'));
     await writeFile(join(directory, 'pedido.md'), job.prompt, { flag: 'wx', mode: 0o600 });
     await writeJson(join(directory, 'schema.json'), job.schema);
@@ -64,6 +104,7 @@ export async function runHerdrJob(directory, job, options) {
     if (!pane?.pane_id) throw new Error('Herdr não informou o pane criado. Nenhum Codex foi iniciado.');
     launch = { workspace, pane_id: pane.pane_id, request_sha256: requestHash, requested_at: new Date().toISOString() };
     await writeJson(join(directory, 'envio.json'), launch);
+    options.onProgress?.(`Pane ${launch.pane_id}: ${options.label ?? 'Avaliação'} em ${workspace}`);
     await command(['pane', 'run', launch.pane_id, `${shellQuote(process.execPath)} ${shellQuote(join(workspace, 'worker.mjs'))}`]);
   }
   const deadline = Date.now() + (job.config.timeout_seconds + 30) * 1000;
@@ -76,24 +117,13 @@ export async function runHerdrJob(directory, job, options) {
   }
   if (!completion) throw new Error(`Julgamento sem confirmação no pane ${launch.pane_id}. Retome o mesmo lote para consultar; não será reenviado.`);
   await archiveWorkerFiles(launch.workspace, directory);
-  if (completion.exit_code !== 0 || completion.timed_out || completion.error) throw new Error(`Codex não concluiu; consulte ${directory}. A chamada foi preservada e não será repetida.`);
-  const result = await readJsonIfPresent(join(directory, 'resultado.json'));
-  if (!result) throw new Error('Codex terminou sem resultado JSON; chamada preservada sem reenvio.');
-  const events = await readFile(join(directory, 'eventos.jsonl'), 'utf8');
-  const entries = events.split('\n').filter(Boolean).map((line) => JSON.parse(line));
-  const allowedItems = ['agent_message', 'reasoning'];
-  if (entries.some((entry) => entry.item && !allowedItems.includes(entry.item.type))) throw new Error('O julgamento usou ferramentas ou eventos não previstos; resultado pendente por isolamento.');
-  if (!entries.some((entry) => entry.type === 'turn.completed') || entries.some((entry) => entry.type === 'turn.failed' || entry.type === 'error')) throw new Error('Eventos do Codex não confirmam conclusão íntegra.');
-  if (!(await readJsonIfPresent(join(directory, 'pane-finalizado.json')))) {
-    try {
-      const { pane } = await command(['pane', 'get', launch.pane_id]);
-      if (pane && !pane.agent && pane.cwd === launch.workspace && pane.foreground_cwd === launch.workspace) {
-        await command(['pane', 'close', launch.pane_id]);
-        await writeJson(join(directory, 'pane-finalizado.json'), { closed_at: new Date().toISOString() });
-      }
-    } catch (error) {
-      options.onProgress?.(`Parecer arquivado; não foi possível fechar o pane ${launch.pane_id}: ${error.message}`);
-    }
+  try {
+    if (completion.exit_code !== 0 || completion.timed_out || completion.error) throw new Error(`Codex não concluiu; consulte ${directory}. A chamada foi preservada e não será repetida.`);
+    validateEvents(await readFile(join(directory, 'eventos.jsonl'), 'utf8'), options.onProgress);
+    const result = await readJsonIfPresent(join(directory, 'resultado.json'));
+    if (!result) throw new Error('Codex terminou sem resultado JSON; chamada preservada sem reenvio.');
+    return result;
+  } finally {
+    await closeFinishedPane(directory, launch, command, options.onProgress);
   }
-  return result;
 }

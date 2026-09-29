@@ -171,7 +171,7 @@ async function judgeExecution(batchDirectory, state, execution, role, completed,
   if (rejected) return { ...identity, status: 'PENDENTE', executed: true, result: null, reason: rejected.reason };
   const input = buildInput(execution, role, completed);
   const prompt = renderJudgePrompt(state.documents[roleFamily(role)], state.protocol, input);
-  const result = await options.runJob(taskDirectory, { prompt, schema: judgmentSchema, config: state.config }, options);
+  const result = await options.runJob(taskDirectory, { prompt, schema: judgmentSchema, config: state.config }, { ...options, label: `${role}: ${identity.code}` });
   await mkdir(taskDirectory, { recursive: true, mode: 0o700 });
   try {
     validateJudgment(result, identity);
@@ -209,6 +209,8 @@ export async function judgeBatch(directory, options = {}) {
         if (options.signal?.aborted) throw new Error('Julgamento interrompido; retome pelo diretório deste lote.');
         options.onProgress?.(`${role}: ${execution.codes[role]}`);
         completed[execution.execution_id][role] = await judgeExecution(batchDirectory, state, execution, role, completed[execution.execution_id], runnerOptions);
+        const judgment = completed[execution.execution_id][role];
+        options.onProgress?.(`${role}: ${execution.codes[role]} - ${judgment.status}${judgment.reason ? `: ${judgment.reason}` : ''}`);
         await replaceDerivedFile(join(batchDirectory, 'privado/fila-julgamento.json'), `${JSON.stringify(completed, null, 2)}\n`);
       }
     }

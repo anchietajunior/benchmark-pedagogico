@@ -105,10 +105,13 @@ Os caminhos e códigos da tabela abaixo são exemplos do formato, não resultado
 Uma linha de papel/código indica o item sendo tratado; ele também pode ser bloqueado ou recuperado de uma execução anterior, sem nova chamada.
 Os julgamentos são processados em sequência.
 Cada chamada nova abre um pane no Herdr sem tirar o foco do terminal principal.
+O diretório de trabalho fica em `~/Documents/tmp/bench-juiz-...`, separado dos arquivos do lote.
 O programa tenta fechar o pane criado depois de arquivar a conclusão, se ele estiver novamente livre no shell esperado.
 
-O pane do juiz pode ficar sem texto: os eventos e a resposta são gravados em arquivos, não apresentados como uma conversa interativa.
-Use as mensagens do terminal principal para acompanhar as etapas.
+O pane mostra o papel do juiz, o código anônimo, o modelo usado para julgar e o diretório dos arquivos.
+Enquanto aguarda o Codex, informa o tempo decorrido a cada 15 segundos; ao terminar, informa conclusão ou falha.
+O terminal principal mostra a situação de cada item após a validação, incluindo bloqueios e pendências.
+Avisos conhecidos de inicialização aparecem como `Aviso Codex`; ferramentas e erros inesperados continuam impedindo a aceitação.
 Uma sessão Codex pode levar vários minutos; o limite configurado é de 15 minutos por sessão, e não para o lote inteiro.
 
 Se quiser inspecionar os arquivos durante a execução, abra um segundo terminal e guarde o caminho real do lote:

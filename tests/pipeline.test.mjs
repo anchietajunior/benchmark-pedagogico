@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, mkdir, readFile, writeFile, readdir, copyFile, symlink, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, readdir, copyFile, symlink, rm, realpath } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
@@ -39,9 +39,13 @@ test('worker inicia por diretório simbólico e registra conclusão sem chamar C
   await symlink(workspace, alias, 'dir');
   await copyFile(new URL('../coletor/codex-worker.mjs', import.meta.url), join(workspace, 'worker.mjs'));
   await writeFile(join(workspace, 'config.json'), JSON.stringify(config));
+  await writeFile(join(workspace, 'contexto.json'), JSON.stringify({ label: 'JC1: Qteste' }));
   await writeFile(join(workspace, 'pedido.md'), 'Teste local.');
   await writeFile(join(directory, 'codex'), `#!${process.execPath}\nprocess.stdin.resume();\nconsole.log(JSON.stringify({ type: 'turn.completed' }));\n`, { mode: 0o700 });
-  await executeFile(process.execPath, [join(alias, 'worker.mjs')], { env: { ...process.env, PATH: directory } });
+  const execution = await executeFile(process.execPath, [join(alias, 'worker.mjs')], { env: { ...process.env, PATH: directory } });
+  assert.match(execution.stdout, /JC1: Qteste/);
+  assert.match(execution.stdout, /Aguardando.*Codex/);
+  assert.match(execution.stdout, /concluiu.*validação/);
   const completed = JSON.parse(await readFile(join(workspace, 'concluido.json'), 'utf8'));
   assert.equal(completed.exit_code, 0);
   assert.equal(completed.error, null);
@@ -210,7 +214,7 @@ test('envio Herdr incerto não duplica o comando ao retomar', async () => {
     throw new Error('Conexão perdida depois do envio.');
   };
   const job = { prompt: 'Somente teste local.', schema: {}, config };
-  await assert.rejects(runHerdrJob(directory, job, { caller_pane: 'wtest:p1', command }), /Conexão perdida/);
+  await assert.rejects(runHerdrJob(directory, job, { caller_pane: 'wtest:p1', command, workspaceRoot: directory }), /Conexão perdida/);
   const controller = new AbortController();
   controller.abort();
   await assert.rejects(runHerdrJob(directory, job, { caller_pane: 'wtest:p1', command, signal: controller.signal }), /não será|sem reenviar/);
@@ -271,6 +275,49 @@ test('simulador de transporte arquiva saída e rejeita ferramentas inesperadas',
     }
     return {};
   };
-  await assert.rejects(runHerdrJob(directory, { prompt: 'Teste', schema: {}, config }, { caller_pane: 'wtest:p1', command }), /ferramentas/);
+  await assert.rejects(runHerdrJob(directory, { prompt: 'Teste', schema: {}, config }, { caller_pane: 'wtest:p1', command, workspaceRoot: directory }), /ferramentas/);
   assert.ok((await readdir(directory)).includes('resultado.json'));
+});
+
+test('avisos conhecidos antes do turno não são ferramentas e o pane arquivado é fechado', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'bench-codex-warnings-test-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const events = [
+    { type: 'thread.started', thread_id: 'fixture' },
+    { type: 'item.completed', item: { type: 'error', message: 'Under-development features enabled: skip_host_skill_discovery. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /user/.codex/config.toml.' } },
+    { type: 'item.completed', item: { type: 'error', message: 'Code Mode is unavailable because code-mode host is disabled. Code mode will fail closed; enable `features.code_mode_host` and install `codex-code-mode-host`.' } },
+    { type: 'turn.started' },
+    { type: 'item.completed', item: { type: 'agent_message', text: '{}' } },
+    { type: 'turn.completed' },
+  ];
+  const messages = [];
+  const commands = [];
+  let workspace;
+  const command = async (args) => {
+    commands.push(args[1]);
+    if (args[1] === 'split') {
+      workspace = args[args.indexOf('--cwd') + 1];
+      assert.ok(workspace.startsWith(await realpath(directory)));
+      return { pane: { pane_id: 'wtest:p2' } };
+    }
+    if (args[1] === 'run') {
+      await writeFile(join(workspace, 'resultado.json'), '{}');
+      await writeFile(join(workspace, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
+      await writeFile(join(workspace, 'concluido.json'), JSON.stringify({ exit_code: 0, timed_out: false, error: null }));
+    }
+    if (args[1] === 'get') return { pane: { cwd: workspace, foreground_cwd: workspace } };
+    return {};
+  };
+  const job = { prompt: 'Teste local.', schema: {}, config };
+  const options = { command, caller_pane: 'wtest:p1', workspaceRoot: directory, label: 'JC1: Qteste', onProgress: (message) => messages.push(message) };
+  assert.deepEqual(await runHerdrJob(directory, job, options), {});
+  assert.equal(messages.filter((message) => message.startsWith('Aviso Codex:')).length, 2);
+  assert.equal(commands.filter((name) => name === 'close').length, 1);
+  assert.equal(JSON.parse(await readFile(join(workspace, 'contexto.json'), 'utf8')).label, 'JC1: Qteste');
+  events.splice(4, 0, { type: 'item.completed', item: { type: 'error', message: 'Falha inesperada no julgamento.' } });
+  await writeFile(join(directory, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
+  await assert.rejects(runHerdrJob(directory, job, options), /Falha inesperada no julgamento/);
+  events[4].item.message = events[1].item.message;
+  await writeFile(join(directory, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
+  await assert.rejects(runHerdrJob(directory, job, options), /Codex reportou erro/);
 });
