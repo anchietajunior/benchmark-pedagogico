@@ -1,11 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { parseArgs, parseEnv } from 'node:util';
 import { createInterface } from 'node:readline/promises';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { loadStudy } from './config.mjs';
 import { collectBatch } from './collector.mjs';
 import { checkJudgmentRuntime, readJsonIfPresent } from './herdr.mjs';
 import { judgeBatch, validateJudgeConfig } from './pipeline.mjs';
+import { acquireOutputLock } from './output-lock.mjs';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
 
@@ -53,6 +54,7 @@ async function main() {
   const runtime = await checkJudgmentRuntime();
   const key = study ? await apiKey() : null;
   if (!values.confirmar && !(await confirm())) return;
+  const release = await acquireOutputLock(study ? study.outputDirectory : dirname(resolve(values.retomar)));
   const controller = new AbortController();
   const interrupt = () => controller.abort();
   process.once('SIGINT', interrupt);
@@ -74,6 +76,7 @@ async function main() {
     process.removeListener('SIGINT', interrupt);
     process.removeListener('SIGTERM', interrupt);
     if (batchDirectory) console.log(`Para retomar sem novas gerações: npm run executar -- --retomar ${JSON.stringify(batchDirectory)}`);
+    await release();
   }
 }
 

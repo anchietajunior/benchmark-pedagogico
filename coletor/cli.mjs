@@ -1,10 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { parseEnv } from 'node:util';
 import { createInterface } from 'node:readline/promises';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { initializeConfig, loadStudy } from './config.mjs';
 import { collectBatch, recoverBatch } from './collector.mjs';
 import { verifyModelEndpoints } from './catalog.mjs';
+import { acquireOutputLock } from './output-lock.mjs';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
 const commands = ['configurar', 'conferir', 'coletar', 'recuperar'];
@@ -48,9 +49,12 @@ async function main() {
   if (!apiKey || apiKey.includes('PREENCHER')) throw new Error('Preencha OPENROUTER_API_KEY em .env; nunca coloque a chave em prompts ou no Git.');
   if (command === 'recuperar') {
     if (args.length !== 1) throw new Error('Uso: npm run recuperar -- CAMINHO_DO_LOTE');
-    const result = await recoverBatch(args[0], { apiKey });
-    console.log(`Telemetria consultada sem gerar explicações: ${result.batchDirectory}`);
-    if (result.records.some((record) => record.telemetry_status !== 'COMPLETA')) process.exitCode = 2;
+    const release = await acquireOutputLock(dirname(resolve(args[0])));
+    try {
+      const result = await recoverBatch(args[0], { apiKey });
+      console.log(`Telemetria consultada sem gerar explicações: ${result.batchDirectory}`);
+      if (result.records.some((record) => record.telemetry_status !== 'COMPLETA')) process.exitCode = 2;
+    } finally { await release(); }
     return;
   }
   if (args.some((arg) => arg !== '--confirmar') || (command === 'conferir' && args.length > 0)) throw new Error('Argumento inválido. coletar aceita somente --confirmar.');
@@ -70,6 +74,7 @@ async function main() {
     console.log('Cancelado antes de qualquer chamada.');
     return;
   }
+  const release = await acquireOutputLock(study.outputDirectory);
   const controller = new AbortController();
   const interrupt = () => controller.abort();
   process.once('SIGINT', interrupt);
@@ -82,6 +87,7 @@ async function main() {
   } finally {
     process.removeListener('SIGINT', interrupt);
     process.removeListener('SIGTERM', interrupt);
+    await release();
   }
 }
 

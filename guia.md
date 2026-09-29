@@ -199,6 +199,32 @@ Se aparecer `Não foi possível concluir: ...`, leia o motivo e preserve o lote 
 Quando houver apenas pendências registradas, o comando pode gerar o HTML e terminar com código de saída 2; confira o relatório.
 O caminho da linha `Resultados:` continua sendo a referência para abrir o arquivo concluído.
 
+## 7. Apagar os resultados e recomeçar
+
+Na pasta do projeto, execute:
+
+```sh
+npm run apagar
+```
+
+O comando remove todos os lotes reconhecidos na pasta `output_dir` de `openrouter.config.json`, incluindo explicações, comprovantes, avaliações e HTML.
+Também remove os temporários associados aos julgamentos em `~/Documents/tmp/bench-juiz-...` e no diretório temporário antigo do sistema.
+Os panes desses julgamentos são fechados quando ainda pertencem ao diretório registrado.
+Código, `.env`, `openrouter.config.json`, fontes e arquivos alheios ao fluxo são preservados.
+A remoção é definitiva e não exige uma confirmação adicional.
+
+Se houver uma coleta ou um coordenador ainda ativo, pressione `Ctrl+C` no terminal principal e espere a mensagem de saída antes de executar a limpeza.
+O comando recusa apagar enquanto esse processo estiver ativo ou quando um pane tiver sido reutilizado para outra tarefa.
+`executar`, `coletar`, `recuperar` e `apagar` reservam a pasta de saída com `.operacao.lock`, impedindo operações simultâneas.
+A trava é removida na saída normal; após encerramento abrupto, confira se o PID registrado realmente encerrou antes de remover esse arquivo.
+Depois da limpeza, inicie um lote novo:
+
+```sh
+npm run executar
+```
+
+`npm run apagar` não faz chamadas aos modelos; a nova execução de `npm run executar` faz novas chamadas após sua confirmação.
+
 ## Temas do estudo
 
 | Curso | Tema |

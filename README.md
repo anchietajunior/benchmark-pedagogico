@@ -15,6 +15,8 @@ Chave de API, cotação e trechos bibliográficos verificados precisam ser forne
 
 O comando prepara os materiais dos quatro papéis e só libera pedagogia após APTO científico validado.
 Para conferir a configuração sem rede ou inferência, execute `npm run executar -- --simular`.
+Para apagar os lotes gerados e os temporários dos julgamentos antes de recomeçar, execute `npm run apagar`.
+Esse comando preserva código, configuração, credenciais e fontes; a remoção dos resultados é definitiva.
 `npm run coletar` continua disponível para fazer somente a coleta e seguir com organização manual.
 O [guia técnico](referencias/coletor-openrouter.md) explica a configuração, as evidências e os limites de medição.
 O [guia do fluxo completo](referencias/pipeline-herdr.md) explica isolamento, retomada e consolidação identificada.
