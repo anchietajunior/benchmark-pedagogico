@@ -8,7 +8,7 @@ Mais texto não autoriza incluir conteúdos fora do recorte nem relaxar a confer
 
 Esta é a referência normativa dos quatro avaliadores e da consolidação.
 Dados operacionais continuam fora do corpo didático, no cabeçalho privado do registro-unico-v1.
-Identifique modo_entrega: arquivo-direto-v1 ou manual-v1; preserve o pedido completo e não misture esses modos silenciosamente nas comparações de tempo/custo.
+Identifique modo_entrega: api-openrouter-v1, arquivo-direto-v1 ou manual-v1; preserve o pedido completo e não misture esses modos silenciosamente nas comparações de tempo/custo.
 Os metaprompts não implementam medição automática de tempo ou tokens; essa lacuna exige instrumentação separada.
 
 Coletas 3.1 preservam seu pedido e limite anterior de até 600 palavras; não aplique a elas o mínimo de 800 palavras nem as novas seções.
@@ -38,10 +38,26 @@ JT pode precisar do original com autoria para verificar F5; essa informação nu
 JE pode conhecer provedor e versão para conferir tarifas, sem transmitir essa informação aos juízes de conteúdo.
 Cada item sem evidência fica N/A com motivo; zero indica descumprimento observado.
 
-## Coleta manual
+## Coleta instrumentada via OpenRouter
 
-O [workflow](../workflow.md) é o roteiro de coleta; [avaliacao.md](../avaliacao.md) explica o encaminhamento posterior.
-No fluxo atual, ~/Documents/coletas/lote.md é o manifesto e ~/Documents/coletas/entrada/E001.md reúne registro privado e resposta original após um marcador explícito.
+A condição openrouter-v1 usa um executor único e uma chamada de geração por explicação, sem ferramentas, skills ou histórico compartilhado.
+O [workflow](../workflow.md) orienta a execução; o [guia do coletor](coletor-openrouter.md) define as medições e os artefatos.
+As rubricas 3.2 e os seis pontos de cada tema são preservados, mas o pedido para API e o fornecimento de trechos fixos constituem outra condição experimental.
+Use os pedidos efetivamente arquivados, não os metaprompts manuais com instruções de navegação e gravação.
+Não misture essa condição com coletas de agentes de programação, mesmo quando o nome do modelo for igual.
+O tempo principal começa imediatamente antes do envio HTTP e termina no fim ou falha do stream, incluindo a instrumentação de recebimento.
+Preparação das fontes, consultas ao catálogo, accounting posterior e preparação dos juízes ficam fora desse intervalo e não podem ser comparados silenciosamente com duração total de um agente.
+Tokens e custo pertencem à chamada; cache e raciocínio não devem ser somados novamente aos totais.
+Custo em reais é a conversão do USD reportado pelo serviço pela cotação documentada, não o total da fatura, impostos ou mensalidade.
+Telemetria COMPLETA não equivale a conclusão normal, APTO científico ou elegibilidade para ranking.
+Telemetria PENDENTE impede tratar consumo/custo como medidas completas; não autoriza excluir a tentativa, nem impede julgamento de conteúdo que esteja preservado.
+Quedas abruptas e perda de conexão podem deixar dados irrecuperáveis; desconhecido não vira zero.
+Conciliações acrescentam evidências sem alterar a primeira resposta ou o cabeçalho original.
+
+## Coleta manual anterior
+
+O [workflow manual](../workflow-manual.md) preserva o roteiro anterior; [avaliacao.md](../avaliacao.md) explica o encaminhamento posterior.
+Nesse fluxo, ~/Documents/coletas/lote.md é o manifesto e ~/Documents/coletas/entrada/E001.md reúne registro privado e resposta original após um marcador explícito.
 Os pedidos completos por tema geram um ID automático se o pesquisador não fornecer um.
 A coluna “Arquivo coletado” do manifesto liga esse ID ao sistema, tema e rodada planejados; nomes antigos com ID planejado continuam aceitos.
 Preserve a correspondência e o original, sem atribuir rodada ou sistema pela ordem dos arquivos.
@@ -67,7 +83,9 @@ Os resultados de geração e julgamento são preservados independentemente de ap
 Uma execução é uma geração por sistema, tema e rodada, com identificador único.
 Um sistema é a combinação de agente, modelo, provedor, configuração, ferramentas e política de acesso às fontes.
 Uma rodada completa contém B01, B02, N01 e N02 para cada sistema.
-Quatro sistemas × quatro temas × cinco rodadas resultam em 80 execuções planejadas; falhas e ausências permanecem no conjunto.
+O desenho anterior de quatro sistemas × quatro temas × cinco rodadas previa 80 execuções.
+Com os seis modelos selecionados para OpenRouter, o mesmo desenho teria 120 execuções; o piloto configurado usa somente B01 e uma rodada, com seis gerações.
+O manifesto congelado define o número efetivamente planejado; falhas e ausências permanecem no conjunto.
 Nas regras de agregação deste protocolo, “por modelo” significa por sistema fixo identificado, nunca mistura de agentes ou configurações para o mesmo LLM.
 Cinco repetições é uma escolha exploratória, não cálculo de poder estatístico; quatro temas continuam sendo quatro temas.
 Novas gerações são novas rodadas; reenvios de transporte pertencem à execução original e têm tentativas separadas.
@@ -113,7 +131,7 @@ Alteração relevante exige nova condição identificada, sem misturar resultado
 
 Se o objetivo posterior for isolar o efeito do agente, mantenha o mesmo modelo/versão/provedor em dois agentes compatíveis, com fontes e orçamento controlados e repetições.
 Um desenho cruzado de modelos e agentes permite investigar interação, mas depende de suporte real às combinações e de planejamento amostral próprio.
-Essa extensão não está incluída automaticamente nas 80 execuções propostas.
+Essa extensão não está incluída automaticamente nas execuções planejadas do coletor.
 Mesmos valores nominais de parâmetros não garantem implementações equivalentes.
 O resultado atual permite comparar a utilidade das combinações observadas, não decretar o melhor LLM isolado.
 

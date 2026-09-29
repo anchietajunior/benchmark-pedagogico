@@ -6,3 +6,11 @@
 /coleta/privado/
 /coleta/juizes/
 /coleta/consolidado/
+
+# Local OpenRouter credentials, configuration and licensed reference excerpts.
+.env
+.env.*
+!.env.example
+/openrouter.config.json
+/fontes/openrouter/
+/node_modules/

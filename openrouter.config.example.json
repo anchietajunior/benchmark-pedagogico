@@ -1,0 +1,55 @@
+{
+  "batch_name": "piloto",
+  "output_dir": "~/Documents/coletas/openrouter",
+  "phase": "PILOTO",
+  "rounds": 1,
+  "request_timeout_seconds": 180,
+  "parameters": {
+    "max_tokens": 8192,
+    "reasoning": { "effort": "medium" }
+  },
+  "usd_brl": {
+    "rate": null,
+    "date": "PREENCHER_DATA_YYYY-MM-DD",
+    "source": "PREENCHER_FONTE_DA_COTACAO"
+  },
+  "models": [
+    {
+      "id": "S01",
+      "model": "anthropic/claude-opus-5.5",
+      "provider": "anthropic"
+    },
+    {
+      "id": "S02",
+      "model": "anthropic/claude-fable-5.1",
+      "provider": "anthropic"
+    },
+    {
+      "id": "S03",
+      "model": "openai/gpt-6-astra",
+      "provider": "openai"
+    },
+    {
+      "id": "S04",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "deepseek"
+    },
+    {
+      "id": "S05",
+      "model": "meta/muse-spark-1.3",
+      "provider": "meta"
+    },
+    {
+      "id": "S06",
+      "model": "google/gemini-3.8-flash",
+      "provider": "google-ai-studio"
+    }
+  ],
+  "topics": [
+    {
+      "id": "B01",
+      "source_file": "fontes/openrouter/B01.md",
+      "sources_reviewed": false
+    }
+  ]
+}

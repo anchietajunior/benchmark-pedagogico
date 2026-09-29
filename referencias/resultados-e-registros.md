@@ -32,7 +32,7 @@ Sistema, rodada, fase e versão vêm do manifesto; o tema explícito do pedido d
 A coluna “Arquivo coletado” liga o ID real ao rótulo planejado, preservando ambos no mapa privado.
 Uma linha planejada gera uma observação, usando o ID real quando o arquivo estiver vinculado ou o ID planejado quando não houver registro.
 Sem ligação confirmada, mantenha pendência; não deduza identidade ou rodada pelo estilo, pelo código automático ou pela ordem de chegada.
-Registre modo_entrega por execução: arquivo-direto-v1 ou manual-v1, com justificativa para a contingência.
+Registre modo_entrega por execução: api-openrouter-v1, arquivo-direto-v1 ou manual-v1, com justificativa para a contingência.
 Em registros anteriores sem essa informação, use NÃO INFORMADO até confirmação; não deduza o modo apenas pelo formato do arquivo.
 Não agrupe os modos silenciosamente nas comparações de recursos; a gravação por ferramentas integra o tempo/custo da entrega direta.
 Cabeçalho redigido pelo gerador exige evidência independente para suas medidas; o término pode depender de confirmação posterior do pesquisador.

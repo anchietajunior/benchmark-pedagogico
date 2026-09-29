@@ -1,13 +1,29 @@
 # Avaliação de explicações de IA
 
-Abra o arquivo do tema, copie todo o conteúdo e cole no agente.
-O pedido já inclui bibliografia, instruções e destino: ~/Documents/coletas/entrada/.
-O agente cria o ID automaticamente, salvo se você informar um ID planejado.
-A gravação direta exige acesso à pasta local; sem ele, o mesmo conteúdo pode ser salvo manualmente.
-Depois, um metaprompt organizador prepara os arquivos que serão enviados aos quatro juízes.
-Sem skills, instalação ou comandos de terminal.
+Use `npm run executar` para coletar pelo OpenRouter, julgar em sessões Codex isoladas no Herdr e produzir `consolidado/resultados.html`.
+Os juízes recebem códigos anônimos; somente a sessão do consolidador recebe o mapa desses códigos para os nomes dos modelos.
+O HTML identifica cada modelo e mantém os códigos dos pareceres nas tabelas.
+O coletor registra tempo, tokens e custo automaticamente.
+Uma chamada por explicação, sem skills, histórico compartilhado ou ferramentas do modelo.
+Os resultados vão para um lote novo em ~/Documents/coletas/openrouter/.
 
-## Metaprompts prontos
+Comece pelo [guia de execução](guia.md): iniciar no Herdr, acompanhar as etapas e abrir o HTML no navegador.
+O [workflow](workflow.md) detalha a preparação dos arquivos da coleta.
+O fluxo completo exige Node.js 24 ou superior, Herdr ativo e Codex CLI autenticado; não há dependências npm para instalar.
+O piloto já lista os seis modelos escolhidos e começa com B01, uma rodada.
+Chave de API, cotação e trechos bibliográficos verificados precisam ser fornecidos antes de gerar conteúdo pago.
+
+O comando prepara os materiais dos quatro papéis e só libera pedagogia após APTO científico validado.
+Para conferir a configuração sem rede ou inferência, execute `npm run executar -- --simular`.
+`npm run coletar` continua disponível para fazer somente a coleta e seguir com organização manual.
+O [guia técnico](referencias/coletor-openrouter.md) explica a configuração, as evidências e os limites de medição.
+O [guia do fluxo completo](referencias/pipeline-herdr.md) explica isolamento, retomada e consolidação identificada.
+
+## Pedidos manuais preservados
+
+Os arquivos abaixo pertencem ao [fluxo manual anterior](workflow-manual.md).
+O coletor usa o [metaprompt próprio para API](prompts/openrouter/gerar-explicacao.md), os mesmos pedidos temáticos e trechos locais comuns.
+Não misture as duas condições experimentais.
 
 - [gerar-explicacao-bio-01.md](prompts/gerar-explicacao-bio-01.md) - Biomedicina 01 - Hemostasia e coagulação.
 - [gerar-explicacao-bio-02.md](prompts/gerar-explicacao-bio-02.md) - Biomedicina 02 - Resposta imune e memória.
@@ -28,6 +44,14 @@ O [workflow](workflow.md) explica como conferir a coleta e preparar os juízes.
 Protocolo 3.2; aprofundamento dos pedidos revisado em 26 de setembro de 2026.
 As fontes e os seis pontos científicos permanecem os mesmos; a extensão e a estrutura foram ampliadas, com F2/F3 atualizados.
 Use um lote novo: coletas 3.1 preservam seus pedidos e regras originais, sem expansão ou reavaliação retroativa pelo formato atual.
-Registre arquivo-direto-v1 ou manual-v1, pois a entrega por ferramentas pode mudar tempo e custo.
+Registre api-openrouter-v1, arquivo-direto-v1 ou manual-v1, pois a forma de execução muda contexto, tempo e custo.
 Os registros separados de resposta.md e ficha.md continuam aceitos.
 Não há resultados experimentais neste kit.
+
+## Testes
+
+```sh
+npm test
+```
+
+Os testes usam respostas sintéticas e arquivos temporários; não chamam a API paga.

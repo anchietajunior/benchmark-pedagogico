@@ -28,6 +28,18 @@ Fontes-base para consulta:
 - B01-F2: MSD Manual, versão profissional, [Overview of Hemostasis](https://www.msdmanuals.com/professional/hematology-and-oncology/hemostasis/overview-of-hemostasis), revisão de setembro de 2025.
   Conferir interação entre plaquetas e coagulação, regulação e fibrinólise nas seções Platelets, Plasma Coagulation Factors e Regulation of Coagulation.
 
+Fontes adicionais do piloto OpenRouter preparado em 2026-09-28:
+
+- B01-F3: Palta, S.; Saroa, R.; Palta, A. [Overview of the coagulation system](https://doi.org/10.4103/0019-5049.144643), Indian Journal of Anaesthesia, 2014;58(5):515-523.
+  [Texto e licença CC BY-NC-SA 3.0](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC4260295/fullTextXML).
+- B01-F4: NHLBI/NIH, [How Does Blood Clot?](https://www.nhlbi.nih.gov/health/clotting-disorders/how-blood-clots), atualização de 2022-03-24.
+- B01-F5: NHLBI/NIH, [What Are Blood Clotting Disorders?](https://www.nhlbi.nih.gov/health/clotting-disorders), atualização de 2022-03-24.
+
+Nesse piloto, o pacote local contém notas de leitura identificadas de F2 a F5, não capítulos completos; a preparação por IA não é revisão humana.
+Os identificadores anteriores foram preservados; F1 não foi reutilizado para outra obra.
+A página atual de OpenStax declara restrição à ingestão em LLMs sem autorização prévia; disponibilidade pública não equivale a autorização de envio à API.
+Use o mesmo pacote congelado para todos os modelos e informe seu escopo aos juízes.
+
 Obra complementar consolidada:
 
 - Hoffbrand, A. V.; Moss, P. A. H. *Fundamentos em Hematologia*, 6ª ed., Artmed, 2013, conforme a bibliografia básica do [plano de Hematologia Clínica do UniRios, 2025.1](https://www.unirios.edu.br/arquivos/files/cursos/biomedicina/2025/1_semestre/5p/hematologia_clinica.pdf).

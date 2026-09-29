@@ -38,8 +38,10 @@ Execuções de um modelo podem variar mesmo com o mesmo pedido; temperatura zero
 A necessidade de quantificar essa variabilidade é investigada por [Blackwell, Barry e Cohn, 2024](https://arxiv.org/abs/2410.03492).
 
 Proposta exploratória: cinco gerações por modelo e tema, em sessões independentes, conservando configurações e fontes.
-Com quatro modelos e quatro temas, isso produz 80 explicações em cinco rodadas completas.
-Cinco é uma escolha prática para o piloto, não um tamanho amostral validado ou garantia de poder estatístico.
+Com quatro modelos e quatro temas, isso produziria 80 explicações em cinco rodadas completas.
+Com os seis modelos do novo coletor, seriam 120; o piloto configurado usa apenas B01 e uma rodada.
+O manifesto de cada lote define o desenho efetivo, sem misturar condições experimentais.
+Cinco é uma escolha exploratória de repetições, não um tamanho amostral validado ou garantia de poder estatístico.
 Intercalar a ordem dos modelos entre rodadas e registrar condições de execução.
 Repetir geração mede variação das respostas; julgar novamente o mesmo texto mede estabilidade do avaliador.
 São duas fontes distintas de variação e seus registros não devem ser misturados.

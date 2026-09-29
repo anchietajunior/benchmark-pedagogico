@@ -1,69 +1,105 @@
-# Coleta em três etapas
+# Coleta, julgamento e resultados
 
-Os pedidos já instruem o agente a salvar em ~/Documents/coletas.
-Com acesso local, você não precisa copiar a explicação para um arquivo.
+Você configura uma vez e depois executa `npm run executar` dentro do Herdr.
+Para seguir desde a abertura do terminal até o HTML no navegador, use o [guia de execução](guia.md).
+O coletor envia cada pedido diretamente ao OpenRouter, sem skills, memória, navegação ou acesso do modelo ao projeto.
+São necessários Node.js 24 ou superior, Herdr ativo e Codex CLI autenticado; não precisa executar `npm install`.
 
-## 1. Copie o arquivo do tema e cole no agente
+Nesta máquina, o piloto B01 já está configurado: seis modelos, uma rodada, cotação e notas bibliográficas preenchidas.
+Se a chave já está no `.env`, vá direto ao passo 2; não precisa editar `openrouter.config.json` para esse teste.
+As notas foram preparadas por IA e continuam com revisão humana pendente; o programa permite isso somente na fase PILOTO.
+Uma nova cópia do projeto ainda exige a preparação abaixo, pois os arquivos locais não entram no Git.
 
-Uma vez, preencha o [modelo de lote](coleta/lote.md) e salve em ~/Documents/coletas/lote.md.
-O piloto já prevê E001 e E002: uma resposta de cada sistema sobre B01.
-Esses são rótulos do planejamento; o arquivo coletado pode ter um ID automático, vinculado depois sem mudar o plano.
-Sistema significa agente + modelo + configuração; registre os nomes exibidos e controles disponíveis.
+## 1. Prepare uma vez
 
-| Curso | Pedido completo para copiar |
-| --- | --- |
-| Biomedicina | [B01 - Hemostasia e coagulação](prompts/gerar-explicacao-bio-01.md) |
-| Biomedicina | [B02 - Resposta imune e memória](prompts/gerar-explicacao-bio-02.md) |
-| Nutrição | [N01 - Metabolismo energético](prompts/gerar-explicacao-nut-01.md) |
-| Nutrição | [N02 - Regulação do ferro](prompts/gerar-explicacao-nut-02.md) |
+Na pasta deste projeto, execute:
 
-Copie o arquivo inteiro: não há campos de tema, bibliografia ou pergunta para preencher.
-A versão 3.2 pede de 800 a 1.200 palavras, com mecanismo desenvolvido, exemplo explicado, duas confusões esclarecidas e duas perguntas com respostas comentadas.
-Comece um lote separado para esta versão; preserve as coletas 3.1 sem pedir expansão nem aplicar a elas o novo mínimo de palavras.
-O agente cria o ID automaticamente; se quiser usar o rótulo planejado, acrescente “execucao_id: E001” à mensagem, sem editar o arquivo.
-Abra uma conversa nova, cole o pedido inteiro e cronometre do envio até a confirmação final, incluindo ferramentas e gravação.
-Envie somente o pedido e as fontes comuns; o gerador não deve acessar o lote, outras coletas ou materiais dos juízes.
-Use o mesmo arquivo para todos os sistemas do tema e registre configurações que não conseguir controlar.
-Os pedidos têm links, não capítulos completos: confirme o acesso no piloto.
-
-## 2. Confira o arquivo salvo
-
-O agente deverá criar a pasta se necessário, salvar o registro e confirmar o caminho.
-Ele não poderá sobrescrever uma execução existente.
-
-```text
-~/Documents/coletas/
-  lote.md                 cadastro e execuções previstas
-  entrada/
-    ID_DA_EXECUCAO.md      cabeçalho privado + resposta original
-  comprovantes/           prints ou logs, se houver; use o ID real no nome
+```sh
+npm run configurar
 ```
 
-Abra o arquivo confirmado e complete no cabeçalho o término observado, a duração cronometrada e os dados disponíveis na ferramenta.
-Anote o nome retornado na coluna “Arquivo coletado” da linha planejada; preserve nome e ID originais.
-Se a identidade ou a rodada não estiverem claras, o organizador pedirá essa ligação antes de encaminhar aos juízes.
-O agente pode copiar medidas comprovadas por logs; números escritos por ele sem evidência continuam não verificados.
-Tokens e custo indisponíveis ficam N/A; não use mensalidade como custo por resposta.
-Não altere o corpo depois do marcador da resposta original, nem substitua a primeira tentativa.
-Se vier curto, superficial ou longo demais, preserve o resultado para avaliação; não peça uma versão melhor para ocupar a mesma execução.
-Salve também recusas, PENDENTE DE FONTES e saídas truncadas; documente falhas sem saída.
-Guarde prints/logs em comprovantes/, sem credenciais, e indique o arquivo no cabeçalho.
+O comando cria arquivos locais sem sobrescrever o que já existir.
+Preencha somente estes pontos:
 
-Se o agente não tiver acesso local ou a gravação falhar, use o [registro manual](modelos/ficha-coleta.md) e salve a mesma saída no destino.
-Registre o modo manual de contingência; não o misture silenciosamente com a entrega direta nas comparações de tempo/custo.
+- `.env`: sua `OPENROUTER_API_KEY`.
+- `openrouter.config.json`: a cotação em `usd_brl`, com valor em reais por dólar, data e fonte.
+- `fontes/openrouter/B01.md`: os trechos bibliográficos autorizados para os seis pontos de B01, com identificação da obra, seção/página e origem.
+  Depois da conferência humana, marque `sources_reviewed: true` no tema B01 da configuração.
 
-## 3. Peça à IA para preparar a avaliação
+Os seis modelos escolhidos já estão configurados: Opus 5.5, Fable 5.1, GPT-6 Astra, DeepSeek V4.1 Flash, Muse Spark 1.3 e Gemini 3.8 Flash.
+O piloto começa com B01 e uma rodada: seis explicações.
+Use a [bibliografia por tema](referencias/bibliografia-por-tema.md) para preparar as fontes.
+Os arquivos criados são modelos vazios, não fontes científicas já verificadas; não basta colar links ou marcar a conferência sem fornecer os trechos.
+Não publique capítulos protegidos sem autorização.
 
-Em uma sessão de organização, copie o [metaprompt Preparar julgamento](prompts/preparar-julgamento.md).
-Ele já aponta para ~/Documents/coletas; dê ao organizador acesso a essa pasta e ao kit deste projeto.
-Em chat sem acesso local, anexe o kit e a coleta, em ZIP se suportado, sem .git/ e sem credenciais.
-Essa sessão conhece identidades e não pode atuar como juiz.
+## 2. Confira e execute
 
-O organizador preparará os pacotes em ~/Documents/coletas/juizes/enviar/ e a fila em ~/Documents/coletas/privado/FILA.md.
-A fila dirá qual arquivo enviar a cada juiz e onde salvar o parecer.
-Sem ferramentas de arquivos, o organizador entregará os conteúdos para você salvar, sem alegar que criou a pasta.
+```sh
+npm run executar -- --simular
+npm run executar
+```
 
-A coleta termina aqui; para as notas, siga a fila e o [roteiro de avaliação](avaliacao.md).
-Ciência e tecnologia podem começar; pedagogia aguarda APTO científico e tempo/custo aguarda a situação operacional conferida.
-Teste também os juízes no piloto; sem APTO científico, a etapa pedagógica continua não testada.
-Antes da coleta definitiva, use um lote separado e congele pedidos, fontes, configuração e modo de entrega.
+`--simular` verifica a configuração local e mostra as quantidades sem rede, panes ou inferência.
+`executar` confere Herdr/Codex e pede que você digite `EXECUTAR` antes das chamadas.
+No piloto de seis explicações, há seis gerações OpenRouter, até 36 julgamentos e uma consolidação Codex.
+O avaliador padrão é `gpt-6-sol`, esforço `medium`; informe outro com `--modelo-juiz ID` antes de iniciar o lote.
+As chamadas Codex usam a conta autenticada e podem consumir sua franquia/créditos.
+Para conferir apenas o catálogo público, use `npm run conferir`; para somente coletar, use `npm run coletar`.
+Use uma chave OpenRouter com limite de gastos definido na conta e sem BYOK, para evitar cobrança externa não contabilizada.
+
+Cada geração usa somente o pedido e as fontes do tema.
+A ordem é sorteada e registrada antes da primeira chamada.
+O programa salva explicações, recusas e falhas; não pede versões melhores nem reenvia gerações automaticamente.
+Tempos, tokens e custos vêm do programa e do serviço, nunca da autodeclaração do modelo.
+Os juízes recebem códigos opacos em processos Codex novos, executados em panes Herdr.
+JC1 libera JP1 e JC2 libera JP2 somente com APTO consistente; JE aguarda a situação operacional de JT.
+Somente a sessão separada do consolidador recebe a correspondência código-modelo e compõe o relatório identificado.
+
+## 3. Abra o resultado
+
+O terminal mostra a pasta criada dentro de `~/Documents/coletas/openrouter/`.
+Cada comando de coleta cria um lote novo, sem tocar nas coletas antigas.
+Durante o processamento, acompanhe as linhas de coleta, os papéis `JC1`, `JC2`, `JP1`, `JP2`, `JT`, `JE` e a mensagem `CONSOLIDADOR` no terminal principal.
+Os panes dos juízes podem ficar sem texto porque suas saídas são gravadas em arquivos.
+O [guia](guia.md#4-acompanhe-o-andamento) mostra como consultar os registros durante a execução.
+
+Ao aparecer `Resultados: .../consolidado/resultados.html`, copie o caminho do lote e, no macOS, abra o arquivo no Safari:
+
+```sh
+DIRETORIO_DO_LOTE="/caminho/completo/do/lote"
+open -a Safari "$DIRETORIO_DO_LOTE/consolidado/resultados.html"
+```
+
+Substitua o caminho de exemplo pelo diretório mostrado no terminal.
+O navegador não é aberto automaticamente; o HTML é local e não exige servidor.
+
+| Arquivo | O que fazer |
+| --- | --- |
+| `consolidado/resultados.html` | Abrir no navegador: modelos identificados, códigos anônimos dos pareceres, notas, cobertura e limitações. |
+| `consolidado/resultados-completos.csv` | Consultar todos os itens, passagens, evidências e motivos de N/A. |
+| `consolidado/estabilidade.csv` | Comparar as duas passagens de cada papel. |
+| `RESUMO.md` | Conferir a coleta OpenRouter e suas pendências; não indica conclusão dos julgamentos. |
+| `metricas.csv` | Abrir a tabela de tempo, tokens e custo em USD e reais. |
+| `entrada/ID.md` | Ler a primeira explicação, com seu registro privado. |
+| `PREPARAR-JULGAMENTO.md` | Usar somente se escolher a organização manual dos julgamentos. |
+
+O comando usa os quatro papéis existentes em sessões separadas; o coletor OpenRouter não atribui notas.
+Os cálculos e tabelas são montados a partir dos pareceres validados; o consolidador redige a leitura dos resultados sem alterar as notas.
+Não envie a tabela identificada ou o cabeçalho privado diretamente aos juízes de conteúdo.
+
+Se houver interrupção, retome o mesmo lote:
+
+```sh
+npm run executar -- --retomar "CAMINHO_DO_LOTE"
+```
+
+A retomada não gera novas explicações nem repete julgamentos já enviados.
+Parecer inválido permanece pendente; envio sem confirmação é consultado no mesmo pane, sem reenvio automático.
+Veja [limites e recuperação](referencias/pipeline-herdr.md), incluindo F5 e revisão humana.
+
+Se houver telemetria pendente, copie o comando `npm run recuperar -- "CAMINHO_DO_LOTE"` mostrado em `RESUMO.md`.
+Ele consulta os dados da geração existente, sem produzir outra explicação, e acrescenta comprovantes sem alterar o original.
+Ausência continua pendente, nunca vira zero; tentativas incompletas permanecem no lote e na análise de falhas.
+
+Para incluir os outros temas ou aumentar as rodadas, veja a [configuração do coletor](referencias/coletor-openrouter.md).
+O [fluxo manual anterior](workflow-manual.md) continua disponível somente para a condição com agentes de programação.

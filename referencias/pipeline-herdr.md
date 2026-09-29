@@ -1,0 +1,118 @@
+# Fluxo completo pelo Herdr
+
+`npm run executar` encadeia a coleta OpenRouter existente, os julgamentos Codex e o relatório `consolidado/resultados.html`.
+O [guia de execução](../guia.md) ensina a iniciar o comando, acompanhar o processamento e abrir o relatório no navegador.
+O comando usa o pane atual do Herdr como origem explícita e define `HERDR_ENV=1` apenas nos subprocessos da integração.
+Não altera o ambiente global do shell, credenciais ou configuração pessoal do Herdr.
+Não cria branches ou worktrees.
+
+## Execução e simulação
+
+```sh
+npm run executar -- --simular
+npm run executar
+npm run executar -- --modelo-juiz gpt-6-sol --esforco-juiz medium
+npm run executar -- --retomar "CAMINHO_DO_LOTE"
+```
+
+O modo de simulação é estritamente local, sem catálogo remoto, panes ou modelos.
+A execução real exige Codex CLI autenticado e as opções `--ignore-user-config`, `--ignore-rules`, `--ephemeral` e `--output-schema`.
+Herdr e opções do Codex são conferidos antes das gerações OpenRouter.
+A confirmação `EXECUTAR` autoriza geração, julgamentos elegíveis e consolidação; `--confirmar` permite autorização explícita em automações.
+Com seis explicações, o máximo é seis gerações OpenRouter e 37 sessões Codex: seis passagens por explicação e um consolidador.
+Não se executa JP nos ramos sem APTO correspondente.
+O modelo padrão dos avaliadores é `gpt-6-sol`, esforço `medium`, com timeout de 15 minutos por sessão.
+A configuração e a versão do Codex são congeladas antes do primeiro julgamento e preservadas na retomada.
+
+## Quem recebe as identidades
+
+| Destino | Material recebido |
+| --- | --- |
+| JC1 e JC2 | Código próprio, pedido e fontes efetivos, gabarito do tema, resposta e protocolo; sem nomes ou mapa. |
+| JP1 e JP2 | Outro código, mesma resposta/pedido/fontes e certificado mínimo APTO; sem gabarito, parecer JC ou notas anteriores. |
+| JT | Código, execução, pedido, original e situação operacional mínima; sem cadastro do modelo ou notas dos demais papéis. |
+| JE | Código, execução, situação de JT e medidas de recursos; sem resposta ou notas de conteúdo. |
+| Consolidador | Mapa dos códigos para os modelos, pareceres validados, resultados e cobertura. |
+
+Cada passagem usa um código `Q...` distinto, sem modelo, sistema ou posição codificados no nome.
+JC2/JP2 usam ordem inversa da passagem primária, sobre a ordem sorteada da coleta.
+O código recebido por JC1 aparece ao lado do nome do modelo na tabela por execução do HTML.
+A seção de correspondência contém os códigos de todos os papéis.
+O nome mostrado é o ID exato do modelo solicitado, conforme o manifesto, sem inferir uma identidade comercial a partir do estilo.
+O pesquisador autorizou a identificação apenas no relatório consolidado; os juízes continuam sem acesso ao mapa.
+
+O programa preserva literalmente a resposta.
+Uma suspeita de autoria explícita bloqueia as chamadas que receberiam esse conteúdo; não há remoção automática que possa alterar a explicação.
+Essa triagem usa identificadores conhecidos e palavras de autoria, pode bloquear texto legítimo e não garante anonimato estilístico ou detecção de toda identidade possível.
+O lote permanece pendente para revisão quando não é possível fornecer um pacote limpo.
+
+## Isolamento das sessões
+
+Cada chamada inicia um novo `codex exec` em diretório temporário neutro, com apenas pedido, schema, configuração e executor.
+O processo não reutiliza conversas nem o daemon compartilhado e ignora configurações pessoais e regras de execução.
+O catálogo de skills do host, instruções AGENTS, memória, plugins, apps, hooks, shell, navegador, busca, imagens e subagentes são desativados pelos controles da CLI.
+O executor filtra o ambiente do processo, sem encaminhar a chave OpenRouter, variáveis dos panes ou chaves API de inferência.
+A autenticação é a existente no Codex, sem copiar segredos para o lote.
+Os parâmetros seguem a [referência oficial de configuração](https://learn.chatgpt.com/docs/config-file/config-reference) e o [modo não interativo](https://learn.chatgpt.com/docs/non-interactive-mode).
+
+As fontes acessíveis ao juiz são os trechos congelados; URLs não significam navegação ou leitura integral.
+Eventos com uso de ferramentas ou término incompatível impedem a aceitação do parecer.
+Configuração, diretório neutro e auditoria de eventos limitam o contexto; não constituem uma máquina virtual ou prova de comportamento interno do serviço.
+A integração real com inferência ainda exige um piloto autorizado; a implementação foi validada com transportes sintéticos.
+
+O Herdr abre um pane sem mudar o foco do usuário.
+O executor grava eventos, resultado estruturado, erros e conclusão em arquivos privados.
+Após arquivar, tenta fechar somente o pane criado, se ele estiver novamente no shell do diretório esperado.
+Uma interrupção do coordenador pode deixar o processo no pane até terminar ou atingir timeout.
+Não feche outros panes para recuperar o lote.
+
+## Validação e elegibilidade
+
+Os pareceres preservam texto integral e itens estruturados.
+O programa verifica papel, código, tema, rodada, itens únicos, escalas, motivos de N/A e cálculos científicos/pedagógicos.
+APTO exige K1-K6 iguais a 100, inventário de afirmações não vazio e sem itens não verificados/errados, vínculos válidos e nenhum impedimento declarado.
+Isso verifica consistência do parecer, não verdade científica.
+Um parecer inconsistente fica preservado em `pendente.json`, sem reenvio para obter nota melhor.
+O certificado JP tem apenas os seis campos do protocolo; notas e identificadores de origem ficam no registro privado.
+
+F5 exige inspeção humana conforme o protocolo vigente.
+Como essa inspeção ainda não ocorreu, F5 e T2 do ramo explicação ficam N/A neste fluxo automático; F1-F4 e T1 podem permanecer conhecidos.
+Não há metas de tempo/custo pré-fixadas no coletor, portanto E1-E3 continuam N/A.
+Medidas brutas conhecidas permanecem disponíveis, e custo de julgamentos não entra no custo da geração.
+
+## Consolidação identificada
+
+O código reúne as notas aceitas, mantém todas as execuções planejadas e calcula cobertura, agregados condicionais e estabilidade.
+Uma sessão nova do consolidador recebe então o mapa privado e compõe título, resumo, observações e limitações de `resultados.html`.
+Um renderizador local monta o HTML com esses textos e com as tabelas provenientes dos registros validados.
+O consolidador não pode alterar notas nas tabelas, códigos ou nomes durante a composição do relatório.
+O HTML é independente, responsivo, sem scripts, dependências externas ou conteúdo de modelo executável; todos os textos são escapados.
+
+O relatório inclui resultados por modelo/tema, notas por execução e os códigos usados em todas as passagens.
+Os CSV detalhados continuam disponíveis e preservam inventários, evidências, ausências e bloqueios.
+Desacordos JC1/JC2 e alertas JP ficam provisórios; não se escolhe a passagem mais favorável.
+Média condicional dos APTO não vira ranking global.
+Uma média global por rodada só existe com os quatro temas, APTO e P completos sem contestação científica.
+O programa não calcula significância nem demonstra aprendizagem humana.
+
+## Retomada e arquivos
+
+`privado/julgamento.json` congela configuração, kit dos juízes, insumos, mapa e métricas no começo dos julgamentos.
+`privado/fila-julgamento.json` registra chamadas aceitas, bloqueadas ou pendentes.
+`juizes/pareceres/PAPEL/CODIGO/` preserva pedido, schema, envio, eventos, saída e parecer aceito ou rejeitado.
+`privado/consolidador/` contém o pacote identificado e os comprovantes da sessão de consolidação.
+`consolidado/` contém HTML, CSV, relatório e orçamento de julgamentos.
+Esses arquivos ficam no lote privado; não devem ser anexados aos juízes.
+
+O envio é registrado antes de disparar o processo no Herdr.
+Uma queda após o envio nunca autoriza reenviar a mesma chamada automaticamente.
+A retomada consulta o resultado da sessão já criada; falta de confirmação permanece pendente.
+Resultados aceitos são reutilizados, e mudança de insumos ou de configuração exige uma revisão explícita, sem sobrescrever originais.
+Uma trava impede dois coordenadores no mesmo lote e é liberada ao encerrar normalmente ou receber a interrupção tratada.
+Depois de encerramento abrupto, confira o PID registrado e remova somente `privado/julgamento.lock` se o coordenador já não existir, antes de retomar.
+O programa não remove essa trava automaticamente nem adivinha se outro coordenador ainda está ativo.
+
+As métricas usadas pelos juízes são um retrato do início dos julgamentos.
+Uma conciliação OpenRouter posterior preserva o retrato; não modifica silenciosamente o parecer JE ou a consolidação já enviada.
+Para esse caso, mantenha as novas evidências e registre uma revisão identificada do julgamento afetado.
+A retomada de julgamento não inicia gerações ausentes e não preenche chamadas interrompidas com resultados presumidos.

@@ -1,6 +1,7 @@
 # Coleta de tempo e tokens fora do modelo
 
 Pesquisa e proposta verificadas em 26/09/2026.
+Esta proposta registra a abordagem anterior com três agentes; a implementação nova e separada está em [coletor OpenRouter](coletor-openrouter.md).
 O coletor descrito aqui ainda não foi implementado; este documento não substitui silenciosamente o protocolo 3.1 nem os metaprompts atuais.
 O escopo solicitado passa a considerar Codex, Claude Code e OpenCode, cada um com modelo e configuração identificados.
 

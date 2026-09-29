@@ -19,6 +19,7 @@ Não presuma acesso a um caminho citado, ferramenta de arquivos, ZIP, navegaçã
 - [Protocolo completo](../referencias/protocolo-pontuacao.md) e [esquema de registros](../referencias/resultados-e-registros.md).
 - Manifesto ~/Documents/coletas/lote.md, registros em ~/Documents/coletas/entrada/ e comprovantes vinculados; o [modelo do kit](../coleta/lote.md) serve apenas como referência.
 - Metaprompts completos dos temas: [B01](gerar-explicacao-bio-01.md), [B02](gerar-explicacao-bio-02.md), [N01](gerar-explicacao-nut-01.md) e [N02](gerar-explicacao-nut-02.md), além dos anexos realmente enviados.
+- Para condicao_experimental: openrouter-v1, use o pedido efetivo em comprovantes/ID/pedido.json, os trechos incorporados e privado/protocolo.md; não substitua esses insumos pelos prompts manuais acima.
 - Arquivos atuais de pacotes/ e gerar-explicacao.md são índices, não entradas completas; para coletas antigas, use a cópia efetivamente enviada, nunca o redirecionamento como substituto.
 - [Gabaritos](../referencias/gabaritos-conceituais.md), somente para compor os pacotes científicos.
 - Metaprompts de [ciência](avaliar-ciencia.md), [pedagogia](avaliar-pedagogia.md), [tecnologia](apurar-tecnologia.md), [tempo/custo](apurar-tempo-custo.md) e [consolidação](consolidar-resultados.md).
@@ -40,6 +41,11 @@ Campos ainda entre colchetes são não preenchidos, não dados observados.
 Registros-modelo e .gitkeep não são execuções realizadas.
 Preserve as linhas previstas mesmo quando não houver arquivo: registro ausente não prova falha nem ausência de início.
 Consumo indisponível não bloqueia o julgamento de conteúdo; mantenha N/A com motivo.
+Nos lotes OpenRouter, confira também batch.json, privado/catalogo.json, metricas.csv e comprovantes/ID/metricas.json.
+metricas.csv é uma visão derivada; valide valores e conciliações nos comprovantes antes de encaminhar a JE.
+Conciliações posteriores em conciliacao-*.json podem complementar um cabeçalho antigo sem mudar a explicação ou apagar a pendência originalmente registrada.
+Telemetria COMPLETA e ready_for_comparison não são notas, APTO científico ou autorização de ranking; este último campo é apenas uma triagem operacional.
+Preserve todas as execuções do plano, inclusive as não iniciadas, sem registro final, falhas ou com telemetria pendente.
 Configuração não informada do gerador é pendência de reprodutibilidade, nunca igualdade presumida.
 Antes de uma chamada de julgamento, solicite o registro da configuração/método daquele avaliador no lote.
 
@@ -65,7 +71,8 @@ Não gere uma resposta substituta.
 
 O tempo duracao_s vira latencia_total_s somente em conclusão normal; em falha, vira tempo_ate_falha_s.
 Se a situação for desconhecida, preserve o valor bruto sem decidir essa classificação.
-Guarde origem, cobertura, unidades das medidas e modo_entrega: arquivo-direto-v1 ou manual-v1.
+Guarde origem, cobertura, unidades das medidas e modo_entrega: api-openrouter-v1, arquivo-direto-v1 ou manual-v1.
+Na condição OpenRouter, duracao_s é o intervalo do envio HTTP ao término/falha do stream; não inclui preparação das fontes nem consulta posterior de custo.
 Cabeçalho preenchido pelo gerador só fornece medidas válidas quando há logs, comprovantes ou observação do pesquisador; sem evidência, mantenha N/A.
 A confirmação no chat de que o arquivo foi salvo não pertence ao corpo avaliado.
 Registre como pendência qualquer diferença entre execucao_id do cabeçalho e nome do arquivo; o manifesto deve apontar para esse arquivo exato.

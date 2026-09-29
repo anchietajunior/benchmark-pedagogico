@@ -8,10 +8,10 @@ O organizador aceita este manifesto com registros únicos de execução ou com o
 - versao_protocolo: 3.2
 - fase: [PILOTO ou DEFINITIVA]
 - diretorio_coleta: [diretório exclusivo deste lote; piloto usa ~/Documents/coletas]
-- modo_entrega_planejado: [arquivo-direto-v1 ou manual-v1; registrar diferenças por execução]
+- modo_entrega_planejado: [api-openrouter-v1, arquivo-direto-v1 ou manual-v1; registrar diferenças por execução]
 - data_congelamento: [data]
 - fontes_e_pedidos: [pasta com cópias exatas; indicar anexos e datas de acesso]
-- desenho: [piloto: dois sistemas, B01, R01; definitiva proposta: quatro sistemas, quatro temas, R01-R05]
+- desenho: [OpenRouter: piloto com seis modelos, B01, R01; definitiva a planejar separadamente; registrar o desenho efetivamente aprovado]
 - ordem_execucoes: [lista com execução, sistema, tema e rodada; incluir também as ainda não iniciadas]
 - timeout_e_reenvios: [limite e regra de reenvio de transporte, iguais quando possível]
 - revisao_docente: [realizada, pendente ou indisponível, com registro]
