@@ -540,7 +540,8 @@ test('envio Herdr incerto não duplica o comando ao retomar', async () => {
 
 test('worker Codex recebe configuração isolada e não herda chaves da coleta', () => {
   const args = codexArguments('/tmp/neutral', config);
-  for (const flag of ['--no-daemon', '--ignore-user-config', '--ignore-rules', '--ephemeral', 'skip_host_skill_discovery', 'project_doc_max_bytes=0', 'web_search="disabled"']) assert.ok(args.includes(flag));
+  for (const flag of ['--no-daemon', '--ignore-user-config', '--ignore-rules', '--ephemeral', 'skip_host_skill_discovery', 'project_doc_max_bytes=0', 'web_search="disabled"', 'suppress_unstable_features_warning=true']) assert.ok(args.includes(flag));
+  for (const feature of ['code_mode', 'code_mode_host']) assert.equal(args[args.indexOf(feature) - 1], '--disable');
   assert.equal(args.includes('--resume'), false);
   assert.deepEqual(codexEnvironment({ HOME: '/user', PATH: '/bin', OPENROUTER_API_KEY: 'secret', OPENAI_API_KEY: 'secret', HERDR_PANE_ID: 'private' }), { HOME: '/user', PATH: '/bin' });
 });
@@ -596,7 +597,7 @@ test('simulador de transporte arquiva saída e rejeita ferramentas inesperadas',
   assert.ok((await readdir(directory)).includes('resultado.json'));
 });
 
-test('avisos conhecidos antes do turno não são ferramentas e o pane arquivado é fechado', async (context) => {
+test('avisos conhecidos permanecem arquivados sem reaparecer no terminal e erros reais bloqueiam', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'bench-codex-warnings-test-'));
   context.after(() => rm(directory, { recursive: true, force: true }));
   const events = [
@@ -628,7 +629,8 @@ test('avisos conhecidos antes do turno não são ferramentas e o pane arquivado 
   const job = { prompt: 'Teste local.', schema: {}, config };
   const options = { command, caller_pane: 'wtest:p1', workspaceRoot: directory, label: 'JC1: Qteste', onProgress: (message) => messages.push(message) };
   assert.deepEqual(await runHerdrJob(directory, job, options), {});
-  assert.equal(messages.filter((message) => message.startsWith('Aviso Codex:')).length, 2);
+  assert.equal(messages.filter((message) => message.startsWith('Aviso Codex:')).length, 0);
+  assert.equal(await readFile(join(directory, 'eventos.jsonl'), 'utf8'), events.map((event) => JSON.stringify(event)).join('\n'));
   assert.equal(commands.filter((name) => name === 'close').length, 1);
   assert.equal(JSON.parse(await readFile(join(workspace, 'contexto.json'), 'utf8')).label, 'JC1: Qteste');
   events.splice(4, 0, { type: 'item.completed', item: { type: 'error', message: 'Falha inesperada no julgamento.' } });

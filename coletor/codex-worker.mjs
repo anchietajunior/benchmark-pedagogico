@@ -15,6 +15,7 @@ export function codexArguments(directory, config) {
     '--ephemeral', '--skip-git-repo-check', '--sandbox', 'read-only', '--cd', directory,
     '--model', config.model, '-c', `model_reasoning_effort=${JSON.stringify(config.reasoning_effort)}`,
     '-c', 'project_doc_max_bytes=0', '-c', 'web_search="disabled"', '-c', 'mcp_servers={}',
+    '-c', 'suppress_unstable_features_warning=true',
     '-c', 'memories.use_memories=false', '-c', 'memories.generate_memories=false',
     '--enable', 'skip_host_skill_discovery',
     ...disabledFeatures.flatMap((feature) => ['--disable', feature]),

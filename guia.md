@@ -111,7 +111,7 @@ O programa tenta fechar o pane criado depois de arquivar a conclusão, se ele es
 O pane mostra o papel do juiz, o código anônimo, o modelo usado para julgar e o diretório dos arquivos.
 Enquanto aguarda o Codex, informa o tempo decorrido a cada 15 segundos; ao terminar, informa conclusão ou falha.
 O terminal principal mostra a situação de cada item após a validação, incluindo bloqueios e pendências.
-Avisos conhecidos de inicialização aparecem como `Aviso Codex`; ferramentas e erros inesperados continuam impedindo a aceitação.
+Avisos conhecidos de inicialização ficam em `eventos.jsonl`, sem repetição no terminal; ferramentas e erros inesperados continuam impedindo a aceitação.
 Uma sessão Codex pode levar vários minutos; o limite configurado é de 15 minutos por sessão, e não para o lote inteiro.
 
 Se quiser inspecionar os arquivos durante a execução, abra um segundo terminal e guarde o caminho real do lote:

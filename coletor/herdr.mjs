@@ -51,14 +51,13 @@ function isKnownStartupWarning(message) {
   return /^Under-development features enabled: skip_host_skill_discovery\. Under-development features are incomplete and may behave unpredictably\. To suppress this warning, set `suppress_unstable_features_warning = true` in [^\r\n]+\.$/.test(message);
 }
 
-function validateEvents(events, onProgress) {
+function validateEvents(events) {
   const entries = events.split('\n').filter((line) => line.trim()).map((line) => JSON.parse(line));
   let turnStarted = false;
   for (const entry of entries) {
     if (entry.type === 'turn.started') turnStarted = true;
     if (entry.item?.type === 'error') {
       if (entry.type === 'item.completed' && !turnStarted && isKnownStartupWarning(entry.item.message)) {
-        onProgress?.(`Aviso Codex: ${entry.item.message}`);
         continue;
       }
       throw new Error(`Codex reportou erro: ${entry.item.message ?? 'sem descrição'}. Chamada preservada sem reenvio.`);
@@ -99,11 +98,11 @@ async function readCompletedResult(directory, events) {
   return result;
 }
 
-export async function readArchivedHerdrResult(directory, onProgress) {
+export async function readArchivedHerdrResult(directory) {
   const completion = await readJsonIfPresent(join(directory, 'concluido.json'));
   if (!completion || completion.exit_code !== 0 || completion.timed_out || completion.error) throw new Error('Chamada sem conclusão íntegra arquivada; originais preservados.');
   const events = await readFile(join(directory, 'eventos.jsonl'), 'utf8');
-  validateEvents(events, onProgress);
+  validateEvents(events);
   const recovered = await readJsonIfPresent(join(directory, 'resultado-recuperado.json'));
   return recovered ? recovered.result : await readCompletedResult(directory, events);
 }
@@ -144,7 +143,7 @@ export async function runHerdrJob(directory, job, options) {
   await archiveWorkerFiles(launch.workspace, directory);
   try {
     if (completion.exit_code !== 0 || completion.timed_out || completion.error) throw new Error(`Codex não concluiu; consulte ${directory}. A chamada foi preservada e não será repetida.`);
-    return await readArchivedHerdrResult(directory, options.onProgress);
+    return await readArchivedHerdrResult(directory);
   } finally {
     await closeFinishedPane(directory, launch, command, options.onProgress);
   }

@@ -203,7 +203,7 @@ async function judgeExecution(batchDirectory, state, execution, role, completed,
   if (rejected || options.localOnly) {
     if (await readJsonIfPresent(join(taskDirectory, 'concluido.json'))) {
       try {
-        const archived = await readArchivedHerdrResult(taskDirectory, options.onProgress);
+        const archived = await readArchivedHerdrResult(taskDirectory);
         return await validateSavedResult(taskDirectory, archived, identity, execution, completed);
       } catch (error) { return { ...identity, status: 'PENDENTE', executed: true, result: null, reason: error.message }; }
     }

@@ -64,6 +64,8 @@ Os parâmetros seguem a [referência oficial de configuração](https://learn.ch
 As fontes acessíveis ao juiz são os trechos congelados; URLs não significam navegação ou leitura integral.
 Eventos com uso de ferramentas ou término incompatível impedem a aceitação do parecer.
 Os dois avisos conhecidos sobre `skip_host_skill_discovery` experimental e Code Mode indisponível são aceitos apenas antes do início do turno.
+Eles ficam preservados em `eventos.jsonl` sem repetição no terminal; novos workers também desativam o aviso de recursos experimentais pela configuração do Codex.
+Code Mode e seu host continuam desativados nas sessões isoladas, que recebem o material do julgamento diretamente e não usam ferramentas.
 Outros eventos de erro interrompem o julgamento com a mensagem registrada, sem reenviar a chamada.
 Configuração, diretório neutro e auditoria de eventos limitam o contexto; não constituem uma máquina virtual ou prova de comportamento interno do serviço.
 Os testes usam transportes sintéticos e registros de um piloto já executado pelo operador, sem novas chamadas pagas.
