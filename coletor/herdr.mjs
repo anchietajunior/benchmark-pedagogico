@@ -83,6 +83,31 @@ async function closeFinishedPane(directory, launch, command, onProgress) {
   }
 }
 
+async function readCompletedResult(directory, events) {
+  try {
+    const result = await readJsonIfPresent(join(directory, 'resultado.json'));
+    if (result) return result;
+  } catch (error) { if (!(error instanceof SyntaxError)) throw error; }
+  const messages = events.split('\n').filter(Boolean).map((line) => JSON.parse(line)).filter((entry) => entry.type === 'item.completed' && entry.item?.type === 'agent_message');
+  const lastMessage = messages.at(-1)?.item.text?.trim();
+  if (!lastMessage) throw new Error('Codex terminou sem resultado JSON; chamada preservada sem reenvio.');
+  const text = lastMessage.replace(/^```(?:json)?\s*\n([\s\S]*?)\n```$/, '$1');
+  let result;
+  try { result = JSON.parse(text); }
+  catch { throw new Error('A saída e a mensagem final não contêm JSON íntegro; originais preservados para recuperação.'); }
+  await writeJson(join(directory, 'resultado-recuperado.json'), { source: 'Mensagem final em eventos.jsonl, após auditoria de isolamento.', result });
+  return result;
+}
+
+export async function readArchivedHerdrResult(directory, onProgress) {
+  const completion = await readJsonIfPresent(join(directory, 'concluido.json'));
+  if (!completion || completion.exit_code !== 0 || completion.timed_out || completion.error) throw new Error('Chamada sem conclusão íntegra arquivada; originais preservados.');
+  const events = await readFile(join(directory, 'eventos.jsonl'), 'utf8');
+  validateEvents(events, onProgress);
+  const recovered = await readJsonIfPresent(join(directory, 'resultado-recuperado.json'));
+  return recovered ? recovered.result : await readCompletedResult(directory, events);
+}
+
 export async function runHerdrJob(directory, job, options) {
   const command = options.command ?? herdrCommand;
   await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -119,10 +144,7 @@ export async function runHerdrJob(directory, job, options) {
   await archiveWorkerFiles(launch.workspace, directory);
   try {
     if (completion.exit_code !== 0 || completion.timed_out || completion.error) throw new Error(`Codex não concluiu; consulte ${directory}. A chamada foi preservada e não será repetida.`);
-    validateEvents(await readFile(join(directory, 'eventos.jsonl'), 'utf8'), options.onProgress);
-    const result = await readJsonIfPresent(join(directory, 'resultado.json'));
-    if (!result) throw new Error('Codex terminou sem resultado JSON; chamada preservada sem reenvio.');
-    return result;
+    return await readArchivedHerdrResult(directory, options.onProgress);
   } finally {
     await closeFinishedPane(directory, launch, command, options.onProgress);
   }

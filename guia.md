@@ -149,7 +149,8 @@ Esses arquivos são privados e servem para acompanhamento; não os encaminhe aos
 
 Aguarde a linha `Resultados: .../consolidado/resultados.html` no terminal principal.
 Ela fornece o caminho exato do arquivo gerado.
-O programa informa esse caminho, mas não abre o navegador automaticamente.
+O programa abre o relatório no navegador padrão após informar que o fluxo foi concluído.
+Use `--nao-abrir` quando quiser somente gerar o arquivo.
 
 No macOS, defina o caminho real do lote e abra o relatório no Safari:
 
@@ -195,7 +196,23 @@ Use o diretório do lote, não o caminho de `resultados.html`.
 O próprio terminal também imprime um comando de retomada com o caminho preenchido.
 A retomada não gera novas explicações e reutiliza os julgamentos já enviados ou aceitos.
 Linhas de coleta que ficaram sem execução não são iniciadas por esse comando.
-Uma chamada sem confirmação permanece vinculada ao envio original; um parecer inválido permanece pendente.
+Uma chamada sem confirmação permanece vinculada ao envio original.
+A retomada revalida os pareceres arquivados com as regras corrigidas e conserva o original.
+Um item inconsistente fica pendente, mas os demais itens válidos continuam publicados.
+Pareceres parciais nunca liberam pedagogia nem ranking.
+
+Para recuperar apenas os arquivos existentes, sem rede, Herdr ou chamadas de modelos:
+
+```sh
+npm run executar -- --revalidar
+```
+
+O comando usa o lote mais recente; acrescente `--retomar "/caminho/do/lote"` para escolher outro.
+Ele não pede confirmação de chamadas porque só realiza operações locais e abre o HTML atualizado.
+Relatórios anteriores ficam em `consolidado/revisoes/`, e cada decisão de revalidação fica em um arquivo imutável em `revalidacoes/` junto ao parecer original.
+`revalidado.json` aponta para a decisão atual, e os CSV identificam o arquivo imutável usado em cada revisão.
+Julgamentos que nunca foram realizados continuam identificados como ausentes ou bloqueados; esse modo não cria novas avaliações.
+Tempos, tokens e custos conhecidos nos registros são publicados mesmo quando JT ou JE estiverem pendentes, com a origem identificada no CSV.
 
 Se precisar interromper o coordenador, pressione `Ctrl+C` uma vez no terminal principal e aguarde a mensagem de saída.
 Um juiz já iniciado pode continuar no seu pane até terminar ou atingir o limite de tempo.
@@ -203,7 +220,8 @@ Antes de retomar, espere o coordenador anterior encerrar.
 Se aparecer uma mensagem de trava após encerramento abrupto, siga a orientação de [retomada e arquivos](referencias/pipeline-herdr.md#retomada-e-arquivos).
 
 Se aparecer `Não foi possível concluir: ...`, leia o motivo e preserve o lote para investigação.
-Quando houver apenas pendências registradas, o comando pode gerar o HTML e terminar com código de saída 2; confira o relatório.
+Uma falha individual de juiz é registrada e o fluxo continua para os demais modelos e para a geração do HTML.
+Quando houver pendências, o terminal informa `Fluxo concluído` com as contagens e pode terminar com código de saída 2; isso identifica dados pendentes no relatório.
 O caminho da linha `Resultados:` continua sendo a referência para abrir o arquivo concluído.
 
 ## 7. Apagar os resultados e recomeçar

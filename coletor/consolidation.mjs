@@ -1,9 +1,11 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, copyFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { replaceDerivedFile } from './artifacts.mjs';
 import { fixedItems, roleFamily } from './judgments.mjs';
 import { readJsonIfPresent } from './herdr.mjs';
 import { writeHtmlReport } from './html-report.mjs';
+import { recordedItems } from './record-results.mjs';
+import { sha256 } from './config.mjs';
 
 const completeColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,codigo_publico,papel,passagem,item,nota_0_100,valor_bruto,unidade,numerador,denominador,situacao,execucao_avaliacao,avaliador_config_id,metodo_verificacao,arquivo_origem,evidencia,motivo_na'.split(',');
 const summaryColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,K1,K2,K3,K4,K5,K6,C1,C2,C3,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia'.split(',');
@@ -26,27 +28,44 @@ function commonFields(execution, phase) {
 }
 
 function itemValue(judgment, id, field = 'score') {
-  return judgment?.result?.items.find((item) => item.id === id)?.[field] ?? null;
+  return (judgment?.result?.items ?? judgment?.partial_items)?.find((item) => item.id === id)?.[field] ?? null;
 }
 
 function sourceFile(judgment) {
   if (!judgment.executed) return 'privado/fila-julgamento.json';
-  return `juizes/pareceres/${judgment.role}/${judgment.code}/${judgment.result ? 'parecer.md' : 'pendente.json'}`;
+  if (judgment.validation_file) return judgment.validation_file;
+  const root = 'juizes/pareceres';
+  if (judgment.revalidated) return `${root}/${judgment.role}/${judgment.code}/revalidado.json`;
+  return `${root}/${judgment.role}/${judgment.code}/${judgment.result ? 'parecer.md' : 'pendente.json'}`;
+}
+
+function availableItems(execution, judgment) {
+  const family = roleFamily(judgment.role);
+  const judged = judgment.result?.items ?? judgment.partial_items ?? [];
+  const recorded = recordedItems(execution, family);
+  const items = [...judged];
+  for (const item of recorded) {
+    if (!items.some((existing) => existing.id === item.id)) items.push(item);
+  }
+  for (const id of fixedItems[family]) {
+    if (!items.some((item) => item.id === id)) items.push({ id, reason_na: judgment.reason ?? 'Item não disponível no parecer.', evidence: judgment.reason ?? 'Item não disponível no parecer.' });
+  }
+  return items;
 }
 
 function detailedRows(execution, phase, judgments) {
   return Object.values(judgments).flatMap((judgment) => {
     const family = roleFamily(judgment.role);
-    const items = judgment.result?.items ?? fixedItems[family].map((id) => ({ id, reason_na: judgment.reason, evidence: judgment.reason }));
+    const items = availableItems(execution, judgment);
     return items.map((item) => ({
       ...commonFields(execution, phase), codigo_publico: judgment.code, papel: family,
       passagem: ['JT', 'JE'].includes(family) ? 'UNICA' : judgment.role, item: item.id,
       nota_0_100: item.score, valor_bruto: item.value, unidade: item.unit,
       numerador: item.numerator, denominador: item.denominator, situacao: judgment.status,
-      execucao_avaliacao: judgment.executed ? 'EXECUTADO' : 'NÃO EXECUTADO',
-      avaliador_config_id: judgment.executed ? 'CODEX-01' : null,
-      metodo_verificacao: judgment.result ? 'LLM' : 'REGISTRO ADMINISTRATIVO',
-      arquivo_origem: judgment.executed ? sourceFile(judgment) : 'privado/fila-julgamento.json',
+      execucao_avaliacao: item.verification_method ? 'APURAÇÃO LOCAL' : judgment.executed ? 'EXECUTADO' : 'NÃO EXECUTADO',
+      avaliador_config_id: item.verification_method ? null : judgment.executed ? 'CODEX-01' : null,
+      metodo_verificacao: item.verification_method ?? (judgment.result || judgment.partial_items?.includes(item) ? 'LLM' : 'REGISTRO ADMINISTRATIVO'),
+      arquivo_origem: item.verification_method ? `comprovantes/${execution.execution_id}/metricas.json` : sourceFile(judgment),
       evidencia: item.evidence, motivo_na: item.reason_na,
     }));
   });
@@ -59,15 +78,16 @@ function hasScientificDispute(judgments) {
 }
 
 function summaryRow(execution, phase, judgments) {
+  const available = Object.fromEntries(Object.entries(judgments).map(([role, judgment]) => [role, { partial_items: availableItems(execution, judgment) }]));
   const row = { ...commonFields(execution, phase) };
   for (const [role, pattern] of [['JC1', /^(K\d|C\d)$/], ['JP1', /^(M\d(?:\.\d)?|P)$/], ['JT', /^T\d$/], ['JE', /^E\d$/]]) {
-    for (const id of fixedItems[roleFamily(role)].filter((id) => pattern.test(id))) row[id] = itemValue(judgments[role], id);
+    for (const id of fixedItems[roleFamily(role)].filter((id) => pattern.test(id))) row[id] = itemValue(available[role], id);
   }
   const efficiency = { latencia_total_s: 'LATENCIA_TOTAL_S', primeiro_texto_s: 'PRIMEIRO_TEXTO_S', tempo_ate_falha_s: 'TEMPO_ATE_FALHA_S', tokens_entrada: 'TOKENS_ENTRADA', tokens_saida: 'TOKENS_SAIDA', custo_geracao_brl: 'CUSTO_GERACAO_BRL', origem_custo: 'ORIGEM_CUSTO', metas_versao: 'METAS_VERSAO' };
-  for (const [column, id] of Object.entries(efficiency)) row[column] = itemValue(judgments.JE, id, 'value');
-  row.iniciada = itemValue(judgments.JT, 'INICIADA', 'value');
-  row.status_operacional = itemValue(judgments.JT, 'STATUS_OPERACIONAL', 'value');
-  row.ramo_saida = itemValue(judgments.JT, 'RAMO_SAIDA', 'value');
+  for (const [column, id] of Object.entries(efficiency)) row[column] = itemValue(available.JE, id, 'value');
+  row.iniciada = itemValue(available.JT, 'INICIADA', 'value');
+  row.status_operacional = itemValue(available.JT, 'STATUS_OPERACIONAL', 'value');
+  row.ramo_saida = itemValue(available.JT, 'RAMO_SAIDA', 'value');
   row.situacao_JC1 = judgments.JC1.status;
   row.situacao_JP1 = judgments.JP1.status;
   row.contestacao_cientifica = hasScientificDispute(judgments);
@@ -75,6 +95,21 @@ function summaryRow(execution, phase, judgments) {
   row.motivos_na = Object.values(judgments).flatMap((judgment) => judgment.result ? judgment.result.items.filter((item) => item.score === null && item.reason_na).map((item) => `${judgment.role}/${item.id}: ${item.reason_na}`) : [`${judgment.role}: ${judgment.reason}`]).join('; ');
   row.evidencia = Object.values(judgments).filter((judgment) => judgment.executed).map(sourceFile).join('; ');
   return row;
+}
+
+async function archivePreviousReports(directory) {
+  const reports = [];
+  for (const filename of ['resultados.html', 'relatorio.md', 'resultados-completos.csv', 'resultados-resumo.csv', 'estabilidade.csv', 'agregados.csv', 'global-por-rodada.csv', 'orcamento-julgamentos.csv']) {
+    try { reports.push({ filename, hash: sha256(await readFile(join(directory, filename))) }); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+  if (!reports.length) return;
+  const revision = join(directory, 'revisoes', sha256(JSON.stringify(reports)));
+  await mkdir(revision, { recursive: true, mode: 0o700 });
+  for (const { filename } of reports) {
+    try { await copyFile(join(directory, filename), join(revision, filename), 1); }
+    catch (error) { if (error.code !== 'EEXIST') throw error; }
+  }
 }
 
 function stabilityRows(execution, phase, judgments) {
@@ -146,21 +181,32 @@ function globalRows(summary) {
 
 async function judgmentBudget(batchDirectory, completed) {
   const rows = [];
-  const consolidation = await readJsonIfPresent(join(batchDirectory, 'privado/consolidador/aceito.json'));
+  const consolidatorDirectory = join(batchDirectory, 'privado/consolidador');
+  const consolidation = await readJsonIfPresent(join(consolidatorDirectory, 'aceito.json'));
+  const consolidationLaunch = await readJsonIfPresent(join(consolidatorDirectory, 'envio.json'));
+  const consolidationCompletion = await readJsonIfPresent(join(consolidatorDirectory, 'concluido.json'));
   const groups = [...Object.values(completed)];
-  if (consolidation) groups.push({ CONSOLIDADOR: { executed: true, role: 'CONSOLIDADOR', code: 'CONSOLIDACAO' } });
+  if (consolidation || consolidationLaunch || consolidationCompletion) groups.push({ CONSOLIDADOR: { executed: true, role: 'CONSOLIDADOR', code: 'CONSOLIDACAO' } });
   for (const judgments of groups) {
     for (const judgment of Object.values(judgments)) {
-      if (!judgment.executed) continue;
       const isConsolidator = judgment.role === 'CONSOLIDADOR';
       const directory = isConsolidator ? join(batchDirectory, 'privado/consolidador') : join(batchDirectory, 'juizes/pareceres', judgment.role, judgment.code);
+      if (!judgment.executed) {
+        let files;
+        try { files = await readdir(directory); }
+        catch (error) { if (error.code === 'ENOENT') continue; throw error; }
+        if (!files.some((filename) => ['envio.json', 'iniciado.json', 'concluido.json', 'aceito.json'].includes(filename))) continue;
+      }
       const completion = await readJsonIfPresent(join(directory, 'concluido.json'));
       let events = '';
       try { events = await readFile(join(directory, 'eventos.jsonl'), 'utf8'); }
       catch (error) { if (error.code !== 'ENOENT') throw error; }
-      const turns = events.split('\n').filter(Boolean).map((line) => JSON.parse(line)).filter((entry) => entry.type === 'turn.completed');
-      const knownTokens = (field) => turns.length && turns.every((turn) => Number.isSafeInteger(turn.usage?.[field])) ? turns.reduce((sum, turn) => sum + turn.usage[field], 0) : null;
-      rows.push({ categoria: isConsolidator ? 'consolidação' : 'julgamento', papel: judgment.role, codigo: judgment.code, inicio: completion?.started_at, fim: completion?.ended_at, tokens_entrada: knownTokens('input_tokens'), tokens_cache: knownTokens('cached_input_tokens'), tokens_saida: knownTokens('output_tokens'), custo_brl: null, motivo_na: 'Codex CLI não comprova cobrança marginal; assinatura não é custo por resposta.' });
+      let turns = [];
+      let invalidEvents = false;
+      try { turns = events.split('\n').filter(Boolean).map((line) => JSON.parse(line)).filter((entry) => entry.type === 'turn.completed'); }
+      catch (error) { if (!(error instanceof SyntaxError)) throw error; invalidEvents = true; }
+      const knownTokens = (field) => turns.length && turns.every((turn) => Number.isSafeInteger(turn.usage?.[field]) && turn.usage[field] >= 0) ? turns.reduce((sum, turn) => sum + turn.usage[field], 0) : null;
+      rows.push({ categoria: isConsolidator ? 'consolidação' : 'julgamento', papel: judgment.role, codigo: judgment.code, inicio: completion?.started_at, fim: completion?.ended_at, tokens_entrada: knownTokens('input_tokens'), tokens_cache: knownTokens('cached_input_tokens'), tokens_saida: knownTokens('output_tokens'), custo_brl: null, motivo_na: `${invalidEvents ? 'Eventos incompletos ou JSON inválido; consumo do julgamento não confirmado. ' : ''}Codex CLI não comprova cobrança marginal; assinatura não é custo por resposta.` });
     }
   }
   return rows;
@@ -174,6 +220,7 @@ export async function consolidateResults(batchDirectory, state, completed, optio
   const stability = state.executions.flatMap((execution) => stabilityRows(execution, state.phase, completed[execution.execution_id]));
   const aggregates = aggregateRows(summary);
   const global = globalRows(summary);
+  await archivePreviousReports(directory);
   await writeHtmlReport(batchDirectory, state, completed, summary, aggregates, options);
   const budget = await judgmentBudget(batchDirectory, completed);
   const files = [
@@ -195,8 +242,8 @@ export async function consolidateResults(batchDirectory, state, completed, optio
     '# Consolidação do lote', '',
     `Protocolo 3.2; fase ${state.phase}; ${summary.length} execuções planejadas preservadas.`,
     'Consolidação programática v1; os pareceres são do Codex e permanecem provisórios até revisão humana.',
-    `${budget.filter((row) => row.categoria === 'julgamento').length} chamadas de julgamento e uma consolidação registradas; ${pending} pendências administrativas ou de avaliação.`,
-    `${approved} APTO primários; custo conhecido de geração: R$ ${partialCost}; cobertura ${knownCosts.filter((value) => value !== null).length}/${knownCosts.length}.`,
+    `${budget.filter((row) => row.categoria === 'julgamento').length} chamadas de julgamento e ${budget.filter((row) => row.categoria === 'consolidação').length} consolidação(ões) registradas; ${pending} pendências administrativas ou de avaliação.`,
+    `${approved} APTO primários; custo conhecido de geração: ${knownCosts.some((value) => value !== null) ? `R$ ${partialCost}` : 'N/A - nenhuma cobrança confirmada'}; cobertura ${knownCosts.filter((value) => value !== null).length}/${knownCosts.length}.`,
     `Custo por APTO primário: ${costPerApproved}. Inclui todas as gerações do lote, inclusive falhas.`,
     'Julgamentos: orçamento separado em orcamento-julgamentos.csv; custo monetário não observado. Pesquisa e pairwise não realizados por este comando.', '',
     '| Execução | Sistema | Tema | Rodada | JC1 | JP1 | P | T1 | T2 | E1 | E2 | E3 |',

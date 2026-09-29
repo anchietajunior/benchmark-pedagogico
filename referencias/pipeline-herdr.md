@@ -14,9 +14,12 @@ npm run executar
 npm run executar -- --modelo-juiz gpt-6-sol --esforco-juiz medium
 npm run executar -- --retomar
 npm run executar -- --retomar "CAMINHO_DO_LOTE"
+npm run executar -- --revalidar
 ```
 
 O modo de simulação é estritamente local, sem catálogo remoto, panes ou modelos.
+O modo `--revalidar` usa somente arquivos existentes, dispensa runtime Herdr e credenciais e não inicia chamadas; sem caminho, seleciona o lote mais recente.
+Ao concluir, o programa informa as contagens de pendências e bloqueios e abre o HTML no navegador padrão; `--nao-abrir` desativa a abertura.
 `--retomar` sem caminho seleciona o lote compatível mais recente pela data de criação em `output_dir`, inclusive quando já concluído, e informa o caminho antes da confirmação.
 Se não houver lote, o comando encerra sem iniciar coleta; para conferir a seleção sem chamadas, use `--retomar --simular`.
 A execução real exige Codex CLI autenticado e as opções `--ignore-user-config`, `--ignore-rules`, `--ephemeral` e `--output-schema`.
@@ -79,6 +82,7 @@ Não feche outros panes para recuperar o lote.
 Os pareceres preservam texto integral e itens estruturados.
 O programa verifica papel, código, tema, rodada, itens únicos, escalas, motivos de N/A e cálculos científicos/pedagógicos.
 O contrato de saída explicita os IDs e os valores de classificação exigidos em cada papel.
+Novos schemas restringem identidade, papel e IDs permitidos antes da geração do parecer; pedidos já enviados mantêm seu schema original.
 Inventários aceitam `A01`/`V01` como grafias de `A1`/`V1`, mas rejeitam a presença das duas grafias do mesmo item.
 As classificações ignoram maiúsculas e minúsculas; em vínculos, `pendente` corresponde a N/A e `inválido` a problema confirmado, mantendo a conferência da nota.
 Um item sem nota nem valor conhecido pode justificar a ausência somente em `reason_na`; notas e medidas conhecidas continuam exigindo evidência.
@@ -87,13 +91,21 @@ APTO exige K1-K6 iguais a 100, inventário de afirmações não vazio e sem iten
 Isso verifica consistência do parecer, não verdade científica.
 Um parecer inconsistente fica preservado em `pendente.json`, sem reenvio para obter nota melhor.
 Na retomada, julgamentos já enviados reutilizam o pedido e o schema arquivados, mesmo após uma atualização do contrato.
-Pareceres já aceitos ou pendentes não são revalidados automaticamente; atualizar o código não altera o HTML existente.
+Ao executar a retomada ou a revalidação local, pareceres aceitos e pendentes são conferidos novamente sem repetir as chamadas.
+`revalidacoes/` preserva decisões imutáveis com o hash do resultado original; `revalidado.json` aponta para a decisão atual.
+Cada CSV identifica a decisão imutável usada; arquivos `aceito.json`, `pendente.json` e saídas brutas continuam preservados.
+Um parecer inconsistente pode fornecer itens individualmente válidos, mas nunca APTO ou elegibilidade pedagógica.
+Duplicatas equivalentes e cálculos dependentes de itens inválidos ficam excluídos dos valores conhecidos.
+JSON íntegro na mensagem final pode recuperar uma saída estruturada ausente ou malformada, somente após conferir conclusão e isolamento dos eventos.
+Um resultado parcial, de outra versão ou com identidade incompatível não pode substituir um julgamento completo.
 O certificado JP tem apenas os seis campos do protocolo; notas e identificadores de origem ficam no registro privado.
 
 F5 exige inspeção humana conforme o protocolo vigente.
 Como essa inspeção ainda não ocorreu, F5 e T2 do ramo explicação ficam N/A neste fluxo automático; F1-F4 e T1 podem permanecer conhecidos.
 Não há metas de tempo/custo pré-fixadas no coletor, portanto E1-E3 continuam N/A.
 Medidas brutas conhecidas permanecem disponíveis, e custo de julgamentos não entra no custo da geração.
+Os CSV distinguem notas de LLM, medidas do coletor, apuração programática de T1 e registros administrativos.
+Falha de JT/JE não apaga as medidas instrumentadas; ausência de custo confirmado continua N/A.
 
 ## Consolidação identificada
 
@@ -101,9 +113,12 @@ O código reúne as notas aceitas, mantém todas as execuções planejadas e cal
 Uma sessão nova do consolidador recebe então o mapa privado e compõe título, resumo, observações e limitações de `resultados.html`.
 Um renderizador local monta o HTML com esses textos e com as tabelas provenientes dos registros validados.
 O consolidador não pode alterar notas nas tabelas, códigos ou nomes durante a composição do relatório.
+Mudanças após a revalidação produzem uma revisão local identificada, sem nova chamada ao consolidador; o conjunto anterior de HTML e CSV fica arquivado em `consolidado/revisoes/`.
+Se a sessão do consolidador falhar ou o comando for local, o renderizador gera uma síntese local identificada e conserva as tabelas e pendências.
 O HTML é independente, responsivo, sem scripts, dependências externas ou conteúdo de modelo executável; todos os textos são escapados.
 
 O relatório inclui resultados por modelo/tema, notas por execução e os códigos usados em todas as passagens.
+O HTML também mostra as fontes incorporadas, referências do gabarito sem material e o uso de notas ou paráfrases.
 Os CSV detalhados continuam disponíveis e preservam inventários, evidências, ausências e bloqueios.
 Desacordos JC1/JC2 e alertas JP ficam provisórios; não se escolhe a passagem mais favorável.
 Média condicional dos APTO não vira ranking global.
@@ -117,6 +132,9 @@ O programa não calcula significância nem demonstra aprendizagem humana.
 `juizes/pareceres/PAPEL/CODIGO/` preserva pedido, schema, envio, eventos, saída e parecer aceito ou rejeitado.
 `privado/consolidador/` contém o pacote identificado e os comprovantes da sessão de consolidação.
 `consolidado/` contém HTML, CSV, relatório e orçamento de julgamentos.
+`privado/cobertura-fontes.json` identifica fontes incorporadas e referências do gabarito sem material correspondente.
+Antes de novas gerações, o terminal mostra essa cobertura e informa quando o pacote contém notas de leitura ou paráfrases.
+Referência cadastrada não equivale a acesso à obra completa; a ausência de uma fonte do gabarito, isoladamente, não invalida outra fonte fornecida que sustente o conceito.
 Esses arquivos ficam no lote privado; não devem ser anexados aos juízes.
 
 O envio é registrado antes de disparar o processo no Herdr.

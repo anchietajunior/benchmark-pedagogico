@@ -7,15 +7,32 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { sha256 } from '../coletor/config.mjs';
 import { judgeBatch, identityConcern } from '../coletor/pipeline.mjs';
-import { fixedItems, roleFamily, validateJudgment, renderJudgePrompt } from '../coletor/judgments.mjs';
-import { runHerdrJob } from '../coletor/herdr.mjs';
+import { fixedItems, roleFamily, validateJudgment, renderJudgePrompt, judgmentSchemaFor, assertSchema } from '../coletor/judgments.mjs';
+import { runHerdrJob, readArchivedHerdrResult } from '../coletor/herdr.mjs';
 import { codexArguments, codexEnvironment } from '../coletor/codex-worker.mjs';
-import { escapeHtml } from '../coletor/html-report.mjs';
+import { escapeHtml, renderResultsHtml } from '../coletor/html-report.mjs';
+import { recoverValidItems } from '../coletor/judgment-recovery.mjs';
+import { openReport } from '../coletor/report-output.mjs';
+import { sourceCoverage } from '../coletor/source-coverage.mjs';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
 const config = { model: 'modelo-teste', reasoning_effort: 'medium', timeout_seconds: 1 };
 const executionId = 'E00000000000000000001';
 const executeFile = promisify(execFile);
+
+test('HTML mostra o material bibliográfico efetivamente recebido e referências ausentes', () => {
+  const material = {
+    topic: 'B01', codes: {}, messages: [{ role: 'user', content: '## Material bibliográfico fornecido\nNotas de leitura: B01-F2, B01-F3.' }],
+    answer_key: 'Gabarito: B01-F1 e B01-F2.',
+  };
+  const state = { phase: 'PILOTO', frozen_at: 'data de teste', models: [], executions: [material, material] };
+  const narrative = { title: 'Teste', summary: 'Teste', observations: [], limitations: [] };
+  const html = renderResultsHtml(state, [], [], {}, narrative);
+  assert.match(html, /Material usado na validação científica/);
+  assert.match(html, /<td>B01-F2, B01-F3<\/td>/);
+  assert.match(html, /<td>B01-F1<\/td>/);
+  assert.equal(html.match(/Notas\/paráfrases fornecidas/g).length, 1);
+});
 
 test('Herdr aceita sucesso vazio de pane run e exige JSON nos comandos de consulta', async (context) => {
   const directory = await mkdtemp(join(tmpdir(), 'bench-herdr-cli-test-'));
@@ -165,6 +182,213 @@ test('APTO contraditório fica pendente e não libera pedagogia nem é repetido'
   await judgeBatch(directory, { repositoryRoot, runJob: () => { throw new Error('Não reenviar.'); } });
 });
 
+test('revalidação local recupera parecer antigo e atualiza HTML sem consultar modelos', async () => {
+  const directory = await fixture();
+  await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => judgment(inputFromPrompt(job.prompt)) });
+  const state = JSON.parse(await readFile(join(directory, 'privado/julgamento.json'), 'utf8'));
+  const taskDirectory = join(directory, 'juizes/pareceres/JC1', state.executions[0].codes.JC1);
+  const saved = JSON.parse(await readFile(join(taskDirectory, 'aceito.json'), 'utf8'));
+  saved.items.find((item) => item.id === 'A1').id = 'A01';
+  await writeFile(join(taskDirectory, 'pendente.json'), JSON.stringify({ reason: 'Item indevido: A01.', raw_result: saved }));
+  await rm(join(taskDirectory, 'aceito.json'));
+  await rm(join(taskDirectory, 'parecer.md'));
+  const pendingSource = await readFile(join(taskDirectory, 'pendente.json'), 'utf8');
+  const result = await judgeBatch(directory, { repositoryRoot, localOnly: true, runJob: () => { throw new Error('Revalidação não chama modelos.'); } });
+  assert.equal(result.completed[executionId].JC1.status, 'APTO');
+  assert.equal(await readFile(join(taskDirectory, 'pendente.json'), 'utf8'), pendingSource);
+  assert.ok((await readdir(taskDirectory)).includes('revalidado.json'));
+  assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /vendor\/secret-model/);
+});
+
+test('item científico inválido preserva notas válidas e exclui apenas cálculos afetados', async () => {
+  const directory = await fixture();
+  const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    const response = judgment(input);
+    if (input.role === 'JC1') response.items.find((item) => item.id === 'V1').value = 'A1–F1';
+    return response;
+  } });
+  const scientific = result.completed[executionId].JC1;
+  assert.equal(scientific.status, 'PENDENTE');
+  assert.equal(scientific.partial_items.find((item) => item.id === 'K1').score, 100);
+  assert.equal(scientific.partial_items.some((item) => item.id === 'V1'), false);
+  assert.equal(scientific.partial_items.some((item) => item.id === 'C3'), false);
+  const rows = await readFile(join(directory, 'consolidado/resultados-completos.csv'), 'utf8');
+  assert.match(rows, /"JC1","K1","100"/);
+});
+
+test('falha terminal de um juiz não interrompe os demais nem a geração do HTML', async () => {
+  const directory = await fixture();
+  const calls = [];
+  const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    calls.push(input.role);
+    if (input.role === 'JC1') throw new Error('Codex terminou sem JSON.');
+    return judgment(input);
+  } });
+  assert.equal(result.completed[executionId].JC1.status, 'PENDENTE');
+  assert.ok(calls.includes('JC2'));
+  assert.ok(calls.includes('JE'));
+  assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /vendor\/secret-model/);
+});
+
+test('registros de tempo e tokens permanecem publicados quando JT e JE falham', async () => {
+  const directory = await fixture();
+  await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    if (['JT', 'JE', 'CONSOLIDADOR'].includes(input.role)) throw new Error('Falha sintética do avaliador.');
+    return judgment(input);
+  } });
+  const rows = await readFile(join(directory, 'consolidado/resultados-completos.csv'), 'utf8');
+  assert.match(rows, /"JE","UNICA","LATENCIA_TOTAL_S","N\/A","2"/);
+  assert.match(rows, /"JE","UNICA","TOKENS_ENTRADA","N\/A","10"/);
+  assert.match(rows, /"JE","UNICA","CUSTO_GERACAO_BRL","N\/A","0.05"/);
+  assert.match(rows, /"JT","UNICA","T1","100"/);
+  const html = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
+  assert.match(html, /Falha sintética do avaliador/);
+});
+
+test('CLI revalida sem runtime Herdr, credencial ou chamada de rede', async () => {
+  const directory = await fixture();
+  await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => judgment(inputFromPrompt(job.prompt)) });
+  const script = `globalThis.fetch = () => { throw new Error('Rede proibida no teste.'); }; process.argv = ['node', 'pipeline-cli', '--retomar', process.argv[1], '--revalidar', '--nao-abrir']; await import(${JSON.stringify(new URL('../coletor/pipeline-cli.mjs', import.meta.url).href)});`;
+  const result = await executeFile(process.execPath, ['--input-type=module', '-e', script, directory], { env: { PATH: '/pasta-inexistente' } });
+  assert.match(result.stdout, /Revalidação local/);
+  assert.match(result.stdout, /Fluxo concluído/);
+  assert.match(result.stdout, /Resultados:/);
+});
+
+test('schema específico impede código trocado e IDs inventados antes da resposta do juiz', () => {
+  const identity = { role: 'JC1', code: 'Qfixture', topic: 'B01', round: 1 };
+  const response = judgment(identity);
+  const schema = judgmentSchemaFor(identity);
+  assertSchema(response, schema);
+  const codeChanged = structuredClone(response);
+  codeChanged.code = 'Qoutra';
+  assert.throws(() => assertSchema(codeChanged, schema), /code/);
+  response.items[0].id = 'K99';
+  assert.throws(() => assertSchema(response, schema), /formato inválido/);
+});
+
+test('recuperação parcial não mistura versões ou códigos e não aceita duplicatas equivalentes', () => {
+  const identity = { role: 'JC1', code: 'Qfixture', topic: 'B01', round: 1 };
+  const response = judgment(identity);
+  assert.deepEqual(recoverValidItems({ ...response, protocol_version: '2.0' }, identity), []);
+  assert.deepEqual(recoverValidItems({ ...response, code: 'Qoutra' }, identity), []);
+  response.items.push({ ...response.items.find((item) => item.id === 'A1'), id: 'A01' });
+  const partial = recoverValidItems(response, identity);
+  assert.equal(partial.some((item) => /^A\d+$/.test(item.id)), false);
+  assert.equal(partial.some((item) => item.id === 'C2'), false);
+  assert.equal(partial.find((item) => item.id === 'K1').score, 100);
+});
+
+test('recupera JSON da mensagem final íntegra mantendo a auditoria de isolamento', async (context) => {
+  const directory = await mkdtemp(join(tmpdir(), 'bench-json-recovery-'));
+  context.after(() => rm(directory, { recursive: true, force: true }));
+  const response = { code: 'Qfixture' };
+  const events = [
+    { type: 'turn.started' },
+    { type: 'item.completed', item: { type: 'agent_message', text: `\`\`\`json\n${JSON.stringify(response)}\n\`\`\`` } },
+    { type: 'turn.completed' },
+  ];
+  await writeFile(join(directory, 'resultado.json'), '{');
+  await writeFile(join(directory, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
+  await writeFile(join(directory, 'concluido.json'), JSON.stringify({ exit_code: 0, timed_out: false, error: null }));
+  assert.deepEqual(await readArchivedHerdrResult(directory), response);
+  assert.equal(await readFile(join(directory, 'resultado.json'), 'utf8'), '{');
+  events.splice(1, 0, { type: 'item.completed', item: { type: 'command_execution' } });
+  await writeFile(join(directory, 'eventos.jsonl'), events.map((event) => JSON.stringify(event)).join('\n'));
+  await assert.rejects(readArchivedHerdrResult(directory), /ferramentas/);
+});
+
+test('bibliografia ausente do material é identificada sem confundir fonte alternativa com aprovação', () => {
+  const coverage = sourceCoverage([{ role: 'user', content: '## Material bibliográfico fornecido\n## B01-F3 - fonte alternativa\nNotas de leitura disponíveis.' }], 'Conferir B01-F1 e B01-F3.', 'B01');
+  assert.deepEqual(coverage.supplied_source_ids, ['B01-F3']);
+  assert.deepEqual(coverage.answer_key_sources_not_supplied, ['B01-F1']);
+  assert.equal(coverage.reading_notes, true);
+});
+
+test('abertura do relatório passa o caminho literalmente e falha do navegador preserva a conclusão', async () => {
+  const path = '/tmp/relatório com espaços.html';
+  const opened = await openReport(path, { platform: 'darwin', executeFile: async (command, args) => {
+    assert.equal(command, 'open');
+    assert.deepEqual(args, [path]);
+  } });
+  assert.match(opened, /aberto no navegador/);
+  assert.match(await openReport(path, { executeFile: async () => { throw new Error('Navegador indisponível'); } }), /Relatório gerado; abra manualmente/);
+});
+
+test('parecer JT de ramo incompatível não publica T2 nem os componentes de outro ramo', async () => {
+  const directory = await fixture();
+  const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    const response = judgment(input);
+    if (input.role === 'JT') {
+      response.items.find((item) => item.id === 'RAMO_SAIDA').value = 'PENDENTE DE FONTES';
+      response.items.find((item) => item.id === 'T2').score = 100;
+      for (const item of response.items.filter((item) => /^FP\d$/.test(item.id))) item.score = 100;
+    }
+    return response;
+  } });
+  const technical = result.completed[executionId].JT;
+  assert.equal(technical.status, 'PENDENTE');
+  assert.equal(technical.partial_items.some((item) => /^(T2|FP?\d)$/.test(item.id)), false);
+});
+
+test('eventos truncados não interrompem a consolidação nem inventam tokens do julgamento', async () => {
+  const directory = await fixture();
+  await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    if (input.role === 'JC1') {
+      await mkdir(path, { recursive: true });
+      await writeFile(join(path, 'envio.json'), JSON.stringify({ workspace: path }));
+      await writeFile(join(path, 'concluido.json'), JSON.stringify({ exit_code: 1, timed_out: false, error: 'Falha sintética.' }));
+      await writeFile(join(path, 'eventos.jsonl'), '{');
+      throw new Error('Worker encerrou com eventos truncados.');
+    }
+    return judgment(input);
+  } });
+  const budget = await readFile(join(directory, 'consolidado/orcamento-julgamentos.csv'), 'utf8');
+  assert.match(budget, /Eventos incompletos/);
+  assert.match(budget, /"N\/A","N\/A","N\/A"/);
+  assert.match(await readFile(join(directory, 'consolidado/relatorio.md'), 'utf8'), /Consolidação do lote/);
+});
+
+test('revisão após recuperar parecer usa síntese local sem nova chamada do consolidador', async () => {
+  const directory = await fixture();
+  const runner = async (path, job) => judgment(inputFromPrompt(job.prompt));
+  await judgeBatch(directory, { repositoryRoot, config, runJob: runner });
+  const state = JSON.parse(await readFile(join(directory, 'privado/julgamento.json'), 'utf8'));
+  const path = join(directory, 'juizes/pareceres/JC1', state.executions[0].codes.JC1, 'aceito.json');
+  const previous = JSON.parse(await readFile(path, 'utf8'));
+  previous.status = 'CORRIGIR';
+  previous.items.find((item) => item.id === 'SITUACAO_CIENTIFICA').value = 'CORRIGIR';
+  await writeFile(path, JSON.stringify(previous));
+  const originalHtml = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
+  await judgeBatch(directory, { repositoryRoot, runJob: () => { throw new Error('Nenhum consolidador adicional deve ser enviado.'); } });
+  const html = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
+  assert.doesNotMatch(html, /Nenhum consolidador adicional/);
+  assert.match(html, /Consolidação local/);
+  const revisions = await readdir(join(directory, 'consolidado/revisoes'));
+  assert.ok(revisions.length > 0);
+  const archived = await readFile(join(directory, 'consolidado/revisoes', revisions[0], 'resultados.html'), 'utf8');
+  assert.equal(archived, originalHtml);
+});
+
+test('orçamento conserva chamadas históricas mesmo quando a revalidação bloqueia o papel', async () => {
+  const directory = await fixture();
+  await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => judgment(inputFromPrompt(job.prompt)) });
+  const state = JSON.parse(await readFile(join(directory, 'privado/julgamento.json'), 'utf8'));
+  const technicalPath = join(directory, 'juizes/pareceres/JT', state.executions[0].codes.JT, 'aceito.json');
+  const technical = JSON.parse(await readFile(technicalPath, 'utf8'));
+  technical.items.find((item) => item.id === 'RAMO_SAIDA').value = 'PENDENTE DE FONTES';
+  await writeFile(technicalPath, JSON.stringify(technical));
+  const result = await judgeBatch(directory, { repositoryRoot, localOnly: true });
+  assert.equal(result.completed[executionId].JE.executed, false);
+  const budget = await readFile(join(directory, 'consolidado/orcamento-julgamentos.csv'), 'utf8');
+  assert.ok(budget.includes(`"JE","${state.executions[0].codes.JE}"`));
+});
+
 test('ausência de registros mantém todas as linhas previstas sem inferência', async () => {
   const directory = await fixture({ missing: true });
   const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
@@ -275,6 +499,7 @@ test('contrato enviado explicita IDs, classificações e justificativa de N/A', 
 
 test('retomada consulta julgamento já enviado com o contrato arquivado antes da atualização', async () => {
   const directory = await fixture();
+  const controller = new AbortController();
   let submitted = false;
   const runJob = async (path, job) => {
     const input = inputFromPrompt(job.prompt);
@@ -289,9 +514,10 @@ test('retomada consulta julgamento já enviado com o contrato arquivado antes da
     await writeFile(join(path, 'concluido.json'), JSON.stringify({ exit_code: 0, timed_out: false, error: null }));
     await writeFile(join(path, 'resultado.json'), JSON.stringify(judgment(input)));
     await writeFile(join(path, 'eventos.jsonl'), JSON.stringify({ type: 'turn.completed' }));
+    controller.abort();
     throw new Error('Coordenador interrompido após envio.');
   };
-  await assert.rejects(judgeBatch(directory, { repositoryRoot, config, runJob }), /Coordenador interrompido/);
+  await assert.rejects(judgeBatch(directory, { repositoryRoot, config, runJob, signal: controller.signal }), /Coordenador interrompido/);
   const result = await judgeBatch(directory, { repositoryRoot, config, runJob });
   assert.equal(result.completed[executionId].JC1.status, 'APTO');
 });
