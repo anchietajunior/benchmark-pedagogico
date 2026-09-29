@@ -96,7 +96,7 @@ test('HTML exibe somente uma tabela de ranking com nomes escapados e falhas em z
   const html = renderResultsHtml(state, summary);
   assert.equal(html.match(/<table>/g).length, 1);
   assert.match(html, /<td>1<\/td><td>&lt;script&gt;alert\(&quot;modelo&quot;\)&lt;\/script&gt;&amp;<\/td><td>75,25<\/td><td>CONCLUÍDO<\/td>/);
-  assert.match(html, /<td>2<\/td><td>vendor\/model-2<\/td><td>0<\/td><td>ERRO<\/td><td>N\/A<\/td><td>N\/A<\/td><td>N\/A<\/td>/);
+  assert.match(html, /<td>2<\/td><td>vendor\/model-2<\/td><td>0<\/td><td>ERRO<\/td><td>N\/A<\/td><td>N\/A<\/td><td>N\/A<\/td><td>N\/A<\/td>/);
   assert.doesNotMatch(html, /<script>|<details>|Material usado|Notas por execução|Leitura do consolidador/);
 });
 
@@ -128,7 +128,7 @@ test('colunas por dimensão exigem o dado em todas as execuções do modelo e n�
   assert.deepEqual([first.system_id, first.academic_score, first.technological_score], ['S1', 95, 87.5]);
   assert.ok(Math.abs(first.cost_brl - 0.3) < 1e-9);
   assert.deepEqual([second.system_id, second.academic_score, second.technological_score, second.cost_brl], ['S2', 80, null, null]);
-  assert.match(renderResultsHtml(state, summary, costs), /<td>95<\/td><td>87,5<\/td><td>R\$\s0,30<\/td>/);
+  assert.match(renderResultsHtml(state, summary, costs), /<td>95<\/td><td>87,5<\/td><td>N\/A<\/td><td>R\$\s0,30<\/td>/);
 });
 
 test('cobertura distingue notas de leitura do texto original incorporado', () => {
@@ -274,8 +274,8 @@ test('fluxo completo isola papéis, preserva certificados e retoma sem novos jul
   assert.match(html, /vendor\/secret-model/);
   assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td>/);
   assert.equal(consolidator.mapa_privado[0].codigos.JP1, pedagogical.code);
-  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO', academic_score: 100, technological_score: 100, cost_brl: 0.05 }]);
-  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td><td>100<\/td><td>100<\/td><td>R\$\s0,05<\/td>/);
+  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO', academic_score: 100, technological_score: 100, cost_brl: 0.05, material_adherence: 100 }]);
+  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td><td>100<\/td><td>100<\/td><td>100<\/td><td>R\$\s0,05<\/td>/);
   assert.ok(!html.includes(scientific.code));
   const global = await readFile(join(directory, 'consolidado/global-por-rodada.csv'), 'utf8');
   assert.match(global, /"false","N\/A"/);
@@ -526,7 +526,7 @@ test('ausência de registros mantém todas as linhas previstas sem inferência',
     return judgment(input);
   } });
   assert.equal(result.consolidation.planned, 1);
-  assert.equal(Object.keys(result.completed[executionId]).length, 6);
+  assert.equal(Object.keys(result.completed[executionId]).length, 8);
   const report = await readFile(join(directory, 'consolidado/relatorio.md'), 'utf8');
   assert.match(report, /custo incompleto/);
 });

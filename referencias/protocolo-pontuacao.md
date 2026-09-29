@@ -194,6 +194,27 @@ Se faltarem pedido, gabarito ou fontes necessários, mantenha a avaliação PEND
 Ausência de citação, isoladamente, não impede APTO se o juiz verificar o conteúdo e não houver referência falsa ou pendente.
 APTO não é garantia de verdade absoluta nem revisão por especialista.
 
+## JX - Verificação externa (protocolo 3.3)
+
+O JX é acionado somente para um parecer JC PENDENTE com K1 a K6 = 100, nenhuma afirmação contradita, nenhum vínculo com problema confirmado e ao menos uma afirmação sustentada.
+Ele recebe a resposta anonimizada e apenas as afirmações A marcadas como NÃO VERIFICÁVEL pelo JC; JX1 complementa JC1 e JX2 complementa JC2.
+Em chamada isolada, com WebSearch e WebFetch restritos a uma lista fechada de hosts acadêmicos (`coletor/external-verification.mjs`), classifica cada afirmação:
+
+| Classificação | Nota | Evidência necessária |
+| --- | --- | --- |
+| CONFIRMADA_EXTERNA | 100 | URL de host aceito, título e trecho literal que sustenta a afirmação e seus qualificadores. |
+| CONTRADITA_EXTERNA | 0 | URL de host aceito, título e trecho literal que contradiz a afirmação ou um qualificador essencial. |
+| SEM_EVIDÊNCIA | N/A | Descrição das buscas feitas nos hosts aceitos. |
+
+Decisão efetiva: todas confirmadas levam o parecer a APTO; qualquer contradição leva a CORRIGIR; outra combinação mantém PENDENTE.
+O parecer JC arquivado não é alterado; a decisão efetiva e o código do JX ficam registrados na consolidação.
+A verificação externa decide a veracidade, não corrige vínculos bibliográficos: vínculos V não sustentados pela fonte citada continuam registrados.
+
+### C4 - Aderência ao material fornecido
+
+`C4 = 100 × afirmações sustentadas pelo material fornecido / afirmações inventariadas`, calculado sobre o inventário do JC antes do JX.
+C4 mede quanto a resposta se apoiou nas fontes do pedido; não entra em P nem na pontuação geral.
+
 ## JP - Juiz pedagógico
 
 Somente respostas APTO em JC1 recebem JP1; somente APTO em JC2 recebem JP2.

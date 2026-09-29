@@ -13,7 +13,7 @@ export function executionDiscardReason(execution) {
 }
 
 export function discardUnfinishedJudgment(judgment) {
-  if (['BLOQUEADO', 'DESCARTADO'].includes(judgment.status)) return judgment;
+  if (['BLOQUEADO', 'DESCARTADO', 'NÃO APLICÁVEL'].includes(judgment.status)) return judgment;
   const finalStatuses = judgment.role.startsWith('JC') ? ['APTO', 'CORRIGIR'] : ['CONCLUÍDO'];
   if (judgment.result && finalStatuses.includes(judgment.result.status)) return judgment;
   const reasons = judgment.reason || judgment.result?.blockers?.join('; ') || judgment.result?.report || 'Sem parecer completo e validado.';
@@ -34,9 +34,13 @@ export function assessPipelineCompletion(state, completed) {
       discards.push({ ...identity, stage: 'COLETA', reason: generationReason });
     }
     if (execution.record?.telemetry_status !== 'COMPLETA') missingMeasurements.push({ ...identity, stage: 'TELEMETRIA', reason: 'Medição incompleta; custos ou outros valores ausentes ficam N/A e são excluídos das respectivas comparações.' });
-    for (const role of ['JC1', 'JC2', 'JP1', 'JP2', 'JT', 'JE']) {
+    for (const role of ['JC1', 'JC2', 'JX1', 'JX2', 'JP1', 'JP2', 'JT', 'JE']) {
       const judgment = judgments[role];
-      if (!judgment) issues.push({ ...identity, stage: role, reason: 'Etapa ainda não processada.' });
+      if (!judgment) {
+        // Lotes julgados antes do JX não têm essa etapa; a revalidação a acrescenta.
+        if (!role.startsWith('JX')) issues.push({ ...identity, stage: role, reason: 'Etapa ainda não processada.' });
+      }
+      else if (judgment.status === 'NÃO APLICÁVEL') continue;
       else if (judgment.status === 'DESCARTADO' && !generationReason) discards.push({ ...identity, stage: role, reason: judgment.reason });
       else if (!['DESCARTADO', 'BLOQUEADO'].includes(judgment.status)) {
         const finalStatuses = role.startsWith('JC') ? ['APTO', 'CORRIGIR'] : ['CONCLUÍDO'];

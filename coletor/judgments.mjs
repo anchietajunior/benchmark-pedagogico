@@ -28,6 +28,7 @@ export const fixedItems = {
   JP: ['M1.1', 'M1.2', 'M2.1', 'M2.2', 'M3.1', 'M3.2', 'M4.1', 'M4.2', 'M5.1', 'M5.2', 'M1', 'M2', 'M3', 'M4', 'M5', 'P', 'SITUACAO_PEDAGOGICA'],
   JT: ['T1', 'T2', 'F1', 'F2', 'F3', 'F4', 'F5', 'FP1', 'FP2', 'FP3', 'STATUS_OPERACIONAL', 'RAMO_SAIDA', 'INICIADA', 'PALAVRAS_CORPO'],
   JE: ['E1', 'E2', 'E3', 'LATENCIA_TOTAL_S', 'PRIMEIRO_TEXTO_S', 'TEMPO_ATE_FALHA_S', 'TOKENS_ENTRADA', 'TOKENS_SAIDA', 'CUSTO_GERACAO_BRL', 'ORIGEM_CUSTO', 'METAS_VERSAO'],
+  JX: [],
 };
 
 export const optionalItems = { JE: ['TOKENS_TOTAIS', 'TOKENS_CACHE', 'TOKENS_RACIOCINIO'] };
@@ -46,7 +47,7 @@ export function judgmentSchemaFor(identity) {
 }
 
 export function roleFamily(role) {
-  return role.startsWith('JC') ? 'JC' : role.startsWith('JP') ? 'JP' : role;
+  return role.startsWith('JC') ? 'JC' : role.startsWith('JP') ? 'JP' : role.startsWith('JX') ? 'JX' : role;
 }
 
 export function assertSchema(value, schema, path = 'resultado') {

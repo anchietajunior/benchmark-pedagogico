@@ -70,6 +70,7 @@ export function buildModelRanking(state, summary, costsByExecution = new Map()) 
     const averageScore = hasCompleteEvaluation ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
     const technologicalScores = executions.map((execution) => partialFormalConformity(resultsByExecution.get(execution.execution_id)));
     const generationCosts = executions.map((execution) => costsByExecution.get(execution.execution_id));
+    const adherence = executions.map((execution) => resultsByExecution.get(execution.execution_id)?.C4);
     return {
       system_id: model.id, model: model.model,
       score: roundScore(averageScore),
@@ -77,6 +78,7 @@ export function buildModelRanking(state, summary, costsByExecution = new Map()) 
       academic_score: hasCompleteEvaluation ? roundScore(averageScore) : null,
       technological_score: roundScore(averageOfAll(technologicalScores)),
       cost_brl: averageOfAll(generationCosts),
+      material_adherence: roundScore(averageOfAll(adherence)),
     };
   });
   const sortedModels = modelResults.toSorted((first, second) => {
@@ -109,7 +111,7 @@ export function renderResultsHtml(state, summary, costsByExecution = new Map(), 
   const ranking = buildModelRanking(state, summary, costsByExecution);
   const rows = ranking.map((model) => [
     model.rank, model.model, formatNumber(model.score), model.status,
-    formatNumber(model.academic_score), formatNumber(model.technological_score), formatCurrency(model.cost_brl),
+    formatNumber(model.academic_score), formatNumber(model.technological_score), formatNumber(model.material_adherence), formatCurrency(model.cost_brl),
   ]);
   return `<!doctype html>
 <html lang="pt-BR">
@@ -139,10 +141,11 @@ h2{font-size:22px;margin:24px 0 4px}h3{font-size:18px;margin:28px 0 4px;color:#2
 <body><main>
 <h1>Ranking dos modelos</h1>
 <p>Pontuação geral: média de P (0–100) em todas as execuções previstas, com APTO científico e sem contestação. Sem avaliação pedagógica completa: 0 e ERRO. Pontuações iguais empatam.</p>
-${table(['Posição', 'Modelo', 'Pontuação geral', 'Status', 'Acadêmico', 'Tecnológico', 'Custo por explicação'], rows)}
+${table(['Posição', 'Modelo', 'Pontuação geral', 'Status', 'Acadêmico', 'Tecnológico', 'Aderência às fontes', 'Custo por explicação'], rows)}
 <ul>
 <li>Acadêmico, de 0 a 100: índice pedagógico P do juiz JP1 (clareza, organização, foco, causalidade e exemplos), o mesmo que compõe a pontuação geral.</li>
 <li>Tecnológico, de 0 a 100: T2 parcial, média de F1 (título), F2 (800 a 1.200 palavras), F3 (seções pedidas) e F4 (fontes declaradas); F5 exige revisão humana e fica de fora.</li>
+<li>Aderência às fontes, de 0 a 100: C4 do juiz JC1, porcentagem das afirmações sustentadas pelo material fornecido ao modelo; mede o uso das fontes, não a correção, e não entra na pontuação geral.</li>
 <li>Custo por explicação: custo de geração informado pelo OpenRouter, convertido em reais pelo câmbio registrado no lote; é um valor medido, não uma nota.</li>
 <li>N/A indica dado ausente em alguma execução prevista do modelo; ausência nunca vira zero nessas colunas.</li>
 </ul>

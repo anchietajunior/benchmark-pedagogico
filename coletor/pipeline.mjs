@@ -10,9 +10,11 @@ import { recoverValidItems } from './judgment-recovery.mjs';
 import { operationalValues, resourceValues, recordedItems } from './record-results.mjs';
 import { sourceCoverage, answerKeySection } from './source-coverage.mjs';
 import { executionDiscardReason, discardUnfinishedJudgment } from './pipeline-completion.mjs';
+import { academicDomains, effectiveScientificStatus, externalCandidates, externalRoles, externalSchemaFor, materialAdherence, renderExternalPrompt, validateExternalJudgment } from './external-verification.mjs';
 
 const templates = { JC: 'avaliar-ciencia.md', JP: 'avaliar-pedagogia.md', JT: 'apurar-tecnologia.md', JE: 'apurar-tempo-custo.md' };
-const passes = ['JC1', 'JC2', 'JP1', 'JP2', 'JT', 'JE'];
+const passes = ['JC1', 'JC2', 'JX1', 'JX2', 'JP1', 'JP2', 'JT', 'JE'];
+const externalTemplate = 'verificar-externo.md';
 
 export function validateJudgeConfig(config) {
   if (!config || typeof config.model !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,100}$/.test(config.model)) throw new Error('Informe --modelo-juiz com o ID do modelo Claude.');
@@ -105,6 +107,7 @@ async function freezeInputs(batchDirectory, repositoryRoot, config, runtime) {
   if (!protocol.includes('3.2')) throw new Error('O julgamento automático exige protocolo 3.2 arquivado.');
   const documents = {};
   for (const [role, filename] of Object.entries(templates)) documents[role] = await readFile(join(repositoryRoot, 'prompts', filename), 'utf8');
+  documents.JX = await readFile(join(repositoryRoot, 'prompts', externalTemplate), 'utf8');
   documents.consolidation = await readFile(join(repositoryRoot, 'prompts/consolidar-resultados.md'), 'utf8');
   documents.schema = await readFile(join(repositoryRoot, 'referencias/resultados-e-registros.md'), 'utf8');
   const answerKeys = await readFile(join(repositoryRoot, 'referencias/gabaritos-conceituais.md'), 'utf8');
@@ -249,6 +252,75 @@ async function judgeExecution(batchDirectory, state, execution, role, completed,
   return validateSavedResult(taskDirectory, result, identity, execution, completed);
 }
 
+// Lotes congelados antes do JX recebem o metaprompt e códigos anônimos das novas passagens,
+// sem alterar pedidos, respostas ou pareceres já arquivados.
+async function ensureExternalStage(batchDirectory, repositoryRoot, state) {
+  const missingCodes = state.executions.some((execution) => !execution.codes.JX1 || !execution.codes.JX2);
+  if (state.documents.JX && !missingCodes) return state;
+  if (!repositoryRoot) throw new Error('Lote sem etapa JX; informe o repositório para acrescentá-la.');
+  const documents = { ...state.documents, JX: state.documents.JX ?? await readFile(join(repositoryRoot, 'prompts', externalTemplate), 'utf8') };
+  const executions = state.executions.map((execution) => ({
+    ...execution,
+    codes: { ...execution.codes, JX1: execution.codes.JX1 ?? `Q${randomUUID().replaceAll('-', '')}`, JX2: execution.codes.JX2 ?? `Q${randomUUID().replaceAll('-', '')}` },
+  }));
+  const extensions = [...(state.extensions ?? []), { stage: 'JX', added_at: new Date().toISOString(), protocol: '3.3', note: 'Verificação externa acrescentada após o congelamento; pareceres anteriores preservados.' }];
+  const migrated = { ...state, documents, executions, extensions };
+  await replaceDerivedFile(join(batchDirectory, 'privado/julgamento.json'), `${JSON.stringify(migrated, null, 2)}\n`);
+  return migrated;
+}
+
+async function readExternalResult(taskDirectory, identity, candidates) {
+  const accepted = await readJsonIfPresent(join(taskDirectory, 'aceito.json'));
+  if (accepted) return validateExternalJudgment(accepted, identity, candidates);
+  const archived = await readArchivedClaudeResult(taskDirectory);
+  return validateExternalJudgment(archived, identity, candidates);
+}
+
+async function judgeExternal(batchDirectory, state, execution, role, completed, options) {
+  const identity = { code: execution.codes[role], topic: execution.topic, round: execution.round, role };
+  const scientific = completed[externalRoles[role]];
+  const candidates = externalCandidates(scientific?.result);
+  if (!candidates.length) return { ...administrativeResult(identity, 'NÃO APLICÁVEL', `${externalRoles[role]} sem afirmações pendentes elegíveis para verificação externa.`) };
+  const taskDirectory = join(batchDirectory, 'juizes/pareceres', role, identity.code);
+  const hasArchive = await readJsonIfPresent(join(taskDirectory, 'aceito.json')) || await readJsonIfPresent(join(taskDirectory, 'concluido.json'));
+  if (hasArchive || options.localOnly) {
+    if (!hasArchive) return administrativeResult(identity, 'PENDENTE', 'Sem verificação externa arquivada; a revalidação local não inicia chamadas.');
+    try { const result = await readExternalResult(taskDirectory, identity, candidates); return { ...identity, status: result.status, executed: true, result }; }
+    catch (error) { if (options.localOnly) return { ...identity, status: 'PENDENTE', executed: true, result: null, reason: error.message }; }
+  }
+  const input = { ...identity, resposta: execution.content, afirmacoes_pendentes: candidates };
+  const job = { prompt: renderExternalPrompt(state.documents.JX, input), schema: externalSchemaFor(identity, candidates), config: state.config, web_domains: academicDomains };
+  let result;
+  try { result = await options.runJob(taskDirectory, job, { ...options, label: `${role}: ${identity.code}` }); }
+  catch (error) {
+    if (options.signal?.aborted) throw error;
+    return { ...identity, status: 'PENDENTE', executed: true, result: null, reason: error.message };
+  }
+  await mkdir(taskDirectory, { recursive: true, mode: 0o700 });
+  try { validateExternalJudgment(result, identity, candidates); }
+  catch (error) {
+    await replaceDerivedFile(join(taskDirectory, 'pendente.json'), `${JSON.stringify({ reason: error.message, raw_result: result }, null, 2)}\n`);
+    return { ...identity, status: 'PENDENTE', executed: true, result: null, reason: error.message };
+  }
+  await writeJson(join(taskDirectory, 'aceito.json'), result);
+  await replaceDerivedFile(join(taskDirectory, 'parecer.md'), result.report);
+  return { ...identity, status: result.status, executed: true, result };
+}
+
+// Aplica a decisão do JX ao parecer científico em memória; o parecer arquivado do JC não é alterado.
+export function finalizeScientific(scientific, external) {
+  const adherence = materialAdherence(scientific.result);
+  let judgment = { ...scientific, material_adherence: adherence };
+  if (scientific.result && external?.result) {
+    const status = effectiveScientificStatus(scientific.result, external.result);
+    if (status !== scientific.result.status) {
+      const items = scientific.result.items.map((item) => item.id === 'SITUACAO_CIENTIFICA' ? { ...item, value: status, evidence: `${item.evidence} Decisão após verificação externa ${external.role} (${external.code}).` } : item);
+      judgment = { ...judgment, status, original_status: scientific.status, external_verification: external.code, result: { ...scientific.result, status, items } };
+    }
+  }
+  return discardUnfinishedJudgment(judgment);
+}
+
 async function acquireLock(path) {
   try { await writeJson(path, { pid: process.pid, created_at: new Date().toISOString() }); }
   catch (error) {
@@ -262,7 +334,7 @@ export async function judgeBatch(directory, options = {}) {
   const lock = join(batchDirectory, 'privado/julgamento.lock');
   await acquireLock(lock);
   try {
-    const state = await freezeInputs(batchDirectory, options.repositoryRoot, options.config, options.runtime);
+    const state = await ensureExternalStage(batchDirectory, options.repositoryRoot, await freezeInputs(batchDirectory, options.repositoryRoot, options.config, options.runtime));
     const coverage = state.executions.map((execution) => sourceCoverage(execution.messages, execution.answer_key, execution.topic));
     await replaceDerivedFile(join(batchDirectory, 'privado/cobertura-fontes.json'), `${JSON.stringify(coverage, null, 2)}\n`);
     const runnerOptions = { ...options, runJob: options.runJob ?? runClaudeJob };
@@ -270,13 +342,17 @@ export async function judgeBatch(directory, options = {}) {
     const judgeInQueue = async (execution, role) => {
       if (options.signal?.aborted) throw new Error('Julgamento interrompido; retome pelo diretório deste lote.');
       options.onProgress?.(`${role}: ${execution.codes[role]}`);
-      try { completed[execution.execution_id][role] = await judgeExecution(batchDirectory, state, execution, role, completed[execution.execution_id], runnerOptions); }
+      const judgments = completed[execution.execution_id];
+      const external = role.startsWith('JX');
+      try { judgments[role] = await (external ? judgeExternal : judgeExecution)(batchDirectory, state, execution, role, judgments, runnerOptions); }
       catch (error) {
         if (options.signal?.aborted) throw error;
-        completed[execution.execution_id][role] = administrativeResult({ code: execution.codes[role], topic: execution.topic, round: execution.round, role }, 'PENDENTE', `Arquivo ou contrato indisponível: ${error.message}`);
+        judgments[role] = administrativeResult({ code: execution.codes[role], topic: execution.topic, round: execution.round, role }, 'PENDENTE', `Arquivo ou contrato indisponível: ${error.message}`);
       }
-      const judgment = discardUnfinishedJudgment(completed[execution.execution_id][role]);
-      completed[execution.execution_id][role] = judgment;
+      // O JC só é descartado depois do JX correspondente, que pode resolver as pendências.
+      if (external) judgments[externalRoles[role]] = finalizeScientific(judgments[externalRoles[role]], judgments[role]);
+      if (!role.startsWith('JC')) judgments[role] = discardUnfinishedJudgment(judgments[role]);
+      const judgment = judgments[role];
       options.onProgress?.(`${role}: ${execution.codes[role]} - ${judgment.status}${judgment.reason ? `: ${judgment.reason}` : ''}`);
       await replaceDerivedFile(join(batchDirectory, 'privado/fila-julgamento.json'), `${JSON.stringify(completed, null, 2)}\n`);
     };

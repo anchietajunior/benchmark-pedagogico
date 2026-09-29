@@ -8,6 +8,7 @@ import { readJsonIfPresent, replaceDerivedFile, writeJson } from './artifacts.mj
 
 const executeFile = promisify(execFile);
 const judgeSystemPrompt = 'Você é um avaliador independente de um benchmark pedagógico. Siga somente o pedido recebido, sem ferramentas nem navegação, e responda no formato estruturado solicitado.';
+const externalSystemPrompt = 'Você é um verificador independente de um benchmark pedagógico. Use somente WebSearch e WebFetch nos hosts permitidos, siga o pedido recebido e responda no formato estruturado solicitado.';
 
 export async function checkJudgmentRuntime() {
   const { stdout } = await executeFile('claude', ['--version'], { timeout: 10000 });
@@ -15,16 +16,21 @@ export async function checkJudgmentRuntime() {
 }
 
 export function claudeArguments(job) {
+  const web = Boolean(job.web_domains?.length);
+  const tools = web
+    ? ['--tools', 'WebSearch,WebFetch', '--allowedTools', 'WebSearch', ...job.web_domains.map((domain) => `WebFetch(domain:${domain})`)]
+    : ['--tools', ''];
   return [
     '-p', '--model', job.config.model, '--effort', job.config.reasoning_effort,
-    '--system-prompt', judgeSystemPrompt, '--setting-sources', '', '--tools', '',
+    '--system-prompt', web ? externalSystemPrompt : judgeSystemPrompt, '--setting-sources', '', ...tools,
     '--strict-mcp-config', '--disable-slash-commands', '--no-session-persistence',
     '--output-format', 'json', '--json-schema', JSON.stringify(job.schema),
   ];
 }
 
 export function claudeEnvironment(environment) {
-  const allowed = ['PATH', 'HOME', 'USER', 'LOGNAME', 'LANG', 'LC_ALL', 'TMPDIR', 'CLAUDE_CONFIG_DIR', 'SSL_CERT_FILE', 'SSL_CERT_DIR'];
+  const proxy = ['HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY', 'https_proxy', 'http_proxy', 'no_proxy', 'NODE_EXTRA_CA_CERTS'];
+  const allowed = ['PATH', 'HOME', 'USER', 'LOGNAME', 'LANG', 'LC_ALL', 'TMPDIR', 'CLAUDE_CONFIG_DIR', 'SSL_CERT_FILE', 'SSL_CERT_DIR', ...proxy];
   return Object.fromEntries(allowed.filter((name) => environment[name] !== undefined).map((name) => [name, environment[name]]));
 }
 

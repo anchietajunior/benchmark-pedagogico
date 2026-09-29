@@ -1,3 +1,5 @@
+import { academicDomains } from './external-verification.mjs';
+
 export function answerKeySummary(answerKey) {
   const lines = answerKey.split('\n');
   const title = lines[0].replace(/^## /, '').trim();
@@ -23,9 +25,9 @@ function pedagogicalAudience(protocol) {
 function introduction(judgeConfig) {
   const judge = judgeConfig ? ` do Claude (${judgeConfig.model}, esforço ${judgeConfig.reasoning_effort})` : ' do Claude';
   return [
-    `Cada explicação passou por quatro juízes independentes, em chamadas isoladas${judge}, sem ferramentas nem navegação.`,
+    `Cada explicação passou por quatro juízes independentes, em chamadas isoladas${judge}, sem ferramentas nem navegação. Um quinto papel, o verificador externo JX, só é acionado quando o juiz científico deixa afirmações pendentes.`,
     'Os juízes recebem códigos anônimos no lugar do nome do modelo; a identificação aparece somente nesta página.',
-    'Cada juiz recebe apenas o material do seu papel e aplica o protocolo de pontuação 3.2.',
+    'Cada juiz recebe apenas o material do seu papel e aplica o protocolo de pontuação 3.2, com a verificação externa do protocolo 3.3.',
   ];
 }
 
@@ -45,7 +47,8 @@ function scientificSection(topics) {
         'K1 a K6: 100 quando o ponto está presente, correto e suficiente; 50 quando falta uma relação essencial; 0 quando está ausente ou errado. C1 é a média dos seis.',
         'C2 - sustentação factual: cada afirmação do texto é classificada como sustentada, contradita ou não verificável pelos trechos fornecidos; C2 é a porcentagem de sustentadas e só é calculado quando todas foram decididas.',
         'C3 - vínculos bibliográficos: cada citação feita pelo modelo é conferida contra a fonte indicada.',
-        'Decisão: APTO exige os seis pontos com 100, nenhuma afirmação contradita, citações conferidas e nenhum impedimento; erro confirmado ou omissão essencial leva a CORRIGIR. Só respostas APTO seguem para a avaliação acadêmica.',
+        'Decisão: APTO exige os seis pontos com 100, nenhuma afirmação contradita, citações conferidas e nenhum impedimento; erro confirmado ou omissão essencial leva a CORRIGIR. Afirmações que o material não cobre deixam o parecer PENDENTE e seguem para o verificador externo JX. Só respostas APTO seguem para a avaliação acadêmica.',
+        'C4 - aderência às fontes: porcentagem das afirmações sustentadas pelo material fornecido ao modelo. Mostra quanto o texto foi além das fontes pedidas; não entra na pontuação geral.',
       ] },
     ],
   };
@@ -66,6 +69,18 @@ function academicSection(audience) {
       'M4 Explicação causal: explica por que as etapas se conectam e produzem o resultado (M4.1); condições, regulação ou limites pertinentes ligados à conclusão (M4.2).',
       'M5 Concretização e aplicação: uma situação concreta e pertinente ao pedido (M5.1); elementos e resultado do exemplo explicados pelos conceitos apresentados (M5.2).',
     ] }],
+  };
+}
+
+function externalSection() {
+  return {
+    heading: 'Verificação externa - juiz JX',
+    paragraphs: [
+      'Acionado somente quando o juiz científico encontra os seis pontos corretos, nenhuma afirmação contradita e nenhum vínculo com problema confirmado, mas deixa afirmações sem apoio no material fornecido.',
+      'Em uma chamada isolada com busca na web, o JX decide apenas essas afirmações e registra URL, título e trecho literal de cada fonte. JX1 complementa JC1 e JX2 complementa JC2.',
+      'Se todas forem confirmadas, a resposta passa a APTO; se alguma for contradita, vai para CORRIGIR; se faltar evidência, permanece pendente e é descartada das notas.',
+    ],
+    lists: [{ title: 'Fontes aceitas', items: academicDomains }],
   };
 }
 
@@ -112,6 +127,7 @@ export function judgingCriteria(state, exchangeRate) {
     introduction: introduction(state.config),
     sections: [
       scientificSection(topicsJudged(state.executions)),
+      externalSection(),
       academicSection(pedagogicalAudience(state.protocol)),
       technologicalSection(),
       costSection(exchangeRate),

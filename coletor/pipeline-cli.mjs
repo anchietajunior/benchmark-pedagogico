@@ -56,7 +56,7 @@ async function main() {
   const batch = values.retomar ? await readJsonIfPresent(join(resolve(values.retomar), 'batch.json')) : null;
   if (values.retomar && batch?.condition !== 'openrouter-v1') throw new Error('O diretório não contém lote OpenRouter compatível.');
   const count = study ? study.config.models.length * study.materials.length * study.config.rounds : batch.executions.length;
-  const message = values.revalidar ? 'Revalidação local: nenhuma rede, geração ou chamada de modelo. Relatórios anteriores serão arquivados.' : `${study ? count : 0} novas gerações OpenRouter; até ${count * 6} julgamentos e 1 consolidação Claude (${config.model}, ${config.reasoning_effort}).\nJP depende de APTO científico; somente o consolidador recebe o mapa código-modelo. Julgamentos concluídos não são repetidos ao retomar.`;
+  const message = values.revalidar ? 'Revalidação local: nenhuma rede, geração ou chamada de modelo. Relatórios anteriores serão arquivados.' : `${study ? count : 0} novas gerações OpenRouter; até ${count * 6} julgamentos, verificação externa JX das pendências científicas e 1 consolidação Claude (${config.model}, ${config.reasoning_effort}).\nJP depende de APTO científico; somente o consolidador recebe o mapa código-modelo. Julgamentos concluídos não são repetidos ao retomar.`;
   console.log(message);
   if (values.simular) {
     console.log('Simulação local concluída: nenhuma rede, geração ou julgamento iniciado.');

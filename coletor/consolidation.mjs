@@ -8,7 +8,7 @@ import { sha256, studyTopicIds } from './config.mjs';
 import { assessPipelineCompletion } from './pipeline-completion.mjs';
 
 const completeColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,codigo_publico,papel,passagem,item,nota_0_100,valor_bruto,unidade,numerador,denominador,situacao,execucao_avaliacao,avaliador_config_id,metodo_verificacao,arquivo_origem,evidencia,motivo_na'.split(',');
-const summaryColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,K1,K2,K3,K4,K5,K6,C1,C2,C3,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia'.split(',');
+const summaryColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,situacao_JX1,K1,K2,K3,K4,K5,K6,C1,C2,C3,C4,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia'.split(',');
 const stabilityColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,papel,item,passagem_1,valor_1,passagem_2,valor_2,comparavel,diferenca,concordancia,motivo_exclusao,evidencia'.split(',');
 
 export function renderCsv(columns, records) {
@@ -39,8 +39,16 @@ function sourceFile(judgment) {
   return `${root}/${judgment.role}/${judgment.code}/${judgment.result ? 'parecer.md' : 'pendente.json'}`;
 }
 
+function externalItems(judgment) {
+  return (judgment.result?.items ?? []).map((item) => ({
+    id: item.id, score: item.score, value: item.value,
+    evidence: item.url ? `${item.source_title} (${item.url}): ${item.excerpt}` : '', reason_na: item.reason,
+  }));
+}
+
 function availableItems(execution, judgment) {
   const family = roleFamily(judgment.role);
+  if (family === 'JX') return externalItems(judgment);
   const judged = judgment.status === 'DESCARTADO' ? [] : judgment.result?.items ?? judgment.partial_items ?? [];
   const recorded = recordedItems(execution, family).filter((item) => judgment.status !== 'DESCARTADO' || item.id !== 'T1');
   const items = [...judged];
@@ -90,6 +98,8 @@ function summaryRow(execution, phase, judgments) {
   row.status_operacional = itemValue(available.JT, 'STATUS_OPERACIONAL', 'value');
   row.ramo_saida = itemValue(available.JT, 'RAMO_SAIDA', 'value');
   row.situacao_JC1 = judgments.JC1.status;
+  row.situacao_JX1 = judgments.JX1?.status ?? null;
+  row.C4 = judgments.JC1.material_adherence ?? null;
   row.situacao_JP1 = judgments.JP1.status;
   row.contestacao_cientifica = hasScientificDispute(judgments);
   row.provisorio = true;
@@ -270,7 +280,8 @@ export async function consolidateResults(batchDirectory, state, completed, optio
     'JC2/JP2 são estabilidade, nunca substitutos de JC1/JP1. Inventários A/V não foram alinhados semanticamente para concordância.',
     'Desacordos de JC e alertas de JP exigem revisão especializada. Não há medição de compreensão ou aprendizagem humana.',
     'A detecção de identidade é conservadora e não garante anonimato estilístico. F5 e fontes exigem revisão humana.',
-    'Os juízes recebem somente material congelado, sem navegação. Notas de leitura não equivalem a acesso integral às obras.',
+    'JC, JP, JT e JE recebem somente material congelado, sem navegação. Notas de leitura não equivalem a acesso integral às obras.',
+    'JX (protocolo 3.3) verifica em fontes acadêmicas externas apenas as afirmações que o JC deixou pendentes; confirmação de todas leva a APTO, contradição leva a CORRIGIR. C4 mede a aderência ao material fornecido.',
     'Nenhuma ausência foi convertida em zero. Os CSV usam IDs; resultados.html identifica os modelos por autorização do pesquisador.', '',
   ].join('\n');
   await replaceDerivedFile(join(directory, 'relatorio.md'), report);
