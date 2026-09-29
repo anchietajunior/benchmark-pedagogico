@@ -1,4 +1,5 @@
 import { academicDomains } from './external-verification.mjs';
+import { scientificDeductions } from './scientific-score.mjs';
 
 export function answerKeySummary(answerKey) {
   const lines = answerKey.split('\n');
@@ -27,7 +28,7 @@ function introduction(judgeConfig) {
   return [
     `Cada explicação passou por quatro juízes independentes, em chamadas isoladas${judge}, sem ferramentas nem navegação. Um quinto papel, o verificador externo JX, só é acionado quando o juiz científico deixa afirmações pendentes.`,
     'Os juízes recebem códigos anônimos no lugar do nome do modelo; a identificação aparece somente nesta página.',
-    'Cada juiz recebe apenas o material do seu papel e aplica o protocolo de pontuação 3.2, com a verificação externa do protocolo 3.3.',
+    'Cada juiz recebe apenas o material do seu papel e aplica o protocolo de pontuação 3.2, com a verificação externa do protocolo 3.3 e a nota científica graduada e a avaliação pedagógica cega do protocolo 3.4.',
   ];
 }
 
@@ -47,7 +48,8 @@ function scientificSection(topics) {
         'K1 a K6: 100 quando o ponto está presente, correto e suficiente; 50 quando falta uma relação essencial; 0 quando está ausente ou errado. C1 é a média dos seis.',
         'C2 - sustentação factual: cada afirmação do texto é classificada como sustentada, contradita ou não verificável pelos trechos fornecidos; C2 é a porcentagem de sustentadas e só é calculado quando todas foram decididas.',
         'C3 - vínculos bibliográficos: cada citação feita pelo modelo é conferida contra a fonte indicada.',
-        'Decisão: APTO exige os seis pontos com 100, nenhuma afirmação contradita, citações conferidas e nenhum impedimento; erro confirmado ou omissão essencial leva a CORRIGIR. Afirmações que o material não cobre deixam o parecer PENDENTE e seguem para o verificador externo JX. Só respostas APTO seguem para a avaliação acadêmica.',
+        'Decisão: APTO exige os seis pontos com 100, nenhuma afirmação contradita, citações conferidas e nenhum impedimento; erro confirmado ou omissão essencial leva a CORRIGIR. Afirmações que o material não cobre deixam o parecer PENDENTE e seguem para o verificador externo JX. APTO é um rótulo informativo; a pontuação usa a nota S.',
+        `S - nota científica graduada: 100 menos descontos por gravidade: ${scientificDeductions.K0} por ponto obrigatório ausente ou errado, ${scientificDeductions.K50} por ponto incompleto, ${scientificDeductions.CONTRADITA} por afirmação contradita (pelas fontes ou pelo JX), ${scientificDeductions.NAO_VERIFICAVEL} por afirmação sem apoio nem confirmação externa, ${scientificDeductions.VINCULO_PROBLEMA} por citação atribuída a fonte que não a sustenta e ${scientificDeductions.VINCULO_NAO_VERIFICAVEL} por citação não conferível; mínimo 0. S da execução é a média de JC1 e JC2. Os pesos são convenção deste estudo, não valores validados.`,
         'C4 - aderência às fontes: porcentagem das afirmações sustentadas pelo material fornecido ao modelo. Mostra quanto o texto foi além das fontes pedidas; não entra na pontuação geral.',
       ] },
     ],
@@ -59,7 +61,7 @@ function academicSection(audience) {
     heading: 'Acadêmico - juiz JP',
     paragraphs: [
       `Avalia se a explicação ensina o público definido no protocolo: ${audience}`,
-      'Recebe somente respostas APTO, sem as notas científicas. Dez subcritérios recebem 0, 50 ou 100; cada métrica é a média dos seus dois subcritérios, e o índice P é a média das cinco métricas.',
+      'Avalia toda resposta completa sem conhecer a decisão nem as notas científicas. Dez subcritérios recebem 0, 50 ou 100; cada métrica é a média dos seus dois subcritérios, e o índice P é a média das cinco métricas.',
       'JP1 fornece a nota; JP2 mede a estabilidade do julgamento.',
     ],
     lists: [{ title: 'Métricas e subcritérios', items: [

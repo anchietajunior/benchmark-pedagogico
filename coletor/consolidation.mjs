@@ -6,9 +6,10 @@ import { writeHtmlReport } from './html-report.mjs';
 import { recordedItems } from './record-results.mjs';
 import { sha256, studyTopicIds } from './config.mjs';
 import { assessPipelineCompletion } from './pipeline-completion.mjs';
+import { executionScientificScore } from './scientific-score.mjs';
 
 const completeColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,codigo_publico,papel,passagem,item,nota_0_100,valor_bruto,unidade,numerador,denominador,situacao,execucao_avaliacao,avaliador_config_id,metodo_verificacao,arquivo_origem,evidencia,motivo_na'.split(',');
-const summaryColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,situacao_JX1,K1,K2,K3,K4,K5,K6,C1,C2,C3,C4,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia'.split(',');
+const summaryColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,situacao_JX1,K1,K2,K3,K4,K5,K6,C1,C2,C3,C4,S,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia'.split(',');
 const stabilityColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,papel,item,passagem_1,valor_1,passagem_2,valor_2,comparavel,diferenca,concordancia,motivo_exclusao,evidencia'.split(',');
 
 export function renderCsv(columns, records) {
@@ -100,6 +101,7 @@ function summaryRow(execution, phase, judgments) {
   row.situacao_JC1 = judgments.JC1.status;
   row.situacao_JX1 = judgments.JX1?.status ?? null;
   row.C4 = judgments.JC1.material_adherence ?? null;
+  row.S = executionScientificScore(judgments);
   row.situacao_JP1 = judgments.JP1.status;
   row.contestacao_cientifica = hasScientificDispute(judgments);
   row.provisorio = true;
@@ -132,16 +134,15 @@ function stabilityRows(execution, phase, judgments) {
       const field = id.startsWith('SITUACAO_') ? 'value' : 'score';
       const firstValue = itemValue(first, id, field);
       const secondValue = itemValue(second, id, field);
-      const scienceApproved = judgments.JC1.result?.status === 'APTO' && judgments.JC2.result?.status === 'APTO';
       const pedagogyComplete = first.status === 'CONCLUÍDO' && second.status === 'CONCLUÍDO';
-      const comparable = Boolean(first.result && second.result && firstValue !== null && secondValue !== null && (family === 'JC' || (scienceApproved && pedagogyComplete)));
+      const comparable = Boolean(first.result && second.result && firstValue !== null && secondValue !== null && (family === 'JC' || pedagogyComplete));
       rows.push({
         ...commonFields(execution, phase), papel: family, item: id,
         passagem_1: first.role, valor_1: firstValue, passagem_2: second.role, valor_2: secondValue,
         comparavel: comparable,
         diferenca: comparable && typeof firstValue === 'number' && typeof secondValue === 'number' ? secondValue - firstValue : null,
         concordancia: comparable ? firstValue === secondValue : null,
-        motivo_exclusao: comparable ? '' : 'Par sem dois pareceres válidos/medidas conhecidas ou sem elegibilidade pedagógica nos dois ramos.',
+        motivo_exclusao: comparable ? '' : 'Par sem dois pareceres válidos ou medidas conhecidas.',
         evidencia: `${sourceFile(first)}; ${sourceFile(second)}`,
       });
     }
@@ -281,6 +282,7 @@ export async function consolidateResults(batchDirectory, state, completed, optio
     'Desacordos de JC e alertas de JP exigem revisão especializada. Não há medição de compreensão ou aprendizagem humana.',
     'A detecção de identidade é conservadora e não garante anonimato estilístico. F5 e fontes exigem revisão humana.',
     'JC, JP, JT e JE recebem somente material congelado, sem navegação. Notas de leitura não equivalem a acesso integral às obras.',
+    'Protocolo 3.4: JP avalia toda resposta completa sem conhecer a decisão científica; a pontuação geral é P × S / 100, com S = nota científica graduada (média de JC1 e JC2, com descontos por gravidade).',
     'JX (protocolo 3.3) verifica em fontes acadêmicas externas apenas as afirmações que o JC deixou pendentes; confirmação de todas leva a APTO, contradição leva a CORRIGIR. C4 mede a aderência ao material fornecido.',
     'Nenhuma ausência foi convertida em zero. Os CSV usam IDs; resultados.html identifica os modelos por autorização do pesquisador.', '',
   ].join('\n');

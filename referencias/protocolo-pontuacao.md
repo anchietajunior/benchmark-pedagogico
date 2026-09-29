@@ -215,14 +215,31 @@ A verificação externa decide a veracidade, não corrige vínculos bibliográfi
 `C4 = 100 × afirmações sustentadas pelo material fornecido / afirmações inventariadas`, calculado sobre o inventário do JC antes do JX.
 C4 mede quanto a resposta se apoiou nas fontes do pedido; não entra em P nem na pontuação geral.
 
+## Nota científica graduada e pontuação geral (protocolo 3.4)
+
+APTO, CORRIGIR e PENDENTE continuam registrados como rótulos, mas deixam de vetar a pontuação.
+Cada parecer JC válido recebe `S = max(0, 100 − descontos)`, calculado pelo coletor a partir dos itens do parecer e da decisão do JX:
+
+| Ocorrência | Desconto |
+| --- | --- |
+| K = 0 (ponto obrigatório ausente ou errado) | 40 |
+| K = 50 (falta relação essencial) | 15 |
+| Afirmação contradita pelas fontes fornecidas ou CONTRADITA_EXTERNA | 10 |
+| Afirmação não verificável sem CONFIRMADA_EXTERNA | 2 |
+| Vínculo com problema confirmado (fonte citada não sustenta) | 3 |
+| Vínculo não verificável | 1 |
+
+Os pesos são convenção operacional deste estudo, não valores validados pela literatura; publique-os com os resultados.
+S da execução é a média de JC1 e JC2 válidos, para amortecer a instabilidade de uma única passagem.
+Pontuação da execução: `P × S / 100`, com P de JP1. Pontuação do modelo: média das execuções previstas; execução sem P ou S válidos entra como 0 e ERRO na apresentação.
+
 ## JP - Juiz pedagógico
 
-Somente respostas APTO em JC1 recebem JP1; somente APTO em JC2 recebem JP2.
-O pesquisador envia um certificado mínimo de elegibilidade, sem notas C, inventários ou pareceres científicos.
+Desde o protocolo 3.4, toda resposta completa recebe JP1 e JP2, sem que o juiz conheça a decisão científica (avaliação cega).
+O pesquisador envia um certificado mínimo de elegibilidade, sem situação científica, notas C, inventários ou pareceres científicos.
 O juiz recebe o pedido, as fontes comuns, o protocolo e uma cópia anonimizada da mesma resposta certificada, em sessão nova.
 Se faltar certificado compatível com versão, código público, tema, rodada e passagem, registre BLOQUEADO e todas as notas M/P como N/A.
-Se identificar possível erro científico, registre REVISÃO CIENTÍFICA SOLICITADA e M/P como N/A, sem recalcular C ou corrigir o texto.
-Encaminhe a ocorrência à revisão especializada e preserve os julgamentos originais.
+Se identificar possível erro científico, descreva-o no parecer e conclua as notas pedagógicas; a correção científica é medida por JC, JX e S.
 Outras avaliações pedagógicas incompletas recebem PENDENTE; uma avaliação com os 10 itens válidos recebe CONCLUÍDO.
 Essas situações pedagógicas não substituem APTO/CORRIGIR/PENDENTE do juiz científico.
 Público: graduando de Biomedicina com noções de células, tecidos, órgãos, proteínas e nutrientes, ainda sem domínio do mecanismo solicitado.

@@ -41,7 +41,7 @@ test('decisão científica pendente é descartada e o processamento encerra com 
 function rankingFixture(scores) {
   const models = scores.map((score, index) => ({ id: `S${index + 1}`, model: `vendor/model-${index + 1}` }));
   const executions = models.map((model, index) => ({ execution_id: `E${index + 1}`, system_id: model.id, content: 'Explicação completa.', record: { operational_status: 'conclusão normal', output_branch: 'explicação' } }));
-  const summary = executions.map((execution, index) => ({ execucao_id: execution.execution_id, sistema_id: execution.system_id, situacao_JC1: 'APTO', situacao_JP1: 'CONCLUÍDO', contestacao_cientifica: false, P: scores[index] }));
+  const summary = executions.map((execution, index) => ({ execucao_id: execution.execution_id, sistema_id: execution.system_id, situacao_JC1: 'APTO', situacao_JP1: 'CONCLUÍDO', contestacao_cientifica: false, P: scores[index], S: 100 }));
   return { state: { models, executions }, summary };
 }
 
@@ -53,11 +53,11 @@ test('ranking ordena pontuações, mantém todos os modelos e distingue nota zer
   ]);
 });
 
-test('ranking não aproveita notas sem APTO, parecer final ou resposta completa nem com contestação', () => {
+test('ranking não aproveita execuções sem S, parecer pedagógico final ou resposta completa', () => {
   const { state, summary } = rankingFixture(Array(6).fill(100));
-  summary[0].situacao_JC1 = 'CORRIGIR';
+  summary[0].S = null;
   summary[1].situacao_JP1 = 'DESCARTADO';
-  summary[2].contestacao_cientifica = true;
+  summary[2].S = 120;
   state.executions[3].record.operational_status = 'truncamento';
   state.executions[4].content = '';
   summary.pop();
@@ -128,7 +128,7 @@ test('colunas por dimensão exigem o dado em todas as execuções do modelo e n�
   assert.deepEqual([first.system_id, first.academic_score, first.technological_score], ['S1', 95, 87.5]);
   assert.ok(Math.abs(first.cost_brl - 0.3) < 1e-9);
   assert.deepEqual([second.system_id, second.academic_score, second.technological_score, second.cost_brl], ['S2', 80, null, null]);
-  assert.match(renderResultsHtml(state, summary, costs), /<td>95<\/td><td>87,5<\/td><td>N\/A<\/td><td>R\$\s0,30<\/td>/);
+  assert.match(renderResultsHtml(state, summary, costs), /<td>95<\/td><td>100<\/td><td>87,5<\/td><td>N\/A<\/td><td>R\$\s0,30<\/td>/);
 });
 
 test('cobertura distingue notas de leitura do texto original incorporado', () => {
@@ -253,7 +253,8 @@ test('fluxo completo isola papéis, preserva certificados e retoma sem novos jul
   }
   const pedagogical = calls.find((call) => call.role === 'JP1');
   assert.equal(Object.keys(pedagogical.certificado).length, 6);
-  assert.equal(pedagogical.certificado.passagem_cientifica_origem, 'JC1');
+  assert.equal(pedagogical.certificado.passagem, 'JP1');
+  assert.doesNotMatch(JSON.stringify(pedagogical.certificado), /APTO|CORRIGIR/);
   assert.equal(pedagogical.gabarito, undefined);
   const scientific = calls.find((call) => call.role === 'JC1');
   assert.match(scientific.gabarito, /B01 - Hemostasia/);
@@ -274,8 +275,8 @@ test('fluxo completo isola papéis, preserva certificados e retoma sem novos jul
   assert.match(html, /vendor\/secret-model/);
   assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td>/);
   assert.equal(consolidator.mapa_privado[0].codigos.JP1, pedagogical.code);
-  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO', academic_score: 100, technological_score: 100, cost_brl: 0.05, material_adherence: 100 }]);
-  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td><td>100<\/td><td>100<\/td><td>100<\/td><td>R\$\s0,05<\/td>/);
+  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO', academic_score: 100, technological_score: 100, cost_brl: 0.05, material_adherence: 100, scientific_score: 100 }]);
+  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td><td>100<\/td><td>100<\/td><td>100<\/td><td>100<\/td><td>R\$\s0,05<\/td>/);
   assert.ok(!html.includes(scientific.code));
   const global = await readFile(join(directory, 'consolidado/global-por-rodada.csv'), 'utf8');
   assert.match(global, /"false","N\/A"/);
@@ -283,7 +284,7 @@ test('fluxo completo isola papéis, preserva certificados e retoma sem novos jul
   assert.equal(await readFile(join(directory, 'consolidado/resultados-resumo.csv'), 'utf8'), summary);
 });
 
-test('JC1 corrigir bloqueia apenas JP1; JC2 apto libera somente JP2', async () => {
+test('JC1 corrigir não bloqueia a avaliação pedagógica cega', async () => {
   const directory = await fixture();
   const calls = [];
   const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
@@ -291,14 +292,14 @@ test('JC1 corrigir bloqueia apenas JP1; JC2 apto libera somente JP2', async () =
     calls.push(input.role);
     return judgment(input, input.role === 'JC1' ? 'CORRIGIR' : undefined);
   } });
-  assert.equal(calls.includes('JP1'), false);
+  assert.equal(calls.includes('JP1'), true);
   assert.equal(calls.includes('JP2'), true);
-  assert.equal(result.completed[executionId].JP1.executed, false);
+  assert.equal(result.completed[executionId].JP1.status, 'CONCLUÍDO');
   const rows = await readFile(join(directory, 'consolidado/resultados-completos.csv'), 'utf8');
-  assert.match(rows, /"JP1","M1\.1","N\/A"/);
+  assert.match(rows, /"JP1","M1\.1","100"/);
 });
 
-test('APTO contraditório é descartado e não libera pedagogia nem é repetido', async () => {
+test('APTO contraditório é descartado sem repetir chamadas; a pedagogia cega segue', async () => {
   const directory = await fixture();
   const runJob = async (path, job) => {
     const input = inputFromPrompt(job.prompt);
@@ -308,7 +309,7 @@ test('APTO contraditório é descartado e não libera pedagogia nem é repetido'
   };
   const result = await judgeBatch(directory, { repositoryRoot, config, runJob });
   assert.equal(result.completed[executionId].JC1.status, 'DESCARTADO');
-  assert.equal(result.completed[executionId].JP1.executed, false);
+  assert.equal(result.completed[executionId].JP1.status, 'CONCLUÍDO');
   await judgeBatch(directory, { repositoryRoot, runJob: () => { throw new Error('Não reenviar.'); } });
 });
 
@@ -492,12 +493,14 @@ test('revisão após recuperar parecer usa síntese local sem nova chamada do co
   const previous = JSON.parse(await readFile(path, 'utf8'));
   previous.status = 'CORRIGIR';
   previous.items.find((item) => item.id === 'SITUACAO_CIENTIFICA').value = 'CORRIGIR';
+  previous.items.find((item) => item.id === 'K1').score = 0;
+  previous.items.find((item) => item.id === 'C1').score = 500 / 6;
   await writeFile(path, JSON.stringify(previous));
   const originalHtml = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
   await judgeBatch(directory, { repositoryRoot, runJob: () => { throw new Error('Nenhum consolidador adicional deve ser enviado.'); } });
   const html = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
   assert.doesNotMatch(html, /Nenhum consolidador adicional/);
-  assert.match(html, /<td>0<\/td><td>ERRO<\/td>/);
+  assert.match(html, /<td>80<\/td><td>CONCLUÍDO<\/td>/);
   const revisions = await readdir(join(directory, 'consolidado/revisoes'));
   assert.ok(revisions.length > 0);
   const archived = await readFile(join(directory, 'consolidado/revisoes', revisions[0], 'resultados.html'), 'utf8');
@@ -585,7 +588,7 @@ test('pareceres científicos e técnicos sem conclusão são descartados das not
   assert.equal(result.completed[executionId].JC1.result, null);
   assert.deepEqual(result.completed[executionId].JC1.partial_items, []);
   assert.equal(result.completed[executionId].JT.status, 'DESCARTADO');
-  assert.equal(result.completed[executionId].JP1.status, 'BLOQUEADO');
+  assert.equal(result.completed[executionId].JP1.status, 'CONCLUÍDO');
   assert.equal(result.consolidation.completion.status, 'CONCLUÍDO_COM_DESCARTES');
   const csv = await readFile(join(directory, 'consolidado/resultados-completos.csv'), 'utf8');
   assert.match(csv, /"JC","JC1","K1","N\/A"/);
@@ -609,7 +612,7 @@ test('descarte de JP2 preserva contestação científica e exclui P dos agregado
   assert.match(summary, /"true","true"/);
   const aggregates = await readFile(join(directory, 'consolidado/agregados.csv'), 'utf8');
   assert.match(aggregates, /"S01","B01","1","1","1","1","0"/);
-  assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /<td>0<\/td><td>ERRO<\/td>/);
+  assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /<td>100<\/td><td>CONCLUÍDO<\/td>/);
 });
 
 test('autoria explícita bloqueia conteúdo sem reescrever original', async () => {

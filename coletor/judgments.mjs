@@ -160,11 +160,11 @@ export function validateJudgment(result, identity) {
   return result;
 }
 
-export function pedagogicalCertificate(identity, scientificRole) {
+export function pedagogicalCertificate(identity) {
   return {
-    versao_protocolo: '3.2', codigo_publico_destino: identity.code, tema: identity.topic,
-    rodada: `R${String(identity.round).padStart(2, '0')}`, passagem_cientifica_origem: scientificRole,
-    situacao_cientifica: 'APTO',
+    versao_protocolo: '3.4', codigo_publico_destino: identity.code, tema: identity.topic,
+    rodada: `R${String(identity.round).padStart(2, '0')}`, passagem: identity.role,
+    elegibilidade: 'Resposta completa; avaliação pedagógica cega, sem a decisão científica.',
   };
 }
 
@@ -188,6 +188,10 @@ export function renderJudgePrompt(template, protocol, input) {
     'Preserve inventários A/V completos, fontes, localizações, justificativas e cálculos no parecer.',
     'A falta de uma referência indicada no gabarito não impede APTO por si só: confira se outra fonte incorporada sustenta a afirmação. O gabarito não é evidência independente.',
     'Indique a extensão real do acesso, inclusive consulta indireta por notas fornecidas; não declare leitura de uma obra completa quando apenas notas ou trechos estiverem disponíveis.',
+  );
+  if (family === 'JP') contract.push(
+    'Protocolo 3.4, que prevalece sobre o texto anterior: o JP avalia toda resposta completa sem conhecer a decisão científica. O certificado de avaliação cega substitui a exigência de APTO; não registre BLOQUEADO por falta de APTO.',
+    'A correção científica é medida por outro juiz. Se notar possível erro científico, descreva-o no report e conclua as notas pedagógicas normalmente; não use REVISÃO CIENTÍFICA SOLICITADA.',
   );
   if (family === 'JE') contract.push(`IDs opcionais para detalhar consumo: ${optionalItems.JE.join(', ')}. Use score null, valor observado em value e unidade tokens; não some cache ou raciocínio ao total.`);
   if (['JT', 'JE'].includes(family)) contract.push('Use status CONCLUÍDO quando a apuração dos itens disponíveis estiver terminada; N/A por ausência de metas, medição ou revisão humana não comprova o dado e deve manter reason_na. Se não concluir a apuração, use PENDENTE; esse parecer será descartado das notas.');

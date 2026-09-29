@@ -10,6 +10,7 @@ import { recoverValidItems } from './judgment-recovery.mjs';
 import { operationalValues, resourceValues, recordedItems } from './record-results.mjs';
 import { sourceCoverage, answerKeySection } from './source-coverage.mjs';
 import { executionDiscardReason, discardUnfinishedJudgment } from './pipeline-completion.mjs';
+import { scientificScore } from './scientific-score.mjs';
 import { academicDomains, effectiveScientificStatus, externalCandidates, externalRoles, externalSchemaFor, materialAdherence, renderExternalPrompt, validateExternalJudgment } from './external-verification.mjs';
 
 const templates = { JC: 'avaliar-ciencia.md', JP: 'avaliar-pedagogia.md', JT: 'apurar-tecnologia.md', JE: 'apurar-tempo-custo.md' };
@@ -117,7 +118,7 @@ async function freezeInputs(batchDirectory, repositoryRoot, config, runtime) {
   }
   const state = {
     schema_version: 1, config, runtime, frozen_at: new Date().toISOString(), phase: batch.config.phase,
-    protocol, documents, executions, models: batch.config.models,
+    protocol, documents, executions, models: batch.config.models, pedagogy: 'cega',
     limitation: 'Kit de julgamento congelado neste instante; não comprova uso anterior. Sem ferramentas ou navegação. Revisão humana pendente.',
   };
   await writeJson(statePath, state);
@@ -139,7 +140,7 @@ function buildInput(execution, role, completed) {
   if (family === 'JC') return { ...base, pedido_e_fontes: execution.messages, gabarito: execution.answer_key, resposta: execution.content, cobertura_fontes: sourceCoverage(execution.messages, execution.answer_key, execution.topic) };
   if (family === 'JP') return {
     ...base, pedido_e_fontes: execution.messages, resposta: execution.content,
-    certificado: pedagogicalCertificate(identity, role === 'JP1' ? 'JC1' : 'JC2'),
+    certificado: pedagogicalCertificate(identity),
   };
   if (family === 'JT') return {
     ...base, execucao: execution.execution_id, pedido_e_fontes: execution.messages, original: execution.content,
@@ -155,10 +156,6 @@ function buildInput(execution, role, completed) {
 }
 
 function blockReason(role, completed) {
-  if (role.startsWith('JP')) {
-    const scientificRole = role === 'JP1' ? 'JC1' : 'JC2';
-    if (completed[scientificRole]?.result?.status !== 'APTO') return `${scientificRole} sem APTO validado.`;
-  }
   if (role === 'JE' && !completed.JT?.result) return 'JT sem parecer válido; medidas brutas preservadas pelos registros do coletor.';
   return null;
 }
@@ -256,7 +253,7 @@ async function judgeExecution(batchDirectory, state, execution, role, completed,
 // sem alterar pedidos, respostas ou pareceres já arquivados.
 async function ensureExternalStage(batchDirectory, repositoryRoot, state) {
   const missingCodes = state.executions.some((execution) => !execution.codes.JX1 || !execution.codes.JX2);
-  if (state.documents.JX && !missingCodes) return state;
+  if (state.documents.JX && !missingCodes) return ensureBlindPedagogy(batchDirectory, state);
   if (!repositoryRoot) throw new Error('Lote sem etapa JX; informe o repositório para acrescentá-la.');
   const documents = { ...state.documents, JX: state.documents.JX ?? await readFile(join(repositoryRoot, 'prompts', externalTemplate), 'utf8') };
   const executions = state.executions.map((execution) => ({
@@ -265,6 +262,20 @@ async function ensureExternalStage(batchDirectory, repositoryRoot, state) {
   }));
   const extensions = [...(state.extensions ?? []), { stage: 'JX', added_at: new Date().toISOString(), protocol: '3.3', note: 'Verificação externa acrescentada após o congelamento; pareceres anteriores preservados.' }];
   const migrated = { ...state, documents, executions, extensions };
+  await replaceDerivedFile(join(batchDirectory, 'privado/julgamento.json'), `${JSON.stringify(migrated, null, 2)}\n`);
+  return ensureBlindPedagogy(batchDirectory, migrated);
+}
+
+// Lotes julgados com JP condicionado ao APTO recebem novos códigos JP para a avaliação cega (protocolo 3.4);
+// os pareceres anteriores continuam nos diretórios dos códigos antigos, listados na extensão.
+async function ensureBlindPedagogy(batchDirectory, state) {
+  if (state.pedagogy === 'cega') return state;
+  const previousCodes = Object.fromEntries(state.executions.map((execution) => [execution.execution_id, { JP1: execution.codes.JP1, JP2: execution.codes.JP2 }]));
+  const executions = state.executions.map((execution) => ({
+    ...execution, codes: { ...execution.codes, JP1: `Q${randomUUID().replaceAll('-', '')}`, JP2: `Q${randomUUID().replaceAll('-', '')}` },
+  }));
+  const extensions = [...(state.extensions ?? []), { stage: 'JP-cego', added_at: new Date().toISOString(), protocol: '3.4', note: 'JP passa a avaliar toda resposta completa sem conhecer a decisão científica; pareceres JP anteriores preservados sob os códigos antigos.', previous_codes: previousCodes }];
+  const migrated = { ...state, executions, extensions, pedagogy: 'cega' };
   await replaceDerivedFile(join(batchDirectory, 'privado/julgamento.json'), `${JSON.stringify(migrated, null, 2)}\n`);
   return migrated;
 }
@@ -310,7 +321,7 @@ async function judgeExternal(batchDirectory, state, execution, role, completed, 
 // Aplica a decisão do JX ao parecer científico em memória; o parecer arquivado do JC não é alterado.
 export function finalizeScientific(scientific, external) {
   const adherence = materialAdherence(scientific.result);
-  let judgment = { ...scientific, material_adherence: adherence };
+  let judgment = { ...scientific, material_adherence: adherence, scientific_score: scientificScore(scientific.result, external?.result) };
   if (scientific.result && external?.result) {
     const status = effectiveScientificStatus(scientific.result, external.result);
     if (status !== scientific.result.status) {
