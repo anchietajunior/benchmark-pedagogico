@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { sha256 } from '../coletor/config.mjs';
 import { judgeBatch, identityConcern } from '../coletor/pipeline.mjs';
-import { fixedItems, roleFamily, validateJudgment } from '../coletor/judgments.mjs';
+import { fixedItems, roleFamily, validateJudgment, renderJudgePrompt } from '../coletor/judgments.mjs';
 import { runHerdrJob } from '../coletor/herdr.mjs';
 import { codexArguments, codexEnvironment } from '../coletor/codex-worker.mjs';
 import { escapeHtml } from '../coletor/html-report.mjs';
@@ -203,6 +203,97 @@ test('schema rejeita itens duplicados, código trocado e cálculos incompatívei
     change(result);
     assert.throws(() => validateJudgment(result, input));
   }
+});
+
+test('inventários aceitam zeros à esquerda e classificações em minúsculas sem duplicar afirmações', () => {
+  const input = { code: 'Qteste', topic: 'B01', round: 1, role: 'JC1' };
+  const result = judgment(input);
+  const assertion = result.items.find((item) => item.id === 'A1');
+  assertion.id = 'A01';
+  assertion.value = 'sustentada';
+  const reference = result.items.find((item) => item.id === 'V1');
+  reference.id = 'V01';
+  reference.value = 'válido';
+  assert.equal(validateJudgment(result, input), result);
+  result.items.push({ ...assertion, id: 'A1' });
+  assert.throws(() => validateJudgment(result, input), /Item repetido/);
+  result.items.pop();
+  reference.value = 'A01-F1';
+  assert.throws(() => validateJudgment(result, input), /classificação incompatível/);
+  reference.value = 'pendente';
+  reference.score = null;
+  result.status = 'PENDENTE';
+  result.items.find((item) => item.id === 'SITUACAO_CIENTIFICA').value = 'PENDENTE';
+  result.items.find((item) => item.id === 'C3').score = null;
+  assert.equal(validateJudgment(result, input), result);
+  reference.value = 'inválido';
+  assert.throws(() => validateJudgment(result, input), /classificação incompatível/);
+  reference.score = 0;
+  result.items.find((item) => item.id === 'C3').score = 0;
+  result.status = 'CORRIGIR';
+  result.items.find((item) => item.id === 'SITUACAO_CIENTIFICA').value = 'CORRIGIR';
+  assert.equal(validateJudgment(result, input), result);
+});
+
+test('item sem nota nem medida aceita motivo de inaplicabilidade, mas medida conhecida exige evidência', () => {
+  const input = { code: 'Qteste', topic: 'B01', round: 1, role: 'JT' };
+  const result = judgment(input);
+  const item = result.items.find((item) => item.id === 'FP1');
+  Object.assign(item, { score: null, value: null, evidence: '', reason_na: 'Não se aplica ao ramo explicação.' });
+  assert.equal(validateJudgment(result, input), result);
+  item.reason_na = '';
+  assert.throws(() => validateJudgment(result, input), /falta evidência|sem motivo/);
+  item.reason_na = 'Não se aplica.';
+  item.value = 10;
+  assert.throws(() => validateJudgment(result, input), /falta evidência/);
+});
+
+test('JE permite detalhes opcionais dos tokens e confere seus valores contra os comprovantes', async () => {
+  for (const total of [null, 900]) {
+    const directory = await fixture();
+    const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+      const input = inputFromPrompt(job.prompt);
+      const output = judgment(input);
+      if (input.role === 'JE') {
+        for (const id of ['TOKENS_TOTAIS', 'TOKENS_CACHE', 'TOKENS_RACIOCINIO']) output.items.push({ ...output.items.find((item) => item.id === 'TOKENS_ENTRADA'), id, value: id === 'TOKENS_TOTAIS' ? total : null });
+      }
+      return output;
+    } });
+    assert.equal(result.completed[executionId].JE.status, total === null ? 'CONCLUÍDO' : 'PENDENTE');
+    if (total !== null) assert.match(result.completed[executionId].JE.reason, /medida incompatível/);
+  }
+});
+
+test('contrato enviado explicita IDs, classificações e justificativa de N/A', () => {
+  const prompt = renderJudgePrompt('Instruções.', 'Protocolo.', { role: 'JC1' });
+  assert.match(prompt, /SUSTENTADA/);
+  assert.match(prompt, /PROBLEMA CONFIRMADO/);
+  assert.match(prompt, /A1, A2/);
+  assert.match(prompt, /evidence/);
+  assert.match(renderJudgePrompt('Instruções.', 'Protocolo.', { role: 'JE' }), /TOKENS_TOTAIS/);
+});
+
+test('retomada consulta julgamento já enviado com o contrato arquivado antes da atualização', async () => {
+  const directory = await fixture();
+  let submitted = false;
+  const runJob = async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    if (input.role !== 'JC1') return judgment(input);
+    if (submitted) return runHerdrJob(path, job, { command: async () => ({}) });
+    submitted = true;
+    const archivedJob = { ...job, prompt: job.prompt.replace(/## Contrato de saída[\s\S]*?(?=## Entradas da chamada)/, '## Contrato anterior\n\n') };
+    await mkdir(path, { recursive: true });
+    await writeFile(join(path, 'pedido.md'), archivedJob.prompt);
+    await writeFile(join(path, 'schema.json'), JSON.stringify(archivedJob.schema));
+    await writeFile(join(path, 'envio.json'), JSON.stringify({ workspace: path, pane_id: 'wtest:p2', request_sha256: sha256(JSON.stringify(archivedJob)) }));
+    await writeFile(join(path, 'concluido.json'), JSON.stringify({ exit_code: 0, timed_out: false, error: null }));
+    await writeFile(join(path, 'resultado.json'), JSON.stringify(judgment(input)));
+    await writeFile(join(path, 'eventos.jsonl'), JSON.stringify({ type: 'turn.completed' }));
+    throw new Error('Coordenador interrompido após envio.');
+  };
+  await assert.rejects(judgeBatch(directory, { repositoryRoot, config, runJob }), /Coordenador interrompido/);
+  const result = await judgeBatch(directory, { repositoryRoot, config, runJob });
+  assert.equal(result.completed[executionId].JC1.status, 'APTO');
 });
 
 test('envio Herdr incerto não duplica o comando ao retomar', async () => {

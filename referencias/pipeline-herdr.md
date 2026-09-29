@@ -75,9 +75,16 @@ Não feche outros panes para recuperar o lote.
 
 Os pareceres preservam texto integral e itens estruturados.
 O programa verifica papel, código, tema, rodada, itens únicos, escalas, motivos de N/A e cálculos científicos/pedagógicos.
+O contrato de saída explicita os IDs e os valores de classificação exigidos em cada papel.
+Inventários aceitam `A01`/`V01` como grafias de `A1`/`V1`, mas rejeitam a presença das duas grafias do mesmo item.
+As classificações ignoram maiúsculas e minúsculas; em vínculos, `pendente` corresponde a N/A e `inválido` a problema confirmado, mantendo a conferência da nota.
+Um item sem nota nem valor conhecido pode justificar a ausência somente em `reason_na`; notas e medidas conhecidas continuam exigindo evidência.
+JE pode detalhar tokens totais, cache e raciocínio em itens opcionais, sempre conferidos contra os comprovantes e sem soma duplicada.
 APTO exige K1-K6 iguais a 100, inventário de afirmações não vazio e sem itens não verificados/errados, vínculos válidos e nenhum impedimento declarado.
 Isso verifica consistência do parecer, não verdade científica.
 Um parecer inconsistente fica preservado em `pendente.json`, sem reenvio para obter nota melhor.
+Na retomada, julgamentos já enviados reutilizam o pedido e o schema arquivados, mesmo após uma atualização do contrato.
+Pareceres já aceitos ou pendentes não são revalidados automaticamente; atualizar o código não altera o HTML existente.
 O certificado JP tem apenas os seis campos do protocolo; notas e identificadores de origem ficam no registro privado.
 
 F5 exige inspeção humana conforme o protocolo vigente.

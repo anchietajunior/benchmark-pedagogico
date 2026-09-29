@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { writeJson, replaceDerivedFile } from './artifacts.mjs';
 import { sha256 } from './config.mjs';
 import { readJsonIfPresent, runHerdrJob } from './herdr.mjs';
-import { fixedItems, judgmentSchema, pedagogicalCertificate, renderJudgePrompt, roleFamily, validateJudgment } from './judgments.mjs';
+import { fixedItems, optionalItems, judgmentSchema, pedagogicalCertificate, renderJudgePrompt, roleFamily, validateJudgment } from './judgments.mjs';
 import { consolidateResults } from './consolidation.mjs';
 
 const templates = { JC: 'avaliar-ciencia.md', JP: 'avaliar-pedagogia.md', JT: 'apurar-tecnologia.md', JE: 'apurar-tempo-custo.md' };
@@ -60,10 +60,13 @@ function validateResourceValues(result, execution, completed) {
     PRIMEIRO_TEXTO_S: record.first_text_seconds,
     TEMPO_ATE_FALHA_S: !normal && !unknown ? record.duration_seconds : null,
     TOKENS_ENTRADA: record.prompt_tokens, TOKENS_SAIDA: record.completion_tokens,
+    TOKENS_TOTAIS: record.total_tokens, TOKENS_CACHE: record.cached_tokens, TOKENS_RACIOCINIO: record.reasoning_tokens,
     CUSTO_GERACAO_BRL: record.cost_brl,
   };
   for (const [id, value] of Object.entries(expected)) {
-    const received = result.items.find((item) => item.id === id).value;
+    const item = result.items.find((item) => item.id === id);
+    if (!item && optionalItems.JE.includes(id)) continue;
+    const received = item.value;
     const expectedValue = value ?? null;
     if (expectedValue === null ? received !== null : typeof received !== 'number' || Math.abs(received - expectedValue) > 0.000001) throw new Error(`${id}: medida incompatível com o comprovante.`);
   }
@@ -170,8 +173,11 @@ async function judgeExecution(batchDirectory, state, execution, role, completed,
   const rejected = await readJsonIfPresent(join(taskDirectory, 'pendente.json'));
   if (rejected) return { ...identity, status: 'PENDENTE', executed: true, result: null, reason: rejected.reason };
   const input = buildInput(execution, role, completed);
-  const prompt = renderJudgePrompt(state.documents[roleFamily(role)], state.protocol, input);
-  const result = await options.runJob(taskDirectory, { prompt, schema: judgmentSchema, config: state.config }, { ...options, label: `${role}: ${identity.code}` });
+  const launch = await readJsonIfPresent(join(taskDirectory, 'envio.json'));
+  const prompt = launch ? await readFile(join(taskDirectory, 'pedido.md'), 'utf8') : renderJudgePrompt(state.documents[roleFamily(role)], state.protocol, input);
+  const schema = launch ? await readJsonIfPresent(join(taskDirectory, 'schema.json')) : judgmentSchema;
+  if (!schema) throw new Error('Schema do julgamento enviado está ausente; preserve o lote para recuperação.');
+  const result = await options.runJob(taskDirectory, { prompt, schema, config: state.config }, { ...options, label: `${role}: ${identity.code}` });
   await mkdir(taskDirectory, { recursive: true, mode: 0o700 });
   try {
     validateJudgment(result, identity);
