@@ -1,6 +1,5 @@
 import { readFile } from 'node:fs/promises';
 import { parseEnv } from 'node:util';
-import { createInterface } from 'node:readline/promises';
 import { join, resolve, dirname } from 'node:path';
 import { loadStudy } from './config.mjs';
 import { collectBatch } from './collector.mjs';
@@ -22,17 +21,10 @@ async function apiKey() {
   return environment.OPENROUTER_API_KEY;
 }
 
-async function confirm() {
-  if (!process.stdin.isTTY) throw new Error('Use um terminal interativo ou --confirmar para autorizar as chamadas.');
-  const terminal = createInterface({ input: process.stdin, output: process.stdout });
-  try { return await terminal.question('Digite EXECUTAR para começar: ') === 'EXECUTAR'; }
-  finally { terminal.close(); }
-}
-
 async function main() {
   const values = parsePipelineOptions(process.argv.slice(2));
   if (values.help) {
-    console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz low|medium|high|xhigh|max] [--confirmar] [--retomar [CAMINHO_DO_LOTE]] [--revalidar] [--nao-abrir]');
+    console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz low|medium|high|xhigh|max] [--retomar [CAMINHO_DO_LOTE]] [--revalidar] [--nao-abrir]');
     console.log('--retomar sem caminho seleciona o lote mais recente em output_dir.');
     console.log('--revalidar recupera apenas os arquivos existentes, sem rede ou modelos; usa o último lote se nenhum caminho for informado.');
     console.log('Respostas incompletas e pareceres sem conclusão válida são descartados das notas e documentados no relatório final.');
@@ -72,7 +64,6 @@ async function main() {
   }
   const runtime = values.revalidar ? null : await checkJudgmentRuntime();
   const key = study ? await apiKey() : null;
-  if (!values.revalidar && !values.confirmar && !(await confirm())) return;
   const release = await acquireOutputLock(study ? study.outputDirectory : dirname(resolve(values.retomar)));
   const controller = new AbortController();
   const interrupt = () => controller.abort();

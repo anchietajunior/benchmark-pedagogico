@@ -28,7 +28,7 @@ Use `--revalidar` para aplicar a política aos arquivos existentes sem chamadas.
 Se não houver lote, o comando encerra sem iniciar coleta; para conferir a seleção sem chamadas, use `--retomar --simular`.
 A execução real exige Node.js 24 ou superior e Claude Code CLI instalado e autenticado; o login existente é reaproveitado.
 Antes das gerações OpenRouter, o programa confere `claude --version`.
-A confirmação `EXECUTAR` autoriza geração, julgamentos elegíveis e consolidação; `--confirmar` permite autorização explícita em automações.
+`npm run executar` inicia geração, julgamentos elegíveis e consolidação sem pedir confirmação; use `--simular` para conferir antes.
 Com seis explicações, o máximo é seis gerações OpenRouter e 37 chamadas Claude: seis passagens por explicação e um consolidador.
 Não se executa JP nos ramos sem APTO correspondente.
 O modelo padrão dos avaliadores é `claude-opus-5-5`, esforço `medium`, com timeout de 15 minutos por chamada.

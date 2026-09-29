@@ -76,9 +76,8 @@ Para iniciar de verdade:
 npm run executar
 ```
 
-O programa confere `claude --version` antes das gerações OpenRouter.
-Quando aparecer `Digite EXECUTAR para começar:`, digite `EXECUTAR` e pressione Enter.
-Essa confirmação autoriza as chamadas OpenRouter e Claude, que podem consumir créditos ou franquia da conta.
+O programa confere `claude --version` e inicia as gerações OpenRouter sem pedir confirmação.
+As chamadas OpenRouter e Claude começam imediatamente e podem consumir créditos ou franquia da conta; use `--simular` antes para conferir as quantidades.
 
 O avaliador padrão é `claude-opus-5-5`, com esforço `medium` (`low`, `medium`, `high`, `xhigh` ou `max`).
 Para escolher outro modelo ou esforço antes de começar, use esta variante no lugar do comando anterior:
@@ -283,7 +282,7 @@ Depois da limpeza, inicie um lote novo:
 npm run executar
 ```
 
-`npm run apagar` não faz chamadas aos modelos; a nova execução de `npm run executar` faz novas chamadas após sua confirmação.
+`npm run apagar` não faz chamadas aos modelos; a nova execução de `npm run executar` faz novas chamadas imediatamente.
 
 ## Temas do estudo
 

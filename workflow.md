@@ -43,7 +43,7 @@ npm run executar
 ```
 
 `--simular` verifica a configuração local e mostra as quantidades sem rede ou inferência.
-`executar` confere `claude --version` e pede que você digite `EXECUTAR` antes das chamadas.
+`executar` confere `claude --version` e inicia as chamadas sem pedir confirmação.
 No piloto de seis explicações, há seis gerações OpenRouter, até 36 julgamentos e uma consolidação Claude.
 O avaliador padrão é `claude-opus-5-5`, esforço `medium`; informe outro com `--modelo-juiz ID` e `--esforco-juiz NIVEL` antes de iniciar o lote.
 As chamadas Claude usam a conta autenticada e podem consumir sua franquia/créditos.
