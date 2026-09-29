@@ -24,13 +24,15 @@ async function apiKey() {
 async function main() {
   const values = parsePipelineOptions(process.argv.slice(2));
   if (values.help) {
-    console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz low|medium|high|xhigh|max] [--retomar [CAMINHO_DO_LOTE]] [--revalidar] [--nao-abrir]');
+    console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz low|medium|high|xhigh|max] [--retomar [CAMINHO_DO_LOTE]] [--revalidar] [--reverificar] [--nao-abrir]');
     console.log('--retomar sem caminho seleciona o lote mais recente em output_dir.');
     console.log('--revalidar recupera apenas os arquivos existentes, sem rede ou modelos; usa o último lote se nenhum caminho for informado.');
+    console.log('--reverificar, com --retomar, refaz as verificações externas JX que terminaram sem evidência ou sem parecer válido; as anteriores ficam em juizes/pareceres/JXn/arquivo.');
     console.log('Respostas incompletas e pareceres sem conclusão válida são descartados das notas e documentados no relatório final.');
     return;
   }
   if (values.revalidar && values.retomar === undefined) values.retomar = '';
+  if (values.reverificar && values.retomar === undefined) values.retomar = '';
   if (values.retomar === '') {
     values.retomar = await findLatestBatch(join(repositoryRoot, 'openrouter.config.json'));
     console.log(`Lote mais recente selecionado: ${values.retomar}`);
@@ -78,7 +80,7 @@ async function main() {
     console.log(`Lote para retomada: ${batchDirectory}`);
     if (controller.signal.aborted) throw new Error('Execução interrompida após a coleta; retome este lote.');
     const result = await judgeBatch(batchDirectory, {
-      repositoryRoot, config, runtime, localOnly: Boolean(values.revalidar), signal: controller.signal, onProgress: console.log,
+      repositoryRoot, config, runtime, localOnly: Boolean(values.revalidar), reverify: Boolean(values.reverificar), signal: controller.signal, onProgress: console.log,
     });
     const reportPath = join(result.consolidation.directory, 'resultados.html');
     const blocked = Object.values(result.completed).flatMap(Object.values).filter((judgment) => judgment.status === 'BLOQUEADO').length;

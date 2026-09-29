@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { sha256 } from '../coletor/config.mjs';
@@ -153,4 +153,27 @@ test('JC1 pendente confirmado pelo JX1 libera JP1 e entra no ranking', async () 
   assert.equal(archived.status, 'PENDENTE');
   const resumed = await judgeBatch(directory, { repositoryRoot, config, localOnly: true, runJob: async () => { throw new Error('não deveria chamar'); } });
   assert.equal(resumed.completed[executionId].JC1.status, 'APTO');
+});
+
+test('--reverificar refaz só o JX sem evidência e arquiva o parecer anterior', async () => {
+  const directory = await fixture();
+  let decision = 'SEM_EVIDÊNCIA';
+  const calls = [];
+  const runJob = async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    calls.push(input.role);
+    if (input.role === 'JX1') return { ...external(decision, 'JX1'), code: input.code };
+    return judgment(input);
+  };
+  const first = await judgeBatch(directory, { repositoryRoot, config, runJob });
+  assert.equal(first.completed[executionId].JC1.status, 'DESCARTADO');
+  decision = 'CONFIRMADA_EXTERNA';
+  calls.length = 0;
+  const second = await judgeBatch(directory, { repositoryRoot, config, runJob, reverify: true });
+  assert.deepEqual(calls.filter((role) => role !== 'CONSOLIDADOR'), ['JX1']);
+  assert.equal(second.completed[executionId].JC1.status, 'APTO');
+  assert.equal((await readdir(join(directory, 'juizes/pareceres/JX1/arquivo'))).length, 1);
+  calls.length = 0;
+  await judgeBatch(directory, { repositoryRoot, config, runJob, reverify: true });
+  assert.deepEqual(calls.filter((role) => role !== 'CONSOLIDADOR'), []);
 });

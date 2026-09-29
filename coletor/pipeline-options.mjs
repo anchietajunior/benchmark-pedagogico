@@ -12,7 +12,7 @@ export function parsePipelineOptions(args) {
   });
   return parseArgs({ args: normalizedArgs, options: {
     simular: { type: 'boolean' }, retomar: { type: 'string' },
-    revalidar: { type: 'boolean' }, 'nao-abrir': { type: 'boolean' },
+    revalidar: { type: 'boolean' }, reverificar: { type: 'boolean' }, 'nao-abrir': { type: 'boolean' },
     'modelo-juiz': { type: 'string' }, 'esforco-juiz': { type: 'string' }, help: { type: 'boolean' },
   } }).values;
 }

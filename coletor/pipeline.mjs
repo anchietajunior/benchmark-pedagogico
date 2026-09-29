@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, rename } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { readJsonIfPresent, writeJson, replaceDerivedFile } from './artifacts.mjs';
 import { sha256 } from './config.mjs';
@@ -287,12 +287,25 @@ async function readExternalResult(taskDirectory, identity, candidates) {
   return validateExternalJudgment(archived, identity, candidates);
 }
 
+// --reverificar: verificações com SEM_EVIDÊNCIA ou sem parecer válido são movidas para juizes/pareceres/JXn/arquivo
+// e refeitas; decisões CONFIRMADA/CONTRADITA ficam como estão.
+async function archiveUnresolvedExternal(batchDirectory, role, code, taskDirectory) {
+  const accepted = await readJsonIfPresent(join(taskDirectory, 'aceito.json'));
+  const launched = await readJsonIfPresent(join(taskDirectory, 'envio.json'));
+  if (!accepted && !launched) return;
+  if (accepted && accepted.status === 'CONCLUÍDO' && accepted.items.every((item) => item.value !== 'SEM_EVIDÊNCIA')) return;
+  const archive = join(batchDirectory, 'juizes/pareceres', role, 'arquivo');
+  await mkdir(archive, { recursive: true, mode: 0o700 });
+  await rename(taskDirectory, join(archive, `${code}-${new Date().toISOString().replaceAll(':', '-')}`));
+}
+
 async function judgeExternal(batchDirectory, state, execution, role, completed, options) {
   const identity = { code: execution.codes[role], topic: execution.topic, round: execution.round, role };
   const scientific = completed[externalRoles[role]];
   const candidates = externalCandidates(scientific?.result);
   if (!candidates.length) return { ...administrativeResult(identity, 'NÃO APLICÁVEL', `${externalRoles[role]} sem afirmações pendentes elegíveis para verificação externa.`) };
   const taskDirectory = join(batchDirectory, 'juizes/pareceres', role, identity.code);
+  if (options.reverify && !options.localOnly) await archiveUnresolvedExternal(batchDirectory, role, identity.code, taskDirectory);
   const hasArchive = await readJsonIfPresent(join(taskDirectory, 'aceito.json')) || await readJsonIfPresent(join(taskDirectory, 'concluido.json'));
   if (hasArchive || options.localOnly) {
     if (!hasArchive) return administrativeResult(identity, 'PENDENTE', 'Sem verificação externa arquivada; a revalidação local não inicia chamadas.');
