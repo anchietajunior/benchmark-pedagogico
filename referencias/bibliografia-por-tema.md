@@ -35,7 +35,10 @@ Fontes adicionais do piloto OpenRouter preparado em 2026-09-28:
 - B01-F4: NHLBI/NIH, [How Does Blood Clot?](https://www.nhlbi.nih.gov/health/clotting-disorders/how-blood-clots), atualização de 2022-03-24.
 - B01-F5: NHLBI/NIH, [What Are Blood Clotting Disorders?](https://www.nhlbi.nih.gov/health/clotting-disorders), atualização de 2022-03-24.
 
-Nesse piloto, o pacote local contém notas de leitura identificadas de F2 a F5, não capítulos completos; a preparação por IA não é revisão humana.
+Os lotes anteriores usaram notas de leitura identificadas de F2 a F5; esse material permanece congelado nos respectivos pedidos.
+Em 2026-09-29, o pacote local para novas coletas foi ampliado com o corpo textual original em inglês de F3, obtido do XML Europe PMC sob CC BY-NC-SA 3.0.
+O XML original e seu hash foram preservados localmente; imagens externas e obras citadas pelo artigo não foram incorporadas.
+A preparação por IA não é revisão humana, e a inclusão do texto não assegura APTO das futuras respostas.
 Os identificadores anteriores foram preservados; F1 não foi reutilizado para outra obra.
 A página atual de OpenStax declara restrição à ingestão em LLMs sem autorização prévia; disponibilidade pública não equivale a autorização de envio à API.
 Use o mesmo pacote congelado para todos os modelos e informe seu escopo aos juízes.

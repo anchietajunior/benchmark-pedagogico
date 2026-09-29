@@ -50,6 +50,12 @@ Confira estes três pontos antes da primeira execução:
 Depois de conferir as fontes, marque `sources_reviewed: true` no tema correspondente da configuração.
 No PILOTO, a opção `pilot_sources_prepared: true` admite notas preparadas por IA ainda sem revisão humana; isso não as torna fontes verificadas.
 Os arquivos-modelo criados por `configurar` precisam ser preenchidos.
+Links e paráfrases curtas podem deixar afirmações sem sustentação e impedir APTO.
+Forneça texto original autorizado que cubra os conceitos do pedido, com obra, seção, origem e licença.
+Identifique cada inclusão com um título como `## Texto original incorporado - B01-F3`; isso declara o escopo, sem substituir a conferência do conteúdo.
+Nesta máquina, B01 inclui as notas anteriores e o corpo textual original de F3, preservado com hash e licença; a revisão humana continua pendente.
+O limite comum de saída passou para 32.768 tokens, mantendo esforço `medium`, porque o raciocínio também consome esse limite.
+Esse teto não aumenta a extensão solicitada da aula; pode aumentar o consumo real e não garante ausência de truncamento ou indisponibilidade do provedor.
 Se esta cópia já estiver preparada, preserve os arquivos locais e siga para a simulação.
 O [workflow](workflow.md#1-prepare-uma-vez) detalha fontes, cotação e configuração do piloto.
 
@@ -101,6 +107,7 @@ Os caminhos e códigos da tabela abaixo são exemplos do formato, não resultado
 | `JT: Q...` e `JE: Q...` | Está tratando formato/conclusão operacional e, depois, tempo/custo. |
 | `CONSOLIDADOR: montando resultados.html...` | A sessão separada do consolidador recebeu o mapa dos modelos e está compondo o relatório. |
 | `Resultados: /caminho/do/lote/consolidado/resultados.html` | O relatório está pronto para abrir. |
+| `Fluxo encerrado com descartes` | O lote foi processado; respostas incompletas e pareceres não concluídos foram excluídos das notas, com motivos registrados. |
 
 Uma linha de papel/código indica o item sendo tratado; ele também pode ser bloqueado ou recuperado de uma execução anterior, sem nova chamada.
 Os julgamentos são processados em sequência.
@@ -129,9 +136,10 @@ Essa variável fica disponível somente no terminal em que você a definiu.
 | --- | --- |
 | `entrada/` e `metricas.csv` | Explicações e métricas das tentativas já registradas. |
 | `RESUMO.md` | Situação da coleta OpenRouter; não é a confirmação de que todos os julgamentos terminaram. |
-| `privado/fila-julgamento.json` | Situação atualizada após cada item tratado: aceito, pendente ou bloqueado. |
+| `privado/fila-julgamento.json` | Situação atualizada após cada item tratado: aceito, descartado ou bloqueado. |
 | `juizes/pareceres/PAPEL/CODIGO/` | Pedido e registro de envio; depois da conclusão, eventos, resultado e parecer aceito ou pendência. |
 | `privado/consolidador/` | Pacote identificado e registros da composição do relatório. |
+| `consolidado/status-fluxo.json` | Contagens de respostas completas, descartes e medições ausentes, com motivos por modelo e etapa. |
 
 Para ver os eventos de uma sessão ainda em andamento, abra o `envio.json` da pasta daquele papel/código e copie o caminho do campo `workspace`.
 No segundo terminal, use esse caminho:
@@ -151,6 +159,21 @@ Aguarde a linha `Resultados: .../consolidado/resultados.html` no terminal princi
 Ela fornece o caminho exato do arquivo gerado.
 O programa abre o relatório no navegador padrão após informar que o fluxo foi concluído.
 Use `--nao-abrir` quando quiser somente gerar o arquivo.
+Respostas com erro, timeout, truncamento ou texto vazio são descartadas antes de iniciar os juízes, mesmo quando há um trecho de texto disponível.
+Recusa, PENDENTE DE FONTES e autoria que comprometa o anonimato também impedem o envio dessa resposta aos juízes.
+Parecer sem decisão final ou que falhe na validação recebe DESCARTADO e não fornece notas ao relatório.
+O processamento encerra com resultados válidos e descartes documentados; essa conclusão não significa que todos os modelos obtiveram notas.
+Se todas as respostas forem descartadas, o HTML informa ausência de resultados elegíveis e é montado localmente, sem chamada ao consolidador.
+Para aplicar essas regras aos arquivos existentes e abrir o relatório sem chamadas:
+
+```sh
+npm run executar -- --revalidar
+```
+
+CORRIGIR é uma decisão científica final desfavorável, com motivos registrados; a pedagogia correspondente permanece bloqueada.
+Ciência PENDENTE indica uma verificação não concluída; esse parecer é descartado das notas.
+Medições ausentes ficam N/A e são excluídas das comparações correspondentes, sem impedir o julgamento de um texto completo.
+Uma nova rodada não é iniciada automaticamente e não substitui uma resposta original rejeitada.
 
 No macOS, defina o caminho real do lote e abra o relatório no Safari:
 
@@ -168,12 +191,13 @@ No navegador, confira:
 2. **Notas por execução:** código usado em JC1, nome do modelo, tema, rodada, notas, tempo e custo.
 3. **Códigos utilizados em todos os julgamentos:** clique para expandir a correspondência de cada passagem com seu modelo.
 4. **Leitura do consolidador e limitações:** observações, pendências e cuidados para interpretar os resultados.
+5. **Decisões científicas e motivos:** decisões de JC1/JC2 e motivos registrados; a tabela **Descartes da avaliação** identifica as exclusões.
 
 Os juízes receberam somente seus códigos e materiais permitidos.
 A sessão do consolidador recebeu o mapa código-modelo para produzir esse relatório identificado.
 N/A significa ausência ou inaplicabilidade, nunca nota zero.
 F5 e T2 do ramo explicação aguardam inspeção humana; E1-E3 ficam N/A enquanto não houver metas pré-fixadas.
-Mesmo com HTML gerado, podem existir avaliações pendentes e resultados provisórios.
+Concluir as etapas automáticas não substitui a revisão humana prevista no protocolo.
 
 Os arquivos `resultados-completos.csv`, `resultados-resumo.csv` e `estabilidade.csv`, na mesma pasta, permitem conferir itens, evidências e passagens.
 
@@ -198,8 +222,8 @@ A retomada não gera novas explicações e reutiliza os julgamentos já enviados
 Linhas de coleta que ficaram sem execução não são iniciadas por esse comando.
 Uma chamada sem confirmação permanece vinculada ao envio original.
 A retomada revalida os pareceres arquivados com as regras corrigidas e conserva o original.
-Um item inconsistente fica pendente, mas os demais itens válidos continuam publicados.
-Pareceres parciais nunca liberam pedagogia nem ranking.
+Pareceres incompletos ou inconsistentes são descartados por inteiro das notas; os originais e as decisões de validação continuam arquivados.
+Pareceres parciais nunca liberam pedagogia nem ranking, nem fornecem notas isoladas ao resultado.
 
 Para recuperar apenas os arquivos existentes, sem rede, Herdr ou chamadas de modelos:
 
@@ -208,11 +232,11 @@ npm run executar -- --revalidar
 ```
 
 O comando usa o lote mais recente; acrescente `--retomar "/caminho/do/lote"` para escolher outro.
-Ele não pede confirmação de chamadas porque só realiza operações locais e abre o HTML atualizado.
+Ele não pede confirmação de chamadas porque só realiza operações locais; ao encerrar o processamento, abre o HTML com os resultados válidos e descartes.
 Relatórios anteriores ficam em `consolidado/revisoes/`, e cada decisão de revalidação fica em um arquivo imutável em `revalidacoes/` junto ao parecer original.
 `revalidado.json` aponta para a decisão atual, e os CSV identificam o arquivo imutável usado em cada revisão.
 Julgamentos que nunca foram realizados continuam identificados como ausentes ou bloqueados; esse modo não cria novas avaliações.
-Tempos, tokens e custos conhecidos nos registros são publicados mesmo quando JT ou JE estiverem pendentes, com a origem identificada no CSV.
+Tempos, tokens e custos conhecidos nos registros são publicados mesmo quando JT ou JE forem descartados, com a origem identificada no CSV.
 
 Se precisar interromper o coordenador, pressione `Ctrl+C` uma vez no terminal principal e aguarde a mensagem de saída.
 Um juiz já iniciado pode continuar no seu pane até terminar ou atingir o limite de tempo.
@@ -221,8 +245,9 @@ Se aparecer uma mensagem de trava após encerramento abrupto, siga a orientaçã
 
 Se aparecer `Não foi possível concluir: ...`, leia o motivo e preserve o lote para investigação.
 Uma falha individual de juiz é registrada e o fluxo continua para os demais modelos e para a geração do HTML.
-Quando houver pendências, o terminal informa `Fluxo concluído` com as contagens e pode terminar com código de saída 2; isso identifica dados pendentes no relatório.
-O caminho da linha `Resultados:` continua sendo a referência para abrir o arquivo concluído.
+Quando houver exclusões, o terminal informa `Fluxo encerrado com descartes`, detalha os motivos e mostra `Resultados:` com o caminho do HTML.
+Descartes registrados são situações finais e não exigem uma nova tentativa; não são convertidos em nota zero.
+Revalidar recupera erros do validador, mas não cria texto faltante, não muda CORRIGIR para APTO nem refaz a ciência com uma bibliografia nova.
 
 ## 7. Apagar os resultados e recomeçar
 
@@ -271,7 +296,7 @@ Quantidade de palavras não demonstra aprendizagem; os juízes continuam avalian
 
 | Juiz | O que verifica | Resultado |
 | --- | --- | --- |
-| JC - Científico | Correção dos seis pontos e sustentação nas fontes lidas. | C1-C3 e APTO, CORRIGIR ou PENDENTE. |
+| JC - Científico | Correção dos seis pontos e sustentação nas fontes lidas. | C1-C3 e APTO ou CORRIGIR; PENDENTE é descartado das notas. |
 | JP - Pedagógico | Clareza, organização, foco, causalidade e exemplos, somente após APTO. | Cinco dimensões e índice P, a partir de 10 itens. |
 | JT - Tecnológico | Conclusão da geração e cumprimento do formato. | T1 e T2. |
 | JE - Tempo e custo | Duração, consumo e gasto documentados. | Valores brutos e E1-E3, quando calculáveis. |

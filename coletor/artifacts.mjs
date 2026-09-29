@@ -124,7 +124,7 @@ export async function archiveBatch(batchDirectory, batch, study) {
   await writeFile(join(batchDirectory, 'lote.md'), renderManifest(batch), { flag: 'wx', mode: 0o600 });
   await writeFile(join(batchDirectory, 'privado/protocolo.md'), study.protocol, { flag: 'wx', mode: 0o600 });
   for (const material of study.materials) await writeJson(join(batchDirectory, 'privado/pedidos', `${material.topic}.json`), material);
-  for (const filename of ['cli.mjs', 'config.mjs', 'openrouter.mjs', 'metrics.mjs', 'artifacts.mjs', 'collector.mjs', 'catalog.mjs', 'pipeline-cli.mjs', 'pipeline-options.mjs', 'pipeline.mjs', 'herdr.mjs', 'codex-worker.mjs', 'judgments.mjs', 'judgment-recovery.mjs', 'record-results.mjs', 'source-coverage.mjs', 'report-output.mjs', 'consolidation.mjs', 'html-report.mjs', 'output-lock.mjs']) {
+  for (const filename of ['cli.mjs', 'config.mjs', 'openrouter.mjs', 'metrics.mjs', 'artifacts.mjs', 'collector.mjs', 'catalog.mjs', 'pipeline-cli.mjs', 'pipeline-options.mjs', 'pipeline-completion.mjs', 'pipeline.mjs', 'herdr.mjs', 'codex-worker.mjs', 'judgments.mjs', 'judgment-recovery.mjs', 'record-results.mjs', 'source-coverage.mjs', 'report-output.mjs', 'consolidation.mjs', 'html-report.mjs', 'output-lock.mjs']) {
     const code = await readFile(join(import.meta.dirname, filename), 'utf8');
     await writeFile(join(batchDirectory, 'privado/coletor', filename), code, { flag: 'wx', mode: 0o600 });
   }

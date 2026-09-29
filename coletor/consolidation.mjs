@@ -6,6 +6,7 @@ import { readJsonIfPresent } from './herdr.mjs';
 import { writeHtmlReport } from './html-report.mjs';
 import { recordedItems } from './record-results.mjs';
 import { sha256 } from './config.mjs';
+import { assessPipelineCompletion } from './pipeline-completion.mjs';
 
 const completeColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,codigo_publico,papel,passagem,item,nota_0_100,valor_bruto,unidade,numerador,denominador,situacao,execucao_avaliacao,avaliador_config_id,metodo_verificacao,arquivo_origem,evidencia,motivo_na'.split(',');
 const summaryColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,K1,K2,K3,K4,K5,K6,C1,C2,C3,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia'.split(',');
@@ -41,8 +42,8 @@ function sourceFile(judgment) {
 
 function availableItems(execution, judgment) {
   const family = roleFamily(judgment.role);
-  const judged = judgment.result?.items ?? judgment.partial_items ?? [];
-  const recorded = recordedItems(execution, family);
+  const judged = judgment.status === 'DESCARTADO' ? [] : judgment.result?.items ?? judgment.partial_items ?? [];
+  const recorded = recordedItems(execution, family).filter((item) => judgment.status !== 'DESCARTADO' || item.id !== 'T1');
   const items = [...judged];
   for (const item of recorded) {
     if (!items.some((existing) => existing.id === item.id)) items.push(item);
@@ -74,7 +75,8 @@ function detailedRows(execution, phase, judgments) {
 function hasScientificDispute(judgments) {
   const first = judgments.JC1.result?.status;
   const second = judgments.JC2.result?.status;
-  return Boolean(first && second && first !== second) || [judgments.JP1, judgments.JP2].some((judgment) => judgment.status === 'REVISÃO CIENTÍFICA SOLICITADA');
+  const pedagogicalReviewRequested = [judgments.JP1, judgments.JP2].some((judgment) => [judgment.status, judgment.original_status].includes('REVISÃO CIENTÍFICA SOLICITADA'));
+  return Boolean(first && second && first !== second) || pedagogicalReviewRequested;
 }
 
 function summaryRow(execution, phase, judgments) {
@@ -99,7 +101,7 @@ function summaryRow(execution, phase, judgments) {
 
 async function archivePreviousReports(directory) {
   const reports = [];
-  for (const filename of ['resultados.html', 'relatorio.md', 'resultados-completos.csv', 'resultados-resumo.csv', 'estabilidade.csv', 'agregados.csv', 'global-por-rodada.csv', 'orcamento-julgamentos.csv']) {
+  for (const filename of ['resultados.html', 'relatorio.md', 'status-fluxo.json', 'resultados-completos.csv', 'resultados-resumo.csv', 'estabilidade.csv', 'agregados.csv', 'global-por-rodada.csv', 'orcamento-julgamentos.csv']) {
     try { reports.push({ filename, hash: sha256(await readFile(join(directory, filename))) }); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
@@ -220,10 +222,14 @@ export async function consolidateResults(batchDirectory, state, completed, optio
   const stability = state.executions.flatMap((execution) => stabilityRows(execution, state.phase, completed[execution.execution_id]));
   const aggregates = aggregateRows(summary);
   const global = globalRows(summary);
+  const completion = assessPipelineCompletion(state, completed);
   await archivePreviousReports(directory);
-  await writeHtmlReport(batchDirectory, state, completed, summary, aggregates, options);
+  await writeHtmlReport(batchDirectory, state, completed, summary, aggregates, {
+    ...options, localOnly: options.localOnly || completion.status === 'INCOMPLETO' || completion.eligible_generations === 0, completion,
+  });
   const budget = await judgmentBudget(batchDirectory, completed);
   const files = [
+    ['status-fluxo.json', `${JSON.stringify(completion, null, 2)}\n`],
     ['resultados-completos.csv', renderCsv(completeColumns, complete)],
     ['resultados-resumo.csv', renderCsv(summaryColumns, summary)],
     ['estabilidade.csv', renderCsv(stabilityColumns, stability)],
@@ -240,6 +246,11 @@ export async function consolidateResults(batchDirectory, state, completed, optio
   const pending = Object.values(completed).flatMap(Object.values).filter((judgment) => judgment.status === 'PENDENTE').length;
   const report = [
     '# Consolidação do lote', '',
+    `Situação do processo automático: ${completion.status}; ${completion.eligible_generations} respostas completas; ${completion.discarded_generations} respostas descartadas; ${completion.discarded_judgments} avaliações descartadas, incluindo etapas não iniciadas.`,
+    completion.limitation, '',
+    ...completion.issues.map((issue) => `- ${issue.system_id}/${issue.topic}/${issue.stage}: ${issue.reason}`), '',
+    ...completion.discards.map((discard) => `- DESCARTADO ${discard.system_id}/${discard.topic}/${discard.stage}: ${discard.reason}`), '',
+    ...completion.missing_measurements.map((measure) => `- N/A ${measure.system_id}/${measure.topic}/${measure.stage}: ${measure.reason}`), '',
     `Protocolo 3.2; fase ${state.phase}; ${summary.length} execuções planejadas preservadas.`,
     'Consolidação programática v1; os pareceres são do Codex e permanecem provisórios até revisão humana.',
     `${budget.filter((row) => row.categoria === 'julgamento').length} chamadas de julgamento e ${budget.filter((row) => row.categoria === 'consolidação').length} consolidação(ões) registradas; ${pending} pendências administrativas ou de avaliação.`,
@@ -258,5 +269,5 @@ export async function consolidateResults(batchDirectory, state, completed, optio
     'Nenhuma ausência foi convertida em zero. Os CSV usam IDs; resultados.html identifica os modelos por autorização do pesquisador.', '',
   ].join('\n');
   await replaceDerivedFile(join(directory, 'relatorio.md'), report);
-  return { directory, pending, planned: summary.length };
+  return { directory, pending, planned: summary.length, completion };
 }

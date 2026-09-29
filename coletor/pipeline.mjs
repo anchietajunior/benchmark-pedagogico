@@ -9,6 +9,7 @@ import { consolidateResults } from './consolidation.mjs';
 import { recoverValidItems } from './judgment-recovery.mjs';
 import { operationalValues, resourceValues, recordedItems } from './record-results.mjs';
 import { sourceCoverage, answerKeySection } from './source-coverage.mjs';
+import { executionDiscardReason, discardUnfinishedJudgment } from './pipeline-completion.mjs';
 
 const templates = { JC: 'avaliar-ciencia.md', JP: 'avaliar-pedagogia.md', JT: 'apurar-tecnologia.md', JE: 'apurar-tempo-custo.md' };
 const passes = ['JC1', 'JC2', 'JP1', 'JP2', 'JT', 'JE'];
@@ -146,12 +147,7 @@ function buildInput(execution, role, completed) {
   };
 }
 
-function blockReason(execution, role, completed) {
-  if (!execution.record) return 'Registro final ausente; não prova falha nem ausência de início.';
-  if (execution.identity_concern && role !== 'JE') return execution.identity_concern;
-  if (role.startsWith('JC') || role.startsWith('JP')) {
-    if (execution.content === null || execution.record.output_branch === 'sem saída') return 'AUSENTE - não há resposta disponível para julgamento de conteúdo.';
-  }
+function blockReason(role, completed) {
   if (role.startsWith('JP')) {
     const scientificRole = role === 'JP1' ? 'JC1' : 'JC2';
     if (completed[scientificRole]?.result?.status !== 'APTO') return `${scientificRole} sem APTO validado.`;
@@ -193,9 +189,17 @@ async function validateSavedResult(taskDirectory, result, identity, execution, c
 
 async function judgeExecution(batchDirectory, state, execution, role, completed, options) {
   const identity = { code: execution.codes[role], topic: execution.topic, round: execution.round, role };
-  const reason = blockReason(execution, role, completed);
-  if (reason) return administrativeResult(identity, role.startsWith('JP') ? 'BLOQUEADO' : reason.startsWith('AUSENTE') ? 'AUSENTE' : 'PENDENTE', reason);
   const taskDirectory = join(batchDirectory, 'juizes/pareceres', role, identity.code);
+  const discardReason = executionDiscardReason(execution);
+  const reason = discardReason ?? blockReason(role, completed);
+  if (reason) {
+    const previousLaunch = await readJsonIfPresent(join(taskDirectory, 'envio.json'));
+    const previousAccepted = await readJsonIfPresent(join(taskDirectory, 'aceito.json'));
+    const previousRejected = await readJsonIfPresent(join(taskDirectory, 'pendente.json'));
+    const historicalExecution = Boolean(previousLaunch || previousAccepted || previousRejected?.executed || previousRejected?.raw_result);
+    const status = discardReason ? 'DESCARTADO' : role.startsWith('JP') ? 'BLOQUEADO' : 'PENDENTE';
+    return { ...administrativeResult(identity, status, reason), historical_execution: historicalExecution };
+  }
   const existing = await readJsonIfPresent(join(taskDirectory, 'aceito.json'));
   if (existing) return validateSavedResult(taskDirectory, existing, identity, execution, completed);
   const rejected = await readJsonIfPresent(join(taskDirectory, 'pendente.json'));
@@ -268,7 +272,8 @@ export async function judgeBatch(directory, options = {}) {
           if (options.signal?.aborted) throw error;
           completed[execution.execution_id][role] = administrativeResult({ code: execution.codes[role], topic: execution.topic, round: execution.round, role }, 'PENDENTE', `Arquivo ou contrato indisponível: ${error.message}`);
         }
-        const judgment = completed[execution.execution_id][role];
+        const judgment = discardUnfinishedJudgment(completed[execution.execution_id][role]);
+        completed[execution.execution_id][role] = judgment;
         options.onProgress?.(`${role}: ${execution.codes[role]} - ${judgment.status}${judgment.reason ? `: ${judgment.reason}` : ''}`);
         await replaceDerivedFile(join(batchDirectory, 'privado/fila-julgamento.json'), `${JSON.stringify(completed, null, 2)}\n`);
       }

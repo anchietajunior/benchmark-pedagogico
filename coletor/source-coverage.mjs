@@ -5,10 +5,13 @@ export function sourceCoverage(messages, answerKey, topic) {
   const pattern = new RegExp(`\\b${topic}-F\\d+\\b`, 'g');
   const suppliedIds = [...new Set(sources.match(pattern) ?? [])].sort();
   const keyIds = [...new Set(answerKey.match(pattern) ?? [])].sort();
+  const originalSourcePattern = new RegExp(`^## Texto original incorporado - (${topic}-F\\d+)\\s*$`, 'gm');
+  const originalIds = [...new Set([...sources.matchAll(originalSourcePattern)].map((match) => match[1]))].sort();
   return {
     topic, supplied_source_ids: suppliedIds, answer_key_source_ids: keyIds,
     answer_key_sources_not_supplied: keyIds.filter((id) => !suppliedIds.includes(id)),
     reading_notes: /notas de leitura|paráfrases?/i.test(sources),
+    original_source_ids: originalIds,
     scope: 'Somente o material incorporado pode ser lido pelo juiz; links e bibliografia não equivalem a leitura das obras completas. Fontes alternativas fornecidas podem sustentar os mesmos conceitos.',
   };
 }

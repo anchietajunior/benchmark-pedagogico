@@ -19,7 +19,10 @@ npm run executar -- --revalidar
 
 O modo de simulação é estritamente local, sem catálogo remoto, panes ou modelos.
 O modo `--revalidar` usa somente arquivos existentes, dispensa runtime Herdr e credenciais e não inicia chamadas; sem caminho, seleciona o lote mais recente.
-Ao concluir, o programa informa as contagens de pendências e bloqueios e abre o HTML no navegador padrão; `--nao-abrir` desativa a abertura.
+Ao concluir as etapas automáticas, o programa abre o HTML no navegador padrão; `--nao-abrir` desativa a abertura.
+Resposta incompleta é descartada antes dos juízes; parecer sem conclusão válida é descartado das notas.
+O fluxo encerra com resultados válidos e exclusões documentadas no HTML, que abre no navegador.
+Use `--revalidar` para aplicar a política aos arquivos existentes sem chamadas.
 `--retomar` sem caminho seleciona o lote compatível mais recente pela data de criação em `output_dir`, inclusive quando já concluído, e informa o caminho antes da confirmação.
 Se não houver lote, o comando encerra sem iniciar coleta; para conferir a seleção sem chamadas, use `--retomar --simular`.
 A execução real exige Codex CLI autenticado e as opções `--ignore-user-config`, `--ignore-rules`, `--ephemeral` e `--output-schema`.
@@ -50,7 +53,7 @@ O pesquisador autorizou a identificação apenas no relatório consolidado; os j
 O programa preserva literalmente a resposta.
 Uma suspeita de autoria explícita bloqueia as chamadas que receberiam esse conteúdo; não há remoção automática que possa alterar a explicação.
 Essa triagem usa identificadores conhecidos e palavras de autoria, pode bloquear texto legítimo e não garante anonimato estilístico ou detecção de toda identidade possível.
-O lote permanece pendente para revisão quando não é possível fornecer um pacote limpo.
+Essa resposta é descartada dos julgamentos quando não é possível fornecer um pacote limpo; os comprovantes permanecem disponíveis para revisão.
 
 ## Isolamento das sessões
 
@@ -88,6 +91,7 @@ Novos schemas restringem identidade, papel e IDs permitidos antes da geração d
 Inventários aceitam `A01`/`V01` como grafias de `A1`/`V1`, mas rejeitam a presença das duas grafias do mesmo item.
 As classificações ignoram maiúsculas e minúsculas; em vínculos, `pendente` corresponde a N/A e `inválido` a problema confirmado, mantendo a conferência da nota.
 Um item sem nota nem valor conhecido pode justificar a ausência somente em `reason_na`; notas e medidas conhecidas continuam exigindo evidência.
+Inventários A/V classificados NÃO VERIFICÁVEL também podem justificar falta de evidência em `reason_na`, mantendo nota N/A e sem liberar APTO.
 JE pode detalhar tokens totais, cache e raciocínio em itens opcionais, sempre conferidos contra os comprovantes e sem soma duplicada.
 APTO exige K1-K6 iguais a 100, inventário de afirmações não vazio e sem itens não verificados/errados, vínculos válidos e nenhum impedimento declarado.
 Isso verifica consistência do parecer, não verdade científica.
@@ -96,8 +100,8 @@ Na retomada, julgamentos já enviados reutilizam o pedido e o schema arquivados,
 Ao executar a retomada ou a revalidação local, pareceres aceitos e pendentes são conferidos novamente sem repetir as chamadas.
 `revalidacoes/` preserva decisões imutáveis com o hash do resultado original; `revalidado.json` aponta para a decisão atual.
 Cada CSV identifica a decisão imutável usada; arquivos `aceito.json`, `pendente.json` e saídas brutas continuam preservados.
-Um parecer inconsistente pode fornecer itens individualmente válidos, mas nunca APTO ou elegibilidade pedagógica.
-Duplicatas equivalentes e cálculos dependentes de itens inválidos ficam excluídos dos valores conhecidos.
+A auditoria de um parecer inconsistente pode identificar itens individualmente válidos; eles permanecem no registro de revalidação e não são aproveitados nas notas.
+O descarte exclui o parecer inteiro da análise de notas, incluindo duplicatas equivalentes e cálculos afetados.
 JSON íntegro na mensagem final pode recuperar uma saída estruturada ausente ou malformada, somente após conferir conclusão e isolamento dos eventos.
 Um resultado parcial, de outra versão ou com identidade incompatível não pode substituir um julgamento completo.
 O certificado JP tem apenas os seis campos do protocolo; notas e identificadores de origem ficam no registro privado.
@@ -113,6 +117,11 @@ Falha de JT/JE não apaga as medidas instrumentadas; ausência de custo confirma
 
 O código reúne as notas aceitas, mantém todas as execuções planejadas e calcula cobertura, agregados condicionais e estabilidade.
 Uma sessão nova do consolidador recebe então o mapa privado e compõe título, resumo, observações e limitações de `resultados.html`.
+Essa chamada só é iniciada depois de processar cada etapa ou registrar seu descarte; se nenhuma resposta for elegível, a síntese é local.
+JC pode terminar em APTO ou CORRIGIR; PENDENTE ou parecer inválido é descartado integralmente das notas, sem manter itens isolados como resultados.
+JP exige APTO da passagem correspondente; seu parecer também precisa de conclusão válida para fornecer notas.
+JT/JE devem declarar CONCLUÍDO após apurar os itens disponíveis; valores N/A justificados não provam o dado, e status PENDENTE descarta o parecer.
+CORRIGIR continua registrado como resultado científico desfavorável, sem iniciar uma substituição automática do texto.
 Um renderizador local monta o HTML com esses textos e com as tabelas provenientes dos registros validados.
 O consolidador não pode alterar notas nas tabelas, códigos ou nomes durante a composição do relatório.
 Mudanças após a revalidação produzem uma revisão local identificada, sem nova chamada ao consolidador; o conjunto anterior de HTML e CSV fica arquivado em `consolidado/revisoes/`.
@@ -121,6 +130,8 @@ O HTML é independente, responsivo, sem scripts, dependências externas ou conte
 
 O relatório inclui resultados por modelo/tema, notas por execução e os códigos usados em todas as passagens.
 O HTML também mostra as fontes incorporadas, referências do gabarito sem material e o uso de notas ou paráfrases.
+Uma tabela mostra os motivos científicos de JC1/JC2; outra identifica os descartes por modelo e etapa.
+`consolidado/status-fluxo.json` registra descartes, cobertura e medições ausentes, separando encerramento automático de revisão humana.
 Os CSV detalhados continuam disponíveis e preservam inventários, evidências, ausências e bloqueios.
 Desacordos JC1/JC2 e alertas JP ficam provisórios; não se escolhe a passagem mais favorável.
 Média condicional dos APTO não vira ranking global.
@@ -130,7 +141,7 @@ O programa não calcula significância nem demonstra aprendizagem humana.
 ## Retomada e arquivos
 
 `privado/julgamento.json` congela configuração, kit dos juízes, insumos, mapa e métricas no começo dos julgamentos.
-`privado/fila-julgamento.json` registra chamadas aceitas, bloqueadas ou pendentes.
+`privado/fila-julgamento.json` registra chamadas aceitas, bloqueadas ou descartadas.
 `juizes/pareceres/PAPEL/CODIGO/` preserva pedido, schema, envio, eventos, saída e parecer aceito ou rejeitado.
 `privado/consolidador/` contém o pacote identificado e os comprovantes da sessão de consolidação.
 `consolidado/` contém HTML, CSV, relatório e orçamento de julgamentos.
@@ -141,7 +152,7 @@ Esses arquivos ficam no lote privado; não devem ser anexados aos juízes.
 
 O envio é registrado antes de disparar o processo no Herdr.
 Uma queda após o envio nunca autoriza reenviar a mesma chamada automaticamente.
-A retomada consulta o resultado da sessão já criada; falta de confirmação permanece pendente.
+A retomada consulta o resultado da sessão já criada; falta de confirmação produz descarte do julgamento, preservando o vínculo com o envio.
 Resultados aceitos são reutilizados, e mudança de insumos ou de configuração exige uma revisão explícita, sem sobrescrever originais.
 Uma trava impede dois coordenadores no mesmo lote e é liberada ao encerrar normalmente ou receber a interrupção tratada.
 Depois de encerramento abrupto, confira o PID registrado e remova somente `privado/julgamento.lock` se o coordenador já não existir, antes de retomar.

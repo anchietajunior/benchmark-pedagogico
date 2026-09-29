@@ -5,9 +5,12 @@ Para seguir desde a abertura do terminal até o HTML no navegador, use o [guia d
 O coletor envia cada pedido diretamente ao OpenRouter, sem skills, memória, navegação ou acesso do modelo ao projeto.
 São necessários Node.js 24 ou superior, Herdr ativo e Codex CLI autenticado; não precisa executar `npm install`.
 
-Nesta máquina, o piloto B01 já está configurado: seis modelos, uma rodada, cotação e notas bibliográficas preenchidas.
+Nesta máquina, o piloto B01 já está configurado: seis modelos, uma rodada, cotação, notas bibliográficas e o corpo textual original autorizado de B01-F3.
 Se a chave já está no `.env`, vá direto ao passo 2; não precisa editar `openrouter.config.json` para esse teste.
 As notas foram preparadas por IA e continuam com revisão humana pendente; o programa permite isso somente na fase PILOTO.
+O texto original de F3 está identificado com origem, escopo, licença e hash; ele não comprova leitura das obras que o artigo cita.
+O limite comum de saída é 32.768 tokens, com esforço `medium`; raciocínio e texto usam esse orçamento.
+O teto maior reduz o risco observado de raciocínio consumir toda a saída, sem garantir conclusão de todos os provedores.
 Uma nova cópia do projeto ainda exige a preparação abaixo, pois os arquivos locais não entram no Git.
 
 ## 1. Prepare uma vez
@@ -71,7 +74,10 @@ open -a Safari "$DIRETORIO_DO_LOTE/consolidado/resultados.html"
 ```
 
 Substitua o caminho de exemplo pelo diretório mostrado no terminal.
-O navegador não é aberto automaticamente; o HTML é local e não exige servidor.
+O navegador abre automaticamente após conclusão das etapas automáticas; o HTML é local e não exige servidor.
+Respostas incompletas são descartadas antes dos julgamentos; pareceres incompletos ou inválidos são descartados das notas.
+O fluxo encerra com resultados válidos, descartes explícitos no HTML e motivos em `consolidado/status-fluxo.json`.
+CORRIGIR é uma decisão científica final desfavorável; APTO continua obrigatório para a pedagogia.
 
 | Arquivo | O que fazer |
 | --- | --- |

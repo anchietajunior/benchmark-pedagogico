@@ -110,6 +110,10 @@ export async function collectBatch(study, options) {
     records.push(record);
     await saveSummary(batchDirectory, records, batch.executions.length);
     options.onProgress?.(`${execution.execution_id}: ${record.operational_status}; telemetria ${record.telemetry_status}`);
+    if (record.provider_error) options.onProgress?.(`Erro do provedor ${record.provider_error.code ?? 'sem código'}: ${record.provider_error.message}`);
+    if (record.operational_status === 'truncamento' && record.first_text_seconds === null && record.completion_tokens > 0 && record.reasoning_tokens === record.completion_tokens) {
+      options.onProgress?.('Limite de saída consumido pelo raciocínio, sem texto de resposta. Confira max_tokens antes de planejar outra coleta.');
+    }
     if (record.telemetry_status === 'PENDENTE') options.onProgress?.('Dados pendentes preservados; consulte recuperar após a coleta.');
     if (record.http_status === 401 || record.http_status === 402) {
       options.onProgress?.('Lote interrompido por autenticação ou saldo. As execuções restantes não foram iniciadas.');

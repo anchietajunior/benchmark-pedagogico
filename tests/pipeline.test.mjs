@@ -14,11 +14,30 @@ import { escapeHtml, renderResultsHtml } from '../coletor/html-report.mjs';
 import { recoverValidItems } from '../coletor/judgment-recovery.mjs';
 import { openReport } from '../coletor/report-output.mjs';
 import { sourceCoverage } from '../coletor/source-coverage.mjs';
+import { assessPipelineCompletion, shouldOpenReport, discardUnfinishedJudgment } from '../coletor/pipeline-completion.mjs';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
 const config = { model: 'modelo-teste', reasoning_effort: 'medium', timeout_seconds: 1 };
 const executionId = 'E00000000000000000001';
 const executeFile = promisify(execFile);
+
+test('decisão científica pendente é descartada e o processamento encerra com exclusões explícitas', () => {
+  const state = { executions: [{ execution_id: executionId, system_id: 'S01', topic: 'B01', content: 'Texto.', record: { operational_status: 'conclusão normal', telemetry_status: 'COMPLETA' } }] };
+  const input = { code: 'Qteste', topic: 'B01', round: 1, role: 'JC1' };
+  const completed = { [executionId]: {
+    JC1: discardUnfinishedJudgment({ role: 'JC1', result: judgment(input, 'PENDENTE'), status: 'PENDENTE' }), JC2: { result: judgment({ ...input, role: 'JC2' }, 'CORRIGIR') },
+    JP1: { status: 'BLOQUEADO' }, JP2: { status: 'BLOQUEADO' }, JT: { result: { status: 'CONCLUÍDO' } }, JE: { result: { status: 'CONCLUÍDO' } },
+  } };
+  const completion = assessPipelineCompletion(state, completed);
+  assert.equal(completion.status, 'CONCLUÍDO_COM_DESCARTES');
+  assert.deepEqual(completion.discards.map((discard) => discard.stage), ['JC1']);
+  assert.equal(shouldOpenReport(completion, {}), true);
+  completed[executionId].JC1 = { status: 'CORRIGIR', result: judgment(input, 'CORRIGIR') };
+  const finalized = assessPipelineCompletion(state, completed);
+  assert.equal(finalized.status, 'CONCLUÍDO');
+  assert.equal(shouldOpenReport(finalized, {}), true);
+  assert.equal(shouldOpenReport(finalized, { 'nao-abrir': true }), false);
+});
 
 test('HTML mostra o material bibliográfico efetivamente recebido e referências ausentes', () => {
   const material = {
@@ -32,6 +51,16 @@ test('HTML mostra o material bibliográfico efetivamente recebido e referências
   assert.match(html, /<td>B01-F2, B01-F3<\/td>/);
   assert.match(html, /<td>B01-F1<\/td>/);
   assert.equal(html.match(/Notas\/paráfrases fornecidas/g).length, 1);
+});
+
+test('cobertura distingue notas de leitura do texto original incorporado', () => {
+  const messages = [{ role: 'user', content: '## Material bibliográfico fornecido\nNotas de leitura: B01-F2.\n## Texto original incorporado - B01-F3\nTexto original.' }];
+  const coverage = sourceCoverage(messages, 'B01-F1', 'B01');
+  assert.deepEqual(coverage.original_source_ids, ['B01-F3']);
+  assert.equal(coverage.reading_notes, true);
+  const state = { phase: 'PILOTO', frozen_at: 'teste', models: [], executions: [{ topic: 'B01', codes: {}, messages, answer_key: 'B01-F1' }] };
+  const html = renderResultsHtml(state, [], [], {}, { title: 'Teste', summary: 'Teste', observations: [], limitations: [] });
+  assert.match(html, /Texto original: B01-F3; notas\/paráfrases/);
 });
 
 test('Herdr aceita sucesso vazio de pane run e exige JSON nos comandos de consulta', async (context) => {
@@ -78,6 +107,7 @@ async function fixture({ missing = false, content = '# Explicação sintética\n
   const record = {
     ...execution, operational_status: 'conclusão normal', output_branch: 'explicação', issues: [],
     duration_seconds: 2, first_text_seconds: 1, prompt_tokens: 10, completion_tokens: 20, cost_usd: 0.01, cost_brl: 0.05,
+    telemetry_status: 'COMPLETA', total_tokens: 30,
   };
   await writeFile(join(directory, 'batch.json'), JSON.stringify({ schema_version: 1, condition: 'openrouter-v1', executions: [execution], config: { phase: 'PILOTO', models: [{ id: 'S01', model: 'vendor/secret-model', provider: 'vendor' }] } }));
   await writeFile(join(directory, 'privado/protocolo.md'), await readFile(join(repositoryRoot, 'referencias/protocolo-pontuacao.md')));
@@ -168,7 +198,7 @@ test('JC1 corrigir bloqueia apenas JP1; JC2 apto libera somente JP2', async () =
   assert.match(rows, /"JP1","M1\.1","N\/A"/);
 });
 
-test('APTO contraditório fica pendente e não libera pedagogia nem é repetido', async () => {
+test('APTO contraditório é descartado e não libera pedagogia nem é repetido', async () => {
   const directory = await fixture();
   const runJob = async (path, job) => {
     const input = inputFromPrompt(job.prompt);
@@ -177,7 +207,7 @@ test('APTO contraditório fica pendente e não libera pedagogia nem é repetido'
     return result;
   };
   const result = await judgeBatch(directory, { repositoryRoot, config, runJob });
-  assert.equal(result.completed[executionId].JC1.status, 'PENDENTE');
+  assert.equal(result.completed[executionId].JC1.status, 'DESCARTADO');
   assert.equal(result.completed[executionId].JP1.executed, false);
   await judgeBatch(directory, { repositoryRoot, runJob: () => { throw new Error('Não reenviar.'); } });
 });
@@ -200,7 +230,7 @@ test('revalidação local recupera parecer antigo e atualiza HTML sem consultar 
   assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /vendor\/secret-model/);
 });
 
-test('item científico inválido preserva notas válidas e exclui apenas cálculos afetados', async () => {
+test('parecer científico inválido mantém a auditoria e exclui todas as suas notas', async () => {
   const directory = await fixture();
   const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
     const input = inputFromPrompt(job.prompt);
@@ -209,12 +239,14 @@ test('item científico inválido preserva notas válidas e exclui apenas cálcul
     return response;
   } });
   const scientific = result.completed[executionId].JC1;
-  assert.equal(scientific.status, 'PENDENTE');
-  assert.equal(scientific.partial_items.find((item) => item.id === 'K1').score, 100);
-  assert.equal(scientific.partial_items.some((item) => item.id === 'V1'), false);
-  assert.equal(scientific.partial_items.some((item) => item.id === 'C3'), false);
+  assert.equal(scientific.status, 'DESCARTADO');
+  assert.deepEqual(scientific.partial_items, []);
+  const audit = JSON.parse(await readFile(join(directory, scientific.validation_file), 'utf8'));
+  assert.equal(audit.outcome.partial_items.find((item) => item.id === 'K1').score, 100);
+  assert.equal(audit.outcome.partial_items.some((item) => item.id === 'V1'), false);
+  assert.equal(audit.outcome.partial_items.some((item) => item.id === 'C3'), false);
   const rows = await readFile(join(directory, 'consolidado/resultados-completos.csv'), 'utf8');
-  assert.match(rows, /"JC1","K1","100"/);
+  assert.match(rows, /"JC1","K1","N\/A"/);
 });
 
 test('falha terminal de um juiz não interrompe os demais nem a geração do HTML', async () => {
@@ -226,7 +258,7 @@ test('falha terminal de um juiz não interrompe os demais nem a geração do HTM
     if (input.role === 'JC1') throw new Error('Codex terminou sem JSON.');
     return judgment(input);
   } });
-  assert.equal(result.completed[executionId].JC1.status, 'PENDENTE');
+  assert.equal(result.completed[executionId].JC1.status, 'DESCARTADO');
   assert.ok(calls.includes('JC2'));
   assert.ok(calls.includes('JE'));
   assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /vendor\/secret-model/);
@@ -243,7 +275,7 @@ test('registros de tempo e tokens permanecem publicados quando JT e JE falham', 
   assert.match(rows, /"JE","UNICA","LATENCIA_TOTAL_S","N\/A","2"/);
   assert.match(rows, /"JE","UNICA","TOKENS_ENTRADA","N\/A","10"/);
   assert.match(rows, /"JE","UNICA","CUSTO_GERACAO_BRL","N\/A","0.05"/);
-  assert.match(rows, /"JT","UNICA","T1","100"/);
+  assert.match(rows, /"JT","UNICA","T1","N\/A"/);
   const html = await readFile(join(directory, 'consolidado/resultados.html'), 'utf8');
   assert.match(html, /Falha sintética do avaliador/);
 });
@@ -256,6 +288,19 @@ test('CLI revalida sem runtime Herdr, credencial ou chamada de rede', async () =
   assert.match(result.stdout, /Revalidação local/);
   assert.match(result.stdout, /Fluxo concluído/);
   assert.match(result.stdout, /Resultados:/);
+});
+
+test('CLI encerra com descartes explícitos em vez de manter ciência pendente', async () => {
+  const directory = await fixture();
+  await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    return judgment(input, input.role.startsWith('JC') ? 'PENDENTE' : undefined);
+  } });
+  const script = `globalThis.fetch = () => { throw new Error('Rede proibida.'); }; process.argv = ['node', 'pipeline-cli', '--retomar', process.argv[1], '--revalidar', '--nao-abrir']; await import(${JSON.stringify(new URL('../coletor/pipeline-cli.mjs', import.meta.url).href)});`;
+  const result = await executeFile(process.execPath, ['--input-type=module', '-e', script, directory], { env: { PATH: '/pasta-inexistente' } });
+  assert.match(result.stdout, /Fluxo encerrado com descartes/);
+  assert.match(result.stdout, /DESCARTADO S01\/B01\/JC1/);
+  assert.doesNotMatch(result.stdout, /Fluxo incompleto|Fluxo concluído/);
 });
 
 test('schema específico impede código trocado e IDs inventados antes da resposta do juiz', () => {
@@ -331,7 +376,7 @@ test('parecer JT de ramo incompatível não publica T2 nem os componentes de out
     return response;
   } });
   const technical = result.completed[executionId].JT;
-  assert.equal(technical.status, 'PENDENTE');
+  assert.equal(technical.status, 'DESCARTADO');
   assert.equal(technical.partial_items.some((item) => /^(T2|FP?\d)$/.test(item.id)), false);
 });
 
@@ -402,6 +447,86 @@ test('ausência de registros mantém todas as linhas previstas sem inferência',
   assert.match(report, /custo incompleto/);
 });
 
+test('resposta vazia não inicia julgamento científico nem consolidador', async () => {
+  const directory = await fixture({ content: '' });
+  const recordPath = join(directory, 'comprovantes', executionId, 'metricas.json');
+  const record = JSON.parse(await readFile(recordPath, 'utf8'));
+  record.operational_status = 'truncamento';
+  record.output_branch = 'texto vazio';
+  await writeFile(recordPath, JSON.stringify(record));
+  const roles = [];
+  const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    roles.push(input.role);
+    const output = judgment(input);
+    if (input.role === 'JT') {
+      output.items.find((item) => item.id === 'STATUS_OPERACIONAL').value = 'truncamento';
+      output.items.find((item) => item.id === 'RAMO_SAIDA').value = 'texto vazio';
+      output.items.find((item) => item.id === 'T1').score = 0;
+    }
+    return output;
+  } });
+  assert.deepEqual(roles, []);
+  assert.equal(result.completed[executionId].JC1.status, 'DESCARTADO');
+  assert.equal(result.completed[executionId].JC2.status, 'DESCARTADO');
+  assert.equal(result.consolidation.completion.status, 'CONCLUÍDO_COM_DESCARTES');
+});
+
+test('truncamento com texto é descartado antes de qualquer julgamento', async () => {
+  const directory = await fixture({ content: 'Esta explicação foi cortada no meio.' });
+  const path = join(directory, 'comprovantes', executionId, 'metricas.json');
+  const record = JSON.parse(await readFile(path, 'utf8'));
+  record.operational_status = 'truncamento';
+  await writeFile(path, JSON.stringify(record));
+  const roles = [];
+  const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    roles.push(input.role);
+    return judgment(input);
+  } });
+  assert.deepEqual(roles, []);
+  assert.equal(result.completed[executionId].JC1.status, 'DESCARTADO');
+  assert.equal(result.consolidation.completion.status, 'CONCLUÍDO_COM_DESCARTES');
+  assert.equal(result.consolidation.completion.discarded_generations, 1);
+  assert.equal(await readFile(join(directory, 'comprovantes', executionId, 'resposta.md'), 'utf8'), 'Esta explicação foi cortada no meio.');
+});
+
+test('pareceres científicos e técnicos sem conclusão são descartados das notas', async () => {
+  const directory = await fixture();
+  const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    return judgment(input, ['JC1', 'JT'].includes(input.role) ? 'PENDENTE' : undefined);
+  } });
+  assert.equal(result.completed[executionId].JC1.status, 'DESCARTADO');
+  assert.equal(result.completed[executionId].JC1.result, null);
+  assert.deepEqual(result.completed[executionId].JC1.partial_items, []);
+  assert.equal(result.completed[executionId].JT.status, 'DESCARTADO');
+  assert.equal(result.completed[executionId].JP1.status, 'BLOQUEADO');
+  assert.equal(result.consolidation.completion.status, 'CONCLUÍDO_COM_DESCARTES');
+  const csv = await readFile(join(directory, 'consolidado/resultados-completos.csv'), 'utf8');
+  assert.match(csv, /"JC","JC1","K1","N\/A"/);
+  assert.doesNotMatch(csv, /"JC","JC1","K1","100"/);
+});
+
+test('descarte de JP2 preserva contestação científica e exclui P dos agregados', async () => {
+  const directory = await fixture();
+  const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
+    const input = inputFromPrompt(job.prompt);
+    const output = judgment(input, input.role === 'JP2' ? 'REVISÃO CIENTÍFICA SOLICITADA' : undefined);
+    if (input.role === 'JP2') {
+      output.blockers = ['Erro científico identificado durante a leitura pedagógica.'];
+      for (const item of output.items) item.score = null;
+    }
+    return output;
+  } });
+  assert.equal(result.completed[executionId].JP2.status, 'DESCARTADO');
+  assert.equal(result.completed[executionId].JP2.original_status, 'REVISÃO CIENTÍFICA SOLICITADA');
+  const summary = await readFile(join(directory, 'consolidado/resultados-resumo.csv'), 'utf8');
+  assert.match(summary, /"true","true"/);
+  const aggregates = await readFile(join(directory, 'consolidado/agregados.csv'), 'utf8');
+  assert.match(aggregates, /"S01","B01","1","1","1","1","0"/);
+});
+
 test('autoria explícita bloqueia conteúdo sem reescrever original', async () => {
   const content = '# Explicação\nEu sou Claude.';
   const directory = await fixture({ content });
@@ -411,7 +536,8 @@ test('autoria explícita bloqueia conteúdo sem reescrever original', async () =
     roles.push(input.role);
     return judgment(input);
   } });
-  assert.deepEqual(roles, ['CONSOLIDADOR']);
+  assert.deepEqual(roles, []);
+  assert.match(await readFile(join(directory, 'consolidado/resultados.html'), 'utf8'), /Descartes da avaliação/);
   assert.equal(await readFile(join(directory, 'comprovantes', executionId, 'resposta.md'), 'utf8'), content);
   assert.equal(identityConcern('O mecanismo tem uma meta fisiológica.', [{ model: 'meta/modelo', provider: 'meta' }]), null);
 });
@@ -472,8 +598,23 @@ test('item sem nota nem medida aceita motivo de inaplicabilidade, mas medida con
   assert.throws(() => validateJudgment(result, input), /falta evidência/);
 });
 
+test('inventário não verificável aceita justificativa da falta de fonte sem perder a decisão científica', () => {
+  const input = { code: 'Qteste', topic: 'B01', round: 1, role: 'JC1' };
+  const result = judgment(input, 'PENDENTE');
+  for (const id of ['A1', 'V1']) Object.assign(result.items.find((item) => item.id === id), {
+    score: null, value: 'NÃO VERIFICÁVEL', evidence: '', reason_na: 'A fonte fornecida não contém o detalhe necessário.',
+  });
+  for (const id of ['C2', 'C3']) result.items.find((item) => item.id === id).score = null;
+  assert.equal(validateJudgment(result, input), result);
+  result.status = 'APTO';
+  result.items.find((item) => item.id === 'SITUACAO_CIENTIFICA').value = 'APTO';
+  assert.throws(() => validateJudgment(result, input), /APTO incompatível/);
+  result.items.find((item) => item.id === 'A1').value = 'SUSTENTADA';
+  assert.throws(() => validateJudgment(result, input), /falta evidência|classificação incompatível/);
+});
+
 test('JE permite detalhes opcionais dos tokens e confere seus valores contra os comprovantes', async () => {
-  for (const total of [null, 900]) {
+  for (const total of [30, 900]) {
     const directory = await fixture();
     const result = await judgeBatch(directory, { repositoryRoot, config, runJob: async (path, job) => {
       const input = inputFromPrompt(job.prompt);
@@ -483,8 +624,8 @@ test('JE permite detalhes opcionais dos tokens e confere seus valores contra os 
       }
       return output;
     } });
-    assert.equal(result.completed[executionId].JE.status, total === null ? 'CONCLUÍDO' : 'PENDENTE');
-    if (total !== null) assert.match(result.completed[executionId].JE.reason, /medida incompatível/);
+    assert.equal(result.completed[executionId].JE.status, total === 30 ? 'CONCLUÍDO' : 'DESCARTADO');
+    if (total !== 30) assert.match(result.completed[executionId].JE.reason, /medida incompatível/);
   }
 });
 

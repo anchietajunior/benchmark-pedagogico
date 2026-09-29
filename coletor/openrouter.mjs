@@ -27,7 +27,15 @@ function readEvent(state, data, startedAt) {
   recordIdentity(state, 'model', event.model);
   recordIdentity(state, 'provider', event.provider);
   const choice = event.choices?.[0];
-  if (event.error || choice?.error) state.issues.push('ERRO_SSE');
+  const providerError = event.error ?? choice?.error;
+  if (providerError) {
+    state.issues.push('ERRO_SSE');
+    state.provider_error = {
+      code: typeof providerError.code === 'number' || typeof providerError.code === 'string' ? providerError.code : null,
+      message: String(providerError.message ?? 'Erro reportado pelo provedor.').replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, 1000),
+      type: typeof providerError.metadata?.error_type === 'string' ? providerError.metadata.error_type : null,
+    };
+  }
   if (event.usage) state.usage = event.usage;
   if (choice?.finish_reason) state.finish_reason = choice.finish_reason;
   if (choice?.native_finish_reason) state.native_finish_reason = choice.native_finish_reason;
@@ -105,6 +113,7 @@ export async function receiveGeneration(request, options) {
     state.error = { name: error.name, message: String(error.message).replaceAll(apiKey, '[CREDENCIAL_REMOVIDA]') };
   } finally {
     state.ended_at = new Date().toISOString();
+    if (state.provider_error) state.provider_error.message = state.provider_error.message.replaceAll(apiKey, '[CREDENCIAL_REMOVIDA]');
     state.duration_seconds = (performance.now() - startedAt) / 1000;
     if (reader) {
       try { await reader.cancel(); }

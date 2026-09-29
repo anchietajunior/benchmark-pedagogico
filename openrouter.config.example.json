@@ -5,7 +5,7 @@
   "rounds": 1,
   "request_timeout_seconds": 180,
   "parameters": {
-    "max_tokens": 8192,
+    "max_tokens": 32768,
     "reasoning": { "effort": "medium" }
   },
   "usd_brl": {

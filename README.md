@@ -16,7 +16,10 @@ Chave de API, cotação e trechos bibliográficos verificados precisam ser forne
 O comando prepara os materiais dos quatro papéis e só libera pedagogia após APTO científico validado.
 Para conferir a configuração sem rede ou inferência, execute `npm run executar -- --simular`.
 Para recuperar os pareceres já gravados e atualizar o HTML sem chamadas, execute `npm run executar -- --revalidar`.
-O relatório abre no navegador ao concluir; use `--nao-abrir` para somente gravar os resultados.
+O relatório abre no navegador após conclusão das etapas automáticas; use `--nao-abrir` para somente gravar os resultados.
+Respostas incompletas não são enviadas aos juízes; pareceres sem conclusão válida são descartados das notas.
+O processamento encerra com resultados válidos e uma tabela de descartes por modelo e etapa; os comprovantes permanecem arquivados.
+CORRIGIR é uma decisão científica final desfavorável e mantém pedagogia bloqueada; PENDENTE de um parecer vira descarte, sem nota aproveitada.
 Para apagar os lotes gerados e os temporários dos julgamentos antes de recomeçar, execute `npm run apagar`.
 Esse comando preserva código, configuração, credenciais e fontes; a remoção dos resultados é definitiva.
 `npm run coletar` continua disponível para fazer somente a coleta e seguir com organização manual.

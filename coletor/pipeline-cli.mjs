@@ -10,6 +10,7 @@ import { acquireOutputLock } from './output-lock.mjs';
 import { findLatestBatch, parsePipelineOptions } from './pipeline-options.mjs';
 import { openReport } from './report-output.mjs';
 import { sourceCoverage, answerKeySection } from './source-coverage.mjs';
+import { shouldOpenReport } from './pipeline-completion.mjs';
 
 const repositoryRoot = resolve(import.meta.dirname, '..');
 
@@ -33,6 +34,7 @@ async function main() {
     console.log('Uso: npm run executar -- [--simular] [--modelo-juiz MODELO] [--esforco-juiz medium] [--confirmar] [--retomar [CAMINHO_DO_LOTE]] [--revalidar] [--nao-abrir]');
     console.log('--retomar sem caminho seleciona o lote mais recente em output_dir.');
     console.log('--revalidar recupera apenas os arquivos existentes, sem rede, Herdr ou modelos; usa o último lote se nenhum caminho for informado.');
+    console.log('Respostas incompletas e pareceres sem conclusão válida são descartados das notas e documentados no relatório final.');
     return;
   }
   if (values.revalidar && values.retomar === undefined) values.retomar = '';
@@ -54,7 +56,8 @@ async function main() {
     for (const material of study.materials) {
       const coverage = sourceCoverage(material.messages, answerKeySection(answerKeys, material.topic), material.topic);
       console.log(`${material.topic}: fontes incorporadas ${coverage.supplied_source_ids.join(', ')}; referências do gabarito sem material: ${coverage.answer_key_sources_not_supplied.join(', ') || 'nenhuma'}.`);
-      if (coverage.reading_notes) console.log(`${material.topic}: o pacote contém notas/paráfrases; APTO depende da sustentação encontrada no material, sem acesso às obras completas.`);
+      if (coverage.original_source_ids.length) console.log(`${material.topic}: texto original incorporado de ${coverage.original_source_ids.join(', ')}.`);
+      if (coverage.reading_notes) console.log(`${material.topic}: o pacote também contém notas/paráfrases; APTO depende da sustentação encontrada no material efetivamente incorporado.`);
     }
   }
   const batch = values.retomar ? await readJsonIfPresent(join(resolve(values.retomar), 'batch.json')) : null;
@@ -87,10 +90,23 @@ async function main() {
     });
     const reportPath = join(result.consolidation.directory, 'resultados.html');
     const blocked = Object.values(result.completed).flatMap(Object.values).filter((judgment) => judgment.status === 'BLOQUEADO').length;
-    console.log(`Fluxo concluído: ${result.consolidation.planned} execuções no relatório; ${result.consolidation.pending} pendências; ${blocked} avaliações pedagógicas bloqueadas.`);
-    console.log(`Resultados: ${reportPath}`);
-    if (!values['nao-abrir']) console.log(await openReport(reportPath));
-    if (result.consolidation.pending > 0) process.exitCode = 2;
+    const completion = result.consolidation.completion;
+    if (completion.status === 'CONCLUÍDO') {
+      console.log(`Fluxo concluído: ${completion.planned} execuções; ${blocked} avaliações pedagógicas bloqueadas por decisão científica. Revisão humana pendente.`);
+      console.log(`Resultados: ${reportPath}`);
+    } else if (completion.status === 'CONCLUÍDO_COM_DESCARTES') {
+      console.log(`Fluxo encerrado com descartes: ${completion.planned} tentativas; ${completion.eligible_generations} respostas completas; ${completion.discarded_generations} gerações descartadas; ${completion.discarded_judgments} avaliações descartadas.`);
+      for (const discard of completion.discards) console.log(`DESCARTADO ${discard.system_id}/${discard.topic}/${discard.stage}: ${discard.reason}`);
+      console.log(`Resultados: ${reportPath}`);
+    } else {
+      console.log(`Fluxo incompleto: ${completion.planned} execuções; ${completion.issues.length} impedimentos; ${blocked} avaliações pedagógicas bloqueadas.`);
+      for (const issue of completion.issues) console.log(`${issue.system_id}/${issue.topic}/${issue.stage}: ${issue.reason}`);
+      console.log(`Relatório parcial: ${reportPath}`);
+      console.log('Há etapas não processadas; retome o lote para encerrá-las.');
+      process.exitCode = 2;
+    }
+    for (const measurement of completion.missing_measurements) console.log(`N/A ${measurement.system_id}/${measurement.topic}/${measurement.stage}: ${measurement.reason}`);
+    if (shouldOpenReport(completion, values)) console.log(await openReport(reportPath));
   } finally {
     process.removeListener('SIGINT', interrupt);
     process.removeListener('SIGTERM', interrupt);

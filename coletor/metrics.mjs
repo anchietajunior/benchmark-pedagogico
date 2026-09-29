@@ -45,6 +45,7 @@ export function measureRecord(execution, transport, metadata, exchangeRate) {
     started_at: transport.started_at,
     ended_at: transport.ended_at,
     operational_status: transport.operational_status,
+    provider_error: transport.provider_error ?? null,
     http_status: transport.http_status,
     output_branch: outputBranch,
     duration_seconds: duration,

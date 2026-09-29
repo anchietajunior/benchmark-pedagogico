@@ -134,6 +134,36 @@ test('telemetria ausente permanece pendente e pode ser conciliada sem outra gera
   assert.ok(revisionFiles.some((filename) => filename.startsWith('conciliacao-')));
 });
 
+test('erro SSE informa o motivo do provedor no registro e no terminal', async () => {
+  const { study } = await prepareStudy();
+  const progress = [];
+  const result = await collectBatch(study, {
+    apiKey: 'secret-test-key', metadataAttempts: 1, onProgress: (message) => progress.push(message),
+    fetchImpl: async (url, options) => {
+      if (String(url).endsWith('/endpoints')) return Response.json({ data: { endpoints: [{ tag: 'vendor', provider_name: 'Vendor', model_id: 'vendor/model-test', status: 0, supported_parameters: ['temperature', 'max_tokens'] }] } });
+      return options.method === 'POST' ? generationStream({ error: true, finish: 'error' }) : metadataResponse();
+    },
+  });
+  assert.deepEqual(result.records[0].provider_error, { code: 500, message: 'Falha do provedor', type: null });
+  assert.match(progress.join('\n'), /500: Falha do provedor/);
+});
+
+test('truncamento sem contagem de tokens não presume consumo pelo raciocínio', async () => {
+  const { study } = await prepareStudy();
+  const progress = [];
+  const result = await collectBatch(study, {
+    apiKey: 'secret-test-key', metadataAttempts: 1, onProgress: (message) => progress.push(message),
+    fetchImpl: async (url, options) => {
+      if (String(url).endsWith('/endpoints')) return Response.json({ data: { endpoints: [{ tag: 'vendor', provider_name: 'Vendor', model_id: 'vendor/model-test', status: 0, supported_parameters: ['temperature', 'max_tokens'] }] } });
+      if (options.method === 'GET') return Response.json({ error: 'Not found' }, { status: 404 });
+      return new Response('data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\ndata: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } });
+    },
+  });
+  assert.equal(result.records[0].completion_tokens, null);
+  assert.equal(result.records[0].reasoning_tokens, null);
+  assert.doesNotMatch(progress.join('\n'), /consumido pelo raciocínio/);
+});
+
 for (const [name, options, status] of [
   ['erro SSE com HTTP 200', { error: true, finish: 'error' }, 'erro'],
   ['limite de saída', { finish: 'length' }, 'truncamento'],
