@@ -75,6 +75,8 @@ export function buildModelRanking(state, summary, costsByExecution = new Map()) 
     const technologicalScores = executions.map((execution) => partialFormalConformity(resultsByExecution.get(execution.execution_id)));
     const generationCosts = executions.map((execution) => costsByExecution.get(execution.execution_id));
     const adherence = executions.map((execution) => resultsByExecution.get(execution.execution_id)?.C4);
+    const assertionCounts = executions.map((execution) => resultsByExecution.get(execution.execution_id)).map((row) => [row?.afirmacoes_confirmadas, row?.afirmacoes_total]);
+    const countsKnown = executions.length > 0 && assertionCounts.every(([confirmed, total]) => Number.isSafeInteger(confirmed) && Number.isSafeInteger(total) && total > 0);
     return {
       system_id: model.id, model: model.model,
       score: roundScore(averageScore),
@@ -84,6 +86,7 @@ export function buildModelRanking(state, summary, costsByExecution = new Map()) 
       technological_score: roundScore(averageOfAll(technologicalScores)),
       cost_brl: averageOfAll(generationCosts),
       material_adherence: roundScore(averageOfAll(adherence)),
+      confirmed_assertions: countsKnown ? { confirmed: assertionCounts.reduce((sum, [confirmed]) => sum + confirmed, 0), total: assertionCounts.reduce((sum, [, total]) => sum + total, 0) } : null,
     };
   });
   const sortedModels = modelResults.toSorted((first, second) => {
@@ -116,7 +119,7 @@ export function renderResultsHtml(state, summary, costsByExecution = new Map(), 
   const ranking = buildModelRanking(state, summary, costsByExecution);
   const rows = ranking.map((model) => [
     model.rank, model.model, formatNumber(model.score), model.status,
-    formatNumber(model.academic_score), formatNumber(model.scientific_score), formatNumber(model.technological_score), formatNumber(model.material_adherence), formatCurrency(model.cost_brl),
+    formatNumber(model.academic_score), formatNumber(model.scientific_score), formatNumber(model.technological_score), formatNumber(model.material_adherence), model.confirmed_assertions ? `${model.confirmed_assertions.confirmed}/${model.confirmed_assertions.total}` : 'N/A', formatCurrency(model.cost_brl),
   ]);
   return `<!doctype html>
 <html lang="pt-BR">
@@ -146,12 +149,13 @@ h2{font-size:22px;margin:24px 0 4px}h3{font-size:18px;margin:28px 0 4px;color:#2
 <body><main>
 <h1>Ranking dos modelos</h1>
 <p>Pontuação geral: média, em todas as execuções previstas, de P × S / 100, em que P é o índice pedagógico e S a nota científica graduada. Execução sem P ou S válidos: 0 e ERRO. Pontuações iguais empatam.</p>
-${table(['Posição', 'Modelo', 'Pontuação geral', 'Status', 'Acadêmico', 'Científico', 'Tecnológico', 'Aderência às fontes', 'Custo por explicação'], rows)}
+${table(['Posição', 'Modelo', 'Pontuação geral', 'Status', 'Acadêmico', 'Científico', 'Tecnológico', 'Aderência às fontes', 'Afirmações confirmadas', 'Custo por explicação'], rows)}
 <ul>
 <li>Acadêmico, de 0 a 100: índice pedagógico P do juiz JP1 (clareza, organização, foco, causalidade e exemplos), avaliado sem conhecer a decisão científica.</li>
 <li>Científico, de 0 a 100: nota S, 100 menos descontos por gravidade nos pareceres JC1 e JC2 (média das duas passagens), após a verificação externa JX.</li>
 <li>Tecnológico, de 0 a 100: T2 parcial, média de F1 (título), F2 (800 a 1.200 palavras), F3 (seções pedidas) e F4 (fontes declaradas); F5 exige revisão humana e fica de fora.</li>
 <li>Aderência às fontes, de 0 a 100: C4 do juiz JC1, porcentagem das afirmações sustentadas pelo material fornecido ao modelo; mede o uso das fontes, não a correção, e não entra na pontuação geral.</li>
+<li>Afirmações confirmadas: acertos/afirmações, soma nas execuções do modelo das afirmações do texto sustentadas pelas fontes fornecidas e citadas, sobre o total inventariado pelo juiz JC1.</li>
 <li>Custo por explicação: custo de geração informado pelo OpenRouter, convertido em reais pelo câmbio registrado no lote; é um valor medido, não uma nota.</li>
 <li>N/A indica dado ausente em alguma execução prevista do modelo; ausência nunca vira zero nessas colunas.</li>
 </ul>

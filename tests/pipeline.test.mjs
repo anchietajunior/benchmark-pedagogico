@@ -117,6 +117,19 @@ test('HTML explica abaixo da tabela os critérios científicos, acadêmicos, tec
   assert.ok(criteria.includes('&quot;# &quot;'));
 });
 
+test('afirmações confirmadas somam acertos e totais de todas as execuções do modelo', () => {
+  const { state, summary } = rankingFixture([90, 80]);
+  state.executions.push({ ...state.executions[0], execution_id: 'E3' });
+  summary.push({ ...summary[0], execucao_id: 'E3' });
+  Object.assign(summary[0], { afirmacoes_confirmadas: 38, afirmacoes_total: 40 });
+  Object.assign(summary[2], { afirmacoes_confirmadas: 10, afirmacoes_total: 40 });
+  Object.assign(summary[1], { afirmacoes_confirmadas: 5, afirmacoes_total: null });
+  const ranking = buildModelRanking(state, summary);
+  assert.deepEqual(ranking.find((model) => model.system_id === 'S1').confirmed_assertions, { confirmed: 48, total: 80 });
+  assert.equal(ranking.find((model) => model.system_id === 'S2').confirmed_assertions, null);
+  assert.match(renderResultsHtml(state, summary), /<td>48\/80<\/td>/);
+});
+
 test('colunas por dimensão exigem o dado em todas as execuções do modelo e não viram zero', () => {
   const { state, summary } = rankingFixture([90, 80]);
   Object.assign(summary[0], { F1: 100, F2: 0, F3: 100, F4: 100 });
@@ -128,7 +141,7 @@ test('colunas por dimensão exigem o dado em todas as execuções do modelo e n�
   assert.deepEqual([first.system_id, first.academic_score, first.technological_score], ['S1', 95, 87.5]);
   assert.ok(Math.abs(first.cost_brl - 0.3) < 1e-9);
   assert.deepEqual([second.system_id, second.academic_score, second.technological_score, second.cost_brl], ['S2', 80, null, null]);
-  assert.match(renderResultsHtml(state, summary, costs), /<td>95<\/td><td>100<\/td><td>87,5<\/td><td>N\/A<\/td><td>R\$\s0,30<\/td>/);
+  assert.match(renderResultsHtml(state, summary, costs), /<td>95<\/td><td>100<\/td><td>87,5<\/td><td>N\/A<\/td><td>N\/A<\/td><td>R\$\s0,30<\/td>/);
 });
 
 test('cobertura distingue notas de leitura do texto original incorporado', () => {
@@ -275,8 +288,8 @@ test('fluxo completo isola papéis, preserva certificados e retoma sem novos jul
   assert.match(html, /vendor\/secret-model/);
   assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td>/);
   assert.equal(consolidator.mapa_privado[0].codigos.JP1, pedagogical.code);
-  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO', academic_score: 100, technological_score: 100, cost_brl: 0.05, material_adherence: 100, scientific_score: 100 }]);
-  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td><td>100<\/td><td>100<\/td><td>100<\/td><td>100<\/td><td>R\$\s0,05<\/td>/);
+  assert.deepEqual(consolidator.ranking, [{ rank: 1, system_id: 'S01', model: 'vendor/secret-model', score: 100, status: 'CONCLUÍDO', academic_score: 100, technological_score: 100, cost_brl: 0.05, material_adherence: 100, confirmed_assertions: { confirmed: 1, total: 1 }, scientific_score: 100 }]);
+  assert.match(html, /<td>100<\/td><td>CONCLUÍDO<\/td><td>100<\/td><td>100<\/td><td>100<\/td><td>100<\/td><td>1\/1<\/td><td>R\$\s0,05<\/td>/);
   assert.ok(!html.includes(scientific.code));
   const global = await readFile(join(directory, 'consolidado/global-por-rodada.csv'), 'utf8');
   assert.match(global, /"false","N\/A"/);

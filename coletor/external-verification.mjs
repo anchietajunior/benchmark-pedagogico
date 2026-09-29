@@ -87,6 +87,13 @@ export function effectiveScientificStatus(scientificResult, externalResult) {
 }
 
 // C4 - aderência ao material fornecido: afirmações sustentadas pelas fontes do pedido sobre o inventário.
+// Afirmações do inventário sustentadas pelas fontes fornecidas (e citáveis) sobre o total inventariado.
+export function materialAssertionCounts(scientificResult) {
+  const assertions = scientificResult?.items?.filter((item) => /^A\d+$/.test(item.id)) ?? [];
+  if (!assertions.length) return null;
+  return { confirmed: assertions.filter((item) => item.score === 100).length, total: assertions.length };
+}
+
 export function materialAdherence(scientificResult) {
   const assertions = scientificResult?.items?.filter((item) => /^A\d+$/.test(item.id)) ?? [];
   if (!assertions.length) return null;

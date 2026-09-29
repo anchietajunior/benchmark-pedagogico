@@ -9,7 +9,7 @@ import { assessPipelineCompletion } from './pipeline-completion.mjs';
 import { executionScientificScore } from './scientific-score.mjs';
 
 const completeColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,codigo_publico,papel,passagem,item,nota_0_100,valor_bruto,unidade,numerador,denominador,situacao,execucao_avaliacao,avaliador_config_id,metodo_verificacao,arquivo_origem,evidencia,motivo_na'.split(',');
-const summaryColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,situacao_JX1,K1,K2,K3,K4,K5,K6,C1,C2,C3,C4,S,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia'.split(',');
+const summaryColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,iniciada,status_operacional,ramo_saida,situacao_JC1,situacao_JX1,K1,K2,K3,K4,K5,K6,C1,C2,C3,C4,afirmacoes_confirmadas,afirmacoes_total,S,situacao_JP1,M1.1,M1.2,M2.1,M2.2,M3.1,M3.2,M4.1,M4.2,M5.1,M5.2,M1,M2,M3,M4,M5,P,T1,T2,E1,E2,E3,latencia_total_s,primeiro_texto_s,tempo_ate_falha_s,tokens_entrada,tokens_saida,custo_geracao_brl,origem_custo,metas_versao,contestacao_cientifica,provisorio,motivos_na,evidencia'.split(',');
 const stabilityColumns = 'versao_protocolo,fase,execucao_id,sistema_id,modo_entrega,tema,rodada,papel,item,passagem_1,valor_1,passagem_2,valor_2,comparavel,diferenca,concordancia,motivo_exclusao,evidencia'.split(',');
 
 export function renderCsv(columns, records) {
@@ -101,6 +101,8 @@ function summaryRow(execution, phase, judgments) {
   row.situacao_JC1 = judgments.JC1.status;
   row.situacao_JX1 = judgments.JX1?.status ?? null;
   row.C4 = judgments.JC1.material_adherence ?? null;
+  row.afirmacoes_confirmadas = judgments.JC1.material_assertions?.confirmed ?? null;
+  row.afirmacoes_total = judgments.JC1.material_assertions?.total ?? null;
   row.S = executionScientificScore(judgments);
   row.situacao_JP1 = judgments.JP1.status;
   row.contestacao_cientifica = hasScientificDispute(judgments);

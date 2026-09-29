@@ -11,7 +11,7 @@ import { operationalValues, resourceValues, recordedItems } from './record-resul
 import { sourceCoverage, answerKeySection } from './source-coverage.mjs';
 import { executionDiscardReason, discardUnfinishedJudgment } from './pipeline-completion.mjs';
 import { scientificScore } from './scientific-score.mjs';
-import { academicDomains, effectiveScientificStatus, externalCandidates, externalRoles, externalSchemaFor, materialAdherence, renderExternalPrompt, validateExternalJudgment } from './external-verification.mjs';
+import { academicDomains, effectiveScientificStatus, externalCandidates, externalRoles, externalSchemaFor, materialAdherence, materialAssertionCounts, renderExternalPrompt, validateExternalJudgment } from './external-verification.mjs';
 
 const templates = { JC: 'avaliar-ciencia.md', JP: 'avaliar-pedagogia.md', JT: 'apurar-tecnologia.md', JE: 'apurar-tempo-custo.md' };
 const passes = ['JC1', 'JC2', 'JX1', 'JX2', 'JP1', 'JP2', 'JT', 'JE'];
@@ -334,7 +334,7 @@ async function judgeExternal(batchDirectory, state, execution, role, completed, 
 // Aplica a decisão do JX ao parecer científico em memória; o parecer arquivado do JC não é alterado.
 export function finalizeScientific(scientific, external) {
   const adherence = materialAdherence(scientific.result);
-  let judgment = { ...scientific, material_adherence: adherence, scientific_score: scientificScore(scientific.result, external?.result) };
+  let judgment = { ...scientific, material_adherence: adherence, material_assertions: materialAssertionCounts(scientific.result), scientific_score: scientificScore(scientific.result, external?.result) };
   if (scientific.result && external?.result) {
     const status = effectiveScientificStatus(scientific.result, external.result);
     if (status !== scientific.result.status) {
