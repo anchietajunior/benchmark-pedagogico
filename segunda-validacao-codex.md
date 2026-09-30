@@ -19,7 +19,7 @@ O objetivo é reproduzir o julgamento científico (JC) e o pedagógico cego (JP)
 4. Lote extraído na raiz do repositório. O pesquisador recebe um arquivo como `lote-piloto-2026-09-29.tar.gz`; extraia com:
 
    ```sh
-   tar -xzf CAMINHO/lote-piloto-2026-09-29.tar.gz
+   tar -xzf lote-piloto-2026-09-29.tar.gz
    ```
 
    Depois disso devem existir `openrouter.config.json`, `fontes/openrouter/` e a pasta do lote em `coleta/privado/openrouter/`.
