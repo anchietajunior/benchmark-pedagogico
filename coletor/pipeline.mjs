@@ -133,7 +133,7 @@ function minimumTechnicalResult(result) {
   return Object.fromEntries(['INICIADA', 'STATUS_OPERACIONAL', 'RAMO_SAIDA'].map((id) => [id, result.items.find((item) => item.id === id).value]));
 }
 
-function buildInput(execution, role, completed) {
+export function buildInput(execution, role, completed) {
   const identity = { code: execution.codes[role], topic: execution.topic, round: execution.round, role };
   const family = roleFamily(role);
   const base = { ...identity, required_items: fixedItems[family] };
