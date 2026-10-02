@@ -8,6 +8,6 @@ When asked to publish, push `main` to `origin/main` without rewriting shared his
 This repository-specific user preference overrides default workflow suggestions to create a branch before editing or committing.
 Apply this rule only to this repository, unless the user explicitly changes it.
 
-## Segunda validação
+## Juízes externos
 
-Quando o pesquisador pedir a segunda validação de um lote com o Codex, siga somente [segunda-validacao-codex.md](segunda-validacao-codex.md).
+Quando o pesquisador pedir que você julgue um lote como juiz externo (Codex ou Grok), siga somente [juizes-externos.md](juizes-externos.md).

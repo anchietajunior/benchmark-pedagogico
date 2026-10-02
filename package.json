@@ -6,7 +6,7 @@
   "engines": { "node": ">=24" },
   "scripts": {
     "executar": "node coletor/pipeline-cli.mjs",
-    "validar": "node coletor/validar-cli.mjs",
+    "kit": "node coletor/kit-cli.mjs",
     "apagar": "node coletor/cleanup-cli.mjs",
     "configurar": "node coletor/cli.mjs configurar",
     "conferir": "node coletor/cli.mjs conferir",

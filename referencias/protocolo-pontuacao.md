@@ -1,6 +1,6 @@
-# Protocolo de pontuação 3.2
+# Protocolo de pontuação 3.4
 
-Versão: 3.2, de 26 de setembro de 2026.
+Versão: 3.4, de 30 de setembro de 2026. As rubricas JC, JP, JT e JE e o formato dos pareceres continuam os da 3.2, de 26 de setembro de 2026; a 3.3 acrescentou a verificação externa JX e a 3.4, a nota científica graduada e o JP cego.
 Em 29 de setembro de 2026, o estudo passou a usar somente os temas B01 e B02; N01 e N02 foram retirados, e as regras de média global foram ajustadas para os dois temas.
 Na mesma data, o público-alvo passou a ser somente o graduando de Biomedicina, sem Nutrição.
 Esta revisão pede material de estudo desenvolvido, com 800 a 1.200 palavras, mecanismo passo a passo, exemplo interpretado, duas confusões esclarecidas e duas perguntas com respostas comentadas.
@@ -25,7 +25,7 @@ Identifique toda medida por versão + código.
 | Papel | Competência exclusiva | Entradas necessárias | Saída |
 | --- | --- | --- | --- |
 | JC - Científico | Correção, cobertura e sustentação bibliográfica. | Resposta anonimizada, pedido, gabarito e fontes acessíveis. | K1-K6, C1-C3, inventários e APTO/CORRIGIR/PENDENTE. |
-| JP - Pedagógico | Indícios de compreensibilidade para o público definido. | Resposta anonimizada, pedido, fontes e certificado mínimo APTO. | 10 subnotas, M1-M5/P ou bloqueio justificado. |
+| JP - Pedagógico | Indícios de compreensibilidade para o público definido. | Resposta anonimizada, pedido, fontes e certificado mínimo de resposta completa, sem situação científica (3.4). | 10 subnotas e M1-M5/P. |
 | JT - Tecnológico | Conclusão operacional e cumprimento de instruções verificáveis. | Original, pedido e registros operacionais mínimos. | T1 conclusão, F1-F5 ou FP1-FP3, T2 conformidade e evidências. |
 | JE - Tempo e custo | Latência, consumo e custo de geração. | Horários, uso, cobrança, tentativas, metas e situação operacional documentada. | Valores brutos, E1-E3 e memória de cálculo. |
 
@@ -72,7 +72,7 @@ JC/JP recebem o pedido sem a seção operacional de entrega, que contém ID e ca
 O organizador preserva o arquivo e extrai original, registros e cópias anônimas antes do envio aos juízes.
 O formato anterior com planejamento.md, resposta.md e ficha.md continua aceito, sem conversão de notas nem exigência de CSV na coleta.
 A fila privada indica o arquivo completo permitido por chamada; nunca é enviada aos juízes.
-JP aguarda o APTO da passagem científica correspondente; JE recebe a situação operacional conferida por JT, sem notas T.
+Desde a 3.4, JP avalia toda resposta completa sem esperar nem conhecer a decisão científica; JE recebe a situação operacional conferida por JT, sem notas T.
 Campos não preenchidos, modelos vazios e arquivos de controle não contam como execuções realizadas.
 Um número declarado pelo modelo não comprova duração, consumo ou cobrança; use observação, logs ou estimativa documentada.
 Não é válido apenas pedir ao juiz que ignore os dados operacionais: JC e JP não devem recebê-los.
@@ -97,8 +97,8 @@ Defina JC1 e JP1 como avaliações primárias, e JC2 e JP2 como repetições de 
 JC2 não recebe JC1; JP2 não recebe JP1 nem os pareceres científicos.
 Use uma resposta por chamada, sessões novas, códigos públicos diferentes e ordem de processamento alterada nas repetições.
 JC1 habilita JP1; JC2 habilita JP2, sempre para a mesma resposta original, sem correções de conteúdo.
-Um ramo não APTO gera registro de JP BLOQUEADO com notas N/A; não faça uma chamada para inventar pontuação.
-O certificado enviado a JP contém somente versão, código público de destino, tema, rodada, passagem científica de origem e situação APTO.
+JP BLOQUEADO só ocorre com certificado incompatível; a decisão científica não bloqueia JP desde a 3.4.
+O certificado enviado a JP contém somente versão, código público de destino, tema, rodada e passagem; não informa situação científica.
 O pesquisador mantém em privado a ligação com o parecer científico, os códigos e a execução original, conferindo que o corpo anonimizado permaneceu o mesmo.
 Certificado é um registro de encaminhamento, não prova autônoma de verdade; uma incompatibilidade impede a avaliação.
 Não envie C1-C3, notas de outros juízes, modelos, custos ou tempos a JP.
